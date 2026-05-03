@@ -186,137 +186,139 @@
         </form>
         <div id="user-info" class="hidden mb-6"></div>
       </div>
+
           <script>
           // --- Email/Password Auth Logic ---
-          const emailAuthForm = document.getElementById('email-auth-form');
-          const emailInput = document.getElementById('email-auth-email');
-          const passwordInput = document.getElementById('email-auth-password');
-          const displayNameInput = document.getElementById('email-auth-displayname');
-          const emailSignInBtn = document.getElementById('email-signin-btn');
-          const emailCreateBtn = document.getElementById('email-create-btn');
-          const emailAuthError = document.getElementById('email-auth-error');
-          const password2Input = document.getElementById('email-auth-password2');
-          const displayNameInput = document.getElementById('email-auth-displayname');
-          const showCreateAccount = document.getElementById('show-create-account');
-          const showSignin = document.getElementById('show-signin');
-          const createAccountLink = document.getElementById('create-account-link');
-          const backToSigninLink = document.getElementById('back-to-signin-link');
+          document.addEventListener('DOMContentLoaded', function() {
+            const emailAuthForm = document.getElementById('email-auth-form');
+            const emailInput = document.getElementById('email-auth-email');
+            const passwordInput = document.getElementById('email-auth-password');
+            const displayNameInput = document.getElementById('email-auth-displayname');
+            const emailSignInBtn = document.getElementById('email-signin-btn');
+            const emailCreateBtn = document.getElementById('email-create-btn');
+            const emailAuthError = document.getElementById('email-auth-error');
+            const password2Input = document.getElementById('email-auth-password2');
+            const showCreateAccount = document.getElementById('show-create-account');
+            const showSignin = document.getElementById('show-signin');
+            const createAccountLink = document.getElementById('create-account-link');
+            const backToSigninLink = document.getElementById('back-to-signin-link');
 
-          function setAuthMode(mode) {
-            if (mode === 'signin') {
-              emailSignInBtn.classList.remove('hidden');
-              emailCreateBtn.classList.add('hidden');
-              password2Input.classList.add('hidden');
-              displayNameInput.classList.add('hidden');
-              createAccountLink.classList.remove('hidden');
-              backToSigninLink.classList.add('hidden');
-            } else {
-              emailSignInBtn.classList.add('hidden');
-              emailCreateBtn.classList.remove('hidden');
-              password2Input.classList.remove('hidden');
-              displayNameInput.classList.remove('hidden');
-              createAccountLink.classList.add('hidden');
-              backToSigninLink.classList.remove('hidden');
-            }
-            clearEmailError();
-            password2Input.value = '';
-            displayNameInput.value = '';
-          }
-          showCreateAccount.onclick = (e) => { e.preventDefault(); setAuthMode('create'); };
-          showSignin.onclick = (e) => { e.preventDefault(); setAuthMode('signin'); };
-          setAuthMode('signin');
-
-          function showEmailError(msg) {
-            emailAuthError.textContent = msg;
-            emailAuthError.classList.remove('hidden');
-          }
-          function clearEmailError() {
-            emailAuthError.textContent = '';
-            emailAuthError.classList.add('hidden');
-          }
-
-          emailSignInBtn.onclick = async (e) => {
-            e.preventDefault();
-            clearEmailError();
-            try {
-              const result = await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
-              currentUser = result.user;
-              userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
-              userInfo.classList.remove('hidden');
-              emailAuthForm.classList.add('hidden');
-              googleBtn.classList.add('hidden');
-              document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
-              // Check if profile exists
-              const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
-              if (profSnap.exists) {
-                profileCreated = true;
-                profileForm.classList.add('hidden');
-                postForm.classList.remove('hidden');
+            function setAuthMode(mode) {
+              if (mode === 'signin') {
+                emailSignInBtn.classList.remove('hidden');
+                emailCreateBtn.classList.add('hidden');
+                password2Input.classList.add('hidden');
+                displayNameInput.classList.add('hidden');
+                createAccountLink.classList.remove('hidden');
+                backToSigninLink.classList.add('hidden');
               } else {
-                // Set display name as username for legacy users
+                emailSignInBtn.classList.add('hidden');
+                emailCreateBtn.classList.remove('hidden');
+                password2Input.classList.remove('hidden');
+                displayNameInput.classList.remove('hidden');
+                createAccountLink.classList.add('hidden');
+                backToSigninLink.classList.remove('hidden');
+              }
+              clearEmailError();
+              password2Input.value = '';
+              displayNameInput.value = '';
+            }
+            showCreateAccount.onclick = (e) => { e.preventDefault(); setAuthMode('create'); };
+            showSignin.onclick = (e) => { e.preventDefault(); setAuthMode('signin'); };
+            setAuthMode('signin');
+
+            function showEmailError(msg) {
+              emailAuthError.textContent = msg;
+              emailAuthError.classList.remove('hidden');
+            }
+            function clearEmailError() {
+              emailAuthError.textContent = '';
+              emailAuthError.classList.add('hidden');
+            }
+
+            emailSignInBtn.onclick = async (e) => {
+              e.preventDefault();
+              clearEmailError();
+              try {
+                const result = await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+                currentUser = result.user;
+                userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
+                userInfo.classList.remove('hidden');
+                emailAuthForm.classList.add('hidden');
+                googleBtn.classList.add('hidden');
+                document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
+                // Check if profile exists
+                const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+                if (profSnap.exists) {
+                  profileCreated = true;
+                  profileForm.classList.add('hidden');
+                  postForm.classList.remove('hidden');
+                } else {
+                  // Set display name as username for legacy users
+                  await db.collection('profiles').doc(currentUser.uid).set({
+                    username: currentUser.displayName || currentUser.email,
+                    bio: '',
+                    email: currentUser.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                  profileCreated = true;
+                  profileForm.classList.add('hidden');
+                  postForm.classList.remove('hidden');
+                }
+              } catch (err) {
+                showEmailError(err.message);
+              }
+            };
+
+            emailCreateBtn.onclick = async (e) => {
+              e.preventDefault();
+              clearEmailError();
+              // Password confirmation
+              if (passwordInput.value !== password2Input.value) {
+                showEmailError('Passwords do not match.');
+                return;
+              }
+              const username = displayNameInput.value.trim();
+              if (!username) {
+                showEmailError('Please enter a username.');
+                return;
+              }
+              // Check for unique username
+              try {
+                const usernameSnap = await db.collection('profiles').where('username', '==', username).get();
+                if (!usernameSnap.empty) {
+                  showEmailError('Username is already taken. Please choose another.');
+                  return;
+                }
+              } catch (err) {
+                showEmailError('Error checking username uniqueness.');
+                return;
+              }
+              try {
+                const result = await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
+                currentUser = result.user;
+                // Set display name to username
+                await currentUser.updateProfile({ displayName: username });
+                // Save profile immediately
                 await db.collection('profiles').doc(currentUser.uid).set({
-                  username: currentUser.displayName || currentUser.email,
+                  username,
                   bio: '',
                   email: currentUser.email,
                   createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
+                userInfo.classList.remove('hidden');
+                emailAuthForm.classList.add('hidden');
+                googleBtn.classList.add('hidden');
+                document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
                 profileCreated = true;
                 profileForm.classList.add('hidden');
                 postForm.classList.remove('hidden');
+              } catch (err) {
+                showEmailError(err.message);
               }
-            } catch (err) {
-              showEmailError(err.message);
-            }
-          };
-
-          emailCreateBtn.onclick = async (e) => {
-            e.preventDefault();
-            clearEmailError();
-            // Password confirmation
-            if (passwordInput.value !== password2Input.value) {
-              showEmailError('Passwords do not match.');
-              return;
-            }
-            const username = displayNameInput.value.trim();
-            if (!username) {
-              showEmailError('Please enter a username.');
-              return;
-            }
-            // Check for unique username
-            try {
-              const usernameSnap = await db.collection('profiles').where('username', '==', username).get();
-              if (!usernameSnap.empty) {
-                showEmailError('Username is already taken. Please choose another.');
-                return;
-              }
-            } catch (err) {
-              showEmailError('Error checking username uniqueness.');
-              return;
-            }
-            try {
-              const result = await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
-              currentUser = result.user;
-              // Set display name to username
-              await currentUser.updateProfile({ displayName: username });
-              // Save profile immediately
-              await db.collection('profiles').doc(currentUser.uid).set({
-                username,
-                bio: '',
-                email: currentUser.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-              userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
-              userInfo.classList.remove('hidden');
-              emailAuthForm.classList.add('hidden');
-              googleBtn.classList.add('hidden');
-              document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
-              profileCreated = true;
-              profileForm.classList.add('hidden');
-              postForm.classList.remove('hidden');
-            } catch (err) {
-              showEmailError(err.message);
-            }
-          };
+            };
+          });
           </script>
       <div id="public-feed" class="mb-10"></div>
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
