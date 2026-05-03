@@ -60,6 +60,27 @@
   </header>
 
   <main>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script>
+      // TODO: Replace with your Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyDd5tPj3G8Emnga-svWIASzojete6vogH0",
+        authDomain: "broliquidity.firebaseapp.com",
+        projectId: "broliquidity",
+        storageBucket: "broliquidity.appspot.com",
+        messagingSenderId: "786880915771",
+        appId: "1:786880915771:web:fe103176ffde52eff06f1e",
+        measurementId: "G-SBMVSQ34L6"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+    </script>
     <section class="max-w-7xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-12 items-center">
       <div>
         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600/20 border border-blue-400/30 text-sm font-bold text-[#b6ff22] mb-6">
@@ -143,27 +164,110 @@
       </div>
     </section>
 
-    <section id="waitlist" class="max-w-3xl mx-auto px-6 py-20 text-center">
-      <h3 class="text-4xl md:text-5xl font-black">Get early access</h3>
-      <p class="text-slate-400 mt-4 mb-8">
-        Be one of the first users when Bro Liquidity launches.
-      </p>
-
-      <form class="glass rounded-3xl p-4 flex flex-col sm:flex-row gap-3">
-        <input 
-          type="email" 
-          placeholder="Enter your email"
-          class="flex-1 px-5 py-4 rounded-2xl bg-white text-black outline-none font-semibold"
-        >
-        <button class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition">
-          Join Now
-        </button>
+    <section id="user-flow" class="max-w-3xl mx-auto px-6 py-20 text-center">
+      <h3 class="text-4xl md:text-5xl font-black mb-6">Join & Post Instantly</h3>
+      <div id="auth-section">
+        <button id="google-signin" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mb-4">Sign in with Google</button>
+        <div id="user-info" class="hidden mb-6"></div>
+      </div>
+      <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
+        <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
+        <textarea id="bio" placeholder="Short bio" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" rows="2"></textarea>
+        <input id="profile-pic" type="file" accept="image/*" class="w-full max-w-xs">
+        <button type="submit" class="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:scale-105 transition mt-2">Save Profile</button>
       </form>
+      <form id="post-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center hidden">
+        <input id="post-title" type="text" placeholder="Post title" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
+        <textarea id="post-content" placeholder="What's on your mind?" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" rows="3" required></textarea>
+        <select id="post-category" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs">
+          <option value="stocks">Stocks</option>
+          <option value="careers">Careers</option>
+          <option value="licenses">Licenses</option>
+        </select>
+        <button type="submit" class="px-8 py-3 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mt-2">Post</button>
+      </form>
+      <div id="post-success" class="hidden text-green-400 font-bold mt-4">Post submitted!</div>
     </section>
   </main>
 
   <footer class="border-t border-white/10 px-6 py-8 text-center text-slate-500 text-sm">
     © 2026 Bro Liquidity. Built for finance conversations.
   </footer>
+
+  <script>
+    // --- Auth & UI logic ---
+    const googleBtn = document.getElementById('google-signin');
+    const userInfo = document.getElementById('user-info');
+    const profileForm = document.getElementById('profile-form');
+    const postForm = document.getElementById('post-form');
+    const postSuccess = document.getElementById('post-success');
+    let currentUser = null;
+    let profileCreated = false;
+
+    googleBtn.onclick = async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        currentUser = result.user;
+        userInfo.innerHTML = `<img src="${currentUser.photoURL}" class="w-12 h-12 rounded-full mx-auto mb-2"><div class="font-bold">${currentUser.displayName}</div><div class="text-xs text-slate-400">${currentUser.email}</div>`;
+        userInfo.classList.remove('hidden');
+        googleBtn.classList.add('hidden');
+        // Check if profile exists
+        const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+        if (profSnap.exists) {
+          profileCreated = true;
+          profileForm.classList.add('hidden');
+          postForm.classList.remove('hidden');
+        } else {
+          profileForm.classList.remove('hidden');
+        }
+      } catch (e) {
+        alert('Sign in failed: ' + e.message);
+      }
+    };
+
+    profileForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const username = document.getElementById('username').value.trim();
+      const bio = document.getElementById('bio').value.trim();
+      const picFile = document.getElementById('profile-pic').files[0];
+      let photoURL = currentUser.photoURL;
+      if (picFile) {
+        const storageRef = storage.ref(`profilePics/${currentUser.uid}`);
+        await storageRef.put(picFile);
+        photoURL = await storageRef.getDownloadURL();
+      }
+      await db.collection('profiles').doc(currentUser.uid).set({
+        username,
+        bio,
+        photoURL,
+        email: currentUser.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      profileCreated = true;
+      profileForm.classList.add('hidden');
+      postForm.classList.remove('hidden');
+    };
+
+    postForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentUser || !profileCreated) return;
+      const title = document.getElementById('post-title').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+      const category = document.getElementById('post-category').value;
+      await db.collection('posts').add({
+        title,
+        content,
+        category,
+        author: currentUser.uid,
+        authorName: currentUser.displayName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      postForm.reset();
+      postSuccess.classList.remove('hidden');
+      setTimeout(() => postSuccess.classList.add('hidden'), 2500);
+    };
+  </script>
 </body>
 </html>
