@@ -181,6 +181,7 @@
         </form>
         <div id="user-info" class="hidden mb-6"></div>
       </div>
+          <script>
           // --- Email/Password Auth Logic ---
           const emailAuthForm = document.getElementById('email-auth-form');
           const emailInput = document.getElementById('email-auth-email');
@@ -245,6 +246,7 @@
               showEmailError(err.message);
             }
           };
+          </script>
       <div id="public-feed" class="mb-10"></div>
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
         <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
