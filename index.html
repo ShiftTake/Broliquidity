@@ -251,7 +251,6 @@
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
         <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
         <textarea id="bio" placeholder="Short bio" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" rows="2"></textarea>
-        <input id="profile-pic" type="file" accept="image/*" class="w-full max-w-xs">
         <button type="submit" class="px-8 py-3 rounded-2xl bg-blue-600 text-white font-black hover:scale-105 transition mt-2">Save Profile</button>
       </form>
       <form id="post-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center hidden">
@@ -342,15 +341,9 @@
       const bio = document.getElementById('bio').value.trim();
       const picFile = document.getElementById('profile-pic').files[0];
       let photoURL = currentUser.photoURL;
-      if (picFile) {
-        const storageRef = storage.ref(`profilePics/${currentUser.uid}`);
-        await storageRef.put(picFile);
-        photoURL = await storageRef.getDownloadURL();
-      }
       await db.collection('profiles').doc(currentUser.uid).set({
         username,
         bio,
-        photoURL,
         email: currentUser.email,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
