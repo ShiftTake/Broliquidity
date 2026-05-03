@@ -54,7 +54,7 @@
       <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
         <a href="#features" class="hover:text-[#b6ff22]">Features</a>
         <a href="#community" class="hover:text-[#b6ff22]">Community</a>
-        <a href="#waitlist" class="hover:text-[#b6ff22]">Join Waitlist</a>
+        <a href="#user-flow" class="hover:text-[#b6ff22]">Get Started</a>
       </div>
     </nav>
   </header>
@@ -96,8 +96,8 @@
         </p>
 
         <div class="mt-8 flex flex-col sm:flex-row gap-4">
-          <a href="#waitlist" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black text-center hover:scale-105 transition">
-            Join the Waitlist
+          <a href="#user-flow" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black text-center hover:scale-105 transition">
+            Create an Account
           </a>
           <a href="#features" class="px-8 py-4 rounded-2xl border border-white/20 font-black text-center hover:border-[#b6ff22] transition">
             Explore Features
@@ -165,11 +165,12 @@
     </section>
 
     <section id="user-flow" class="max-w-3xl mx-auto px-6 py-20 text-center">
-      <h3 class="text-4xl md:text-5xl font-black mb-6">Join & Post Instantly</h3>
+      <h3 class="text-4xl md:text-5xl font-black mb-6">Finance Discussions</h3>
       <div id="auth-section">
-        <button id="google-signin" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mb-4">Sign in with Google</button>
+        <button id="google-signin" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mb-4">Sign in with Google to Interact</button>
         <div id="user-info" class="hidden mb-6"></div>
       </div>
+      <div id="public-feed" class="mb-10"></div>
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
         <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
         <textarea id="bio" placeholder="Short bio" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" rows="2"></textarea>
@@ -201,9 +202,38 @@
     const profileForm = document.getElementById('profile-form');
     const postForm = document.getElementById('post-form');
     const postSuccess = document.getElementById('post-success');
+    const publicFeed = document.getElementById('public-feed');
+        // --- Public Feed Logic ---
+        function renderPost(post, id) {
+          return `<div class="glass rounded-2xl p-5 mb-4 text-left">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs bg-[#b6ff22]/20 text-[#b6ff22] px-2 py-1 rounded">${post.category || ''}</span>
+              <span class="text-xs text-slate-400">${post.authorName || 'Anonymous'}</span>
+              <span class="text-xs text-slate-500 ml-auto">${post.createdAt && post.createdAt.toDate ? post.createdAt.toDate().toLocaleString() : ''}</span>
+            </div>
+            <div class="font-bold text-lg mb-1">${post.title}</div>
+            <div class="text-slate-200 mb-2">${post.content}</div>
+            <div class="flex gap-2">
+              <button class="interact-btn px-3 py-1 rounded bg-[#b6ff22] text-black font-bold" data-action="vote" data-id="${id}" disabled>Vote</button>
+              <button class="interact-btn px-3 py-1 rounded bg-blue-600 text-white font-bold" data-action="comment" data-id="${id}" disabled>Comment</button>
+            </div>
+          </div>`;
+        }
+
+        function loadFeed() {
+          db.collection('posts').orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
+            let html = '';
+            snap.forEach(doc => {
+              html += renderPost(doc.data(), doc.id);
+            });
+            publicFeed.innerHTML = html || '<div class="text-slate-400">No posts yet. Be the first to post!</div>';
+          });
+        }
+        loadFeed();
     let currentUser = null;
     let profileCreated = false;
 
+    // --- Auth logic ---
     googleBtn.onclick = async () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
@@ -212,6 +242,8 @@
         userInfo.innerHTML = `<img src="${currentUser.photoURL}" class="w-12 h-12 rounded-full mx-auto mb-2"><div class="font-bold">${currentUser.displayName}</div><div class="text-xs text-slate-400">${currentUser.email}</div>`;
         userInfo.classList.remove('hidden');
         googleBtn.classList.add('hidden');
+        // Enable interaction buttons
+        document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
         // Check if profile exists
         const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
         if (profSnap.exists) {
