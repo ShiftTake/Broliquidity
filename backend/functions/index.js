@@ -1,0 +1,59 @@
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
+
+// Finance notification for new comment on a post
+exports.notifyOnNewComment = functions.firestore
+  .document('posts/{postId}/comments/{commentId}')
+  .onCreate(async (snap, context) => {
+    const comment = snap.data();
+    const postId = context.params.postId;
+    const postRef = db.collection('posts').doc(postId);
+    const postSnap = await postRef.get();
+    if (!postSnap.exists) return null;
+    const post = postSnap.data();
+    // Don't notify self
+    if (comment.author === post.author) return null;
+    await db.collection('notifications').add({
+      recipient: post.author,
+      type: 'comment',
+      message: `New comment on your post: "${comment.text.slice(0, 60)}"`,
+      postId,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return null;
+  });
+
+// Finance notification for bullish/bearish vote
+exports.notifyOnVote = functions.firestore
+  .document('posts/{postId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const postId = context.params.postId;
+    // Only notify if vote count changed
+    if ((before.bullish !== after.bullish) || (before.bearish !== after.bearish)) {
+      // Don't notify if author is missing
+      if (!after.author) return null;
+      let type = null;
+      let message = '';
+      if (before.bullish !== after.bullish) {
+        type = 'bullish';
+        message = `Your post received a new Bullish vote!`;
+      } else if (before.bearish !== after.bearish) {
+        type = 'bearish';
+        message = `Your post received a new Bearish vote!`;
+      }
+      await db.collection('notifications').add({
+        recipient: after.author,
+        type,
+        message,
+        postId,
+        read: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    return null;
+  });

@@ -1,0 +1,36 @@
+import './index.css';
+
+// Tailwind base styles
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, .35), transparent 35%),
+    radial-gradient(circle at top right, rgba(163, 255, 18, .25), transparent 30%),
+    #050816;
+  color: white;
+}
+
+.glass {
+  background: rgba(8, 13, 35, 0.78);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.pop-card {
+  transition: .25s ease;
+}
+
+.pop-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 45px rgba(182,255,34,.18);
+  border-color: rgba(182,255,34,.65);
+}
+
+.logo-glow {
+  filter: drop-shadow(0 0 32px rgba(182,255,34,.35));
+}
