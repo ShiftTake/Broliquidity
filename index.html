@@ -240,8 +240,10 @@
             emailSignInBtn.onclick = async (e) => {
               e.preventDefault();
               clearEmailError();
+              console.log('Email sign-in button clicked');
               try {
                 const result = await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+                console.log('Email sign-in result:', result);
                 currentUser = result.user;
                 userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
                 userInfo.classList.remove('hidden');
@@ -249,14 +251,13 @@
                 googleBtn.classList.add('hidden');
                 document.getElementById('auth-section').classList.add('hidden');
                 document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
-                // Check if profile exists
                 const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+                console.log('Profile snapshot exists:', profSnap.exists);
                 if (profSnap.exists) {
                   profileCreated = true;
                   profileForm.classList.add('hidden');
                   postForm.classList.remove('hidden');
                 } else {
-                  // Set display name as username for legacy users
                   await db.collection('profiles').doc(currentUser.uid).set({
                     username: currentUser.displayName || currentUser.email,
                     bio: '',
@@ -267,7 +268,11 @@
                   profileForm.classList.add('hidden');
                   postForm.classList.remove('hidden');
                 }
+                document.getElementById('global-auth-error').classList.add('hidden');
               } catch (err) {
+                console.error('Email sign-in error:', err);
+                document.getElementById('global-auth-error').textContent = 'Email sign-in failed: ' + err.message;
+                document.getElementById('global-auth-error').classList.remove('hidden');
                 showEmailError(err.message);
               }
             };
@@ -387,18 +392,19 @@
 
     // --- Auth logic ---
     googleBtn.onclick = async () => {
+      console.log('Google sign-in button clicked');
       const provider = new firebase.auth.GoogleAuthProvider();
       try {
         const result = await auth.signInWithPopup(provider);
+        console.log('Google sign-in result:', result);
         currentUser = result.user;
         userInfo.innerHTML = `<img src="${currentUser.photoURL}" class="w-12 h-12 rounded-full mx-auto mb-2"><div class="font-bold">${currentUser.displayName}</div><div class="text-xs text-slate-400">${currentUser.email}</div>`;
         userInfo.classList.remove('hidden');
         googleBtn.classList.add('hidden');
         document.getElementById('auth-section').classList.add('hidden');
-        // Enable interaction buttons
         document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
-        // Check if profile exists
         const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+        console.log('Profile snapshot exists:', profSnap.exists);
         if (profSnap.exists) {
           profileCreated = true;
           profileForm.classList.add('hidden');
@@ -406,7 +412,11 @@
         } else {
           profileForm.classList.remove('hidden');
         }
+        document.getElementById('global-auth-error').classList.add('hidden');
       } catch (e) {
+        console.error('Google sign-in error:', e);
+        document.getElementById('global-auth-error').textContent = 'Google sign-in failed: ' + e.message;
+        document.getElementById('global-auth-error').classList.remove('hidden');
         alert('Sign in failed: ' + e.message);
       }
     };
