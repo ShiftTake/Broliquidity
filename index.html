@@ -167,9 +167,84 @@
     <section id="user-flow" class="max-w-3xl mx-auto px-6 py-20 text-center">
       <h3 class="text-4xl md:text-5xl font-black mb-6">Finance Discussions</h3>
       <div id="auth-section">
-        <button id="google-signin" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mb-4">Sign in with Google to Interact</button>
+        <button id="google-signin" class="px-8 py-4 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition mb-4">Sign in with Google</button>
+        <div class="mb-4 text-slate-400 font-bold">or</div>
+        <form id="email-auth-form" class="glass rounded-2xl p-4 flex flex-col gap-3 items-center mb-4" style="max-width:350px;margin:auto;">
+          <input id="email-auth-email" type="email" placeholder="Email" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full" required>
+          <input id="email-auth-password" type="password" placeholder="Password" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full" required>
+          <input id="email-auth-displayname" type="text" placeholder="Display Name (for new accounts)" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full">
+          <div class="flex gap-2 w-full">
+            <button id="email-signin-btn" type="button" class="flex-1 px-4 py-2 rounded-2xl bg-blue-600 text-white font-bold hover:scale-105 transition">Sign In</button>
+            <button id="email-create-btn" type="button" class="flex-1 px-4 py-2 rounded-2xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Create Account</button>
+          </div>
+          <div id="email-auth-error" class="text-red-400 text-sm mt-2 hidden"></div>
+        </form>
         <div id="user-info" class="hidden mb-6"></div>
       </div>
+          // --- Email/Password Auth Logic ---
+          const emailAuthForm = document.getElementById('email-auth-form');
+          const emailInput = document.getElementById('email-auth-email');
+          const passwordInput = document.getElementById('email-auth-password');
+          const displayNameInput = document.getElementById('email-auth-displayname');
+          const emailSignInBtn = document.getElementById('email-signin-btn');
+          const emailCreateBtn = document.getElementById('email-create-btn');
+          const emailAuthError = document.getElementById('email-auth-error');
+
+          function showEmailError(msg) {
+            emailAuthError.textContent = msg;
+            emailAuthError.classList.remove('hidden');
+          }
+          function clearEmailError() {
+            emailAuthError.textContent = '';
+            emailAuthError.classList.add('hidden');
+          }
+
+          emailSignInBtn.onclick = async (e) => {
+            e.preventDefault();
+            clearEmailError();
+            try {
+              const result = await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
+              currentUser = result.user;
+              userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
+              userInfo.classList.remove('hidden');
+              emailAuthForm.classList.add('hidden');
+              googleBtn.classList.add('hidden');
+              document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
+              // Check if profile exists
+              const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+              if (profSnap.exists) {
+                profileCreated = true;
+                profileForm.classList.add('hidden');
+                postForm.classList.remove('hidden');
+              } else {
+                profileForm.classList.remove('hidden');
+              }
+            } catch (err) {
+              showEmailError(err.message);
+            }
+          };
+
+          emailCreateBtn.onclick = async (e) => {
+            e.preventDefault();
+            clearEmailError();
+            try {
+              const result = await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
+              currentUser = result.user;
+              // Set display name if provided
+              if (displayNameInput.value.trim()) {
+                await currentUser.updateProfile({ displayName: displayNameInput.value.trim() });
+              }
+              userInfo.innerHTML = `<div class='font-bold'>${currentUser.displayName || currentUser.email}</div><div class='text-xs text-slate-400'>${currentUser.email}</div>`;
+              userInfo.classList.remove('hidden');
+              emailAuthForm.classList.add('hidden');
+              googleBtn.classList.add('hidden');
+              document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
+              // Show profile form for new users
+              profileForm.classList.remove('hidden');
+            } catch (err) {
+              showEmailError(err.message);
+            }
+          };
       <div id="public-feed" class="mb-10"></div>
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
         <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
