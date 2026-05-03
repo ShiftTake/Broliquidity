@@ -247,6 +247,7 @@
                 userInfo.classList.remove('hidden');
                 emailAuthForm.classList.add('hidden');
                 googleBtn.classList.add('hidden');
+                document.getElementById('auth-section').classList.add('hidden');
                 document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
                 // Check if profile exists
                 const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
@@ -311,6 +312,7 @@
                 userInfo.classList.remove('hidden');
                 emailAuthForm.classList.add('hidden');
                 googleBtn.classList.add('hidden');
+                document.getElementById('auth-section').classList.add('hidden');
                 document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
                 profileCreated = true;
                 profileForm.classList.add('hidden');
@@ -392,6 +394,7 @@
         userInfo.innerHTML = `<img src="${currentUser.photoURL}" class="w-12 h-12 rounded-full mx-auto mb-2"><div class="font-bold">${currentUser.displayName}</div><div class="text-xs text-slate-400">${currentUser.email}</div>`;
         userInfo.classList.remove('hidden');
         googleBtn.classList.add('hidden');
+        document.getElementById('auth-section').classList.add('hidden');
         // Enable interaction buttons
         document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
         // Check if profile exists
@@ -424,6 +427,7 @@
       profileCreated = true;
       profileForm.classList.add('hidden');
       postForm.classList.remove('hidden');
+      document.getElementById('auth-section').classList.add('hidden');
     };
 
     profileForm.onsubmit = async (e) => {
@@ -442,6 +446,7 @@
       profileCreated = true;
       profileForm.classList.add('hidden');
       postForm.classList.remove('hidden');
+      document.getElementById('auth-section').classList.add('hidden');
     };
       postSuccess.classList.remove('hidden');
       setTimeout(() => postSuccess.classList.add('hidden'), 2500);
