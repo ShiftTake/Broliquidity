@@ -219,7 +219,10 @@
               switchToCreate.classList.add('bg-blue-600','text-white');
               switchToCreate.classList.remove('bg-white','text-black');
             }
+            // Reset fields and errors
             clearEmailError();
+            password2Input.value = '';
+            displayNameInput.value = '';
           }
           switchToSignin.onclick = () => setAuthMode('signin');
           switchToCreate.onclick = () => setAuthMode('create');
@@ -276,18 +279,30 @@
               showEmailError('Passwords do not match.');
               return;
             }
-            if (!displayNameInput.value.trim()) {
+            const username = displayNameInput.value.trim();
+            if (!username) {
               showEmailError('Please enter a username.');
+              return;
+            }
+            // Check for unique username
+            try {
+              const usernameSnap = await db.collection('profiles').where('username', '==', username).get();
+              if (!usernameSnap.empty) {
+                showEmailError('Username is already taken. Please choose another.');
+                return;
+              }
+            } catch (err) {
+              showEmailError('Error checking username uniqueness.');
               return;
             }
             try {
               const result = await auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value);
               currentUser = result.user;
               // Set display name to username
-              await currentUser.updateProfile({ displayName: displayNameInput.value.trim() });
+              await currentUser.updateProfile({ displayName: username });
               // Save profile immediately
               await db.collection('profiles').doc(currentUser.uid).set({
-                username: displayNameInput.value.trim(),
+                username,
                 bio: '',
                 email: currentUser.email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
