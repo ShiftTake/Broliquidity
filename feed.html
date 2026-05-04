@@ -1,13 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bro Liquidity Feed</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body.light {
+      background: #fff !important;
+      color: #181a20 !important;
+    }
+    body.dark {
+      background: #050816 !important;
+      color: #fff !important;
+    }
+    .glass {
+      background: rgba(8, 13, 35, 0.78);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    body.light .glass {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.08);
+      color: #181a20;
+    }
+    body.light .dark\:bg-\[\#181a20\] {
+      background: #fff !important;
+    }
+    body.light .dark\:text-white {
+      color: #181a20 !important;
+    }
+    body.light .dark\:bg-slate-800 {
+      background: #f3f4f6 !important;
+    }
+    body.light .dark\:bg-black\/60 {
+      background: #fff !important;
+    }
+    body.light .dark\:border-\[\#b6ff22\] {
+      border-color: #b6ff22 !important;
+    }
+  </style>
 </head>
-<body class="bg-[#050816] text-white font-sans min-h-screen">
+<body class="font-sans min-h-screen dark:bg-[#050816] dark:text-white bg-white text-[#181a20]">
   <header class="px-6 py-5">
     <nav class="max-w-7xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -99,13 +135,16 @@
 
     // --- Theme toggle ---
     const themeToggle = document.getElementById('theme-toggle');
+
     function setTheme(theme) {
       if (theme === 'light') {
         document.documentElement.classList.remove('dark');
         document.body.classList.remove('dark');
+        document.body.classList.add('light');
         themeToggle.textContent = '☀️';
       } else {
         document.documentElement.classList.add('dark');
+        document.body.classList.remove('light');
         document.body.classList.add('dark');
         themeToggle.textContent = '🌙';
       }
