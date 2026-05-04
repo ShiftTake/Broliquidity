@@ -65,13 +65,9 @@
           <p class="text-xs text-slate-400">Trades. Licenses. Careers.</p>
         </div>
       </div>
-      <div class="flex items-center gap-8 text-sm font-semibold text-slate-300">
-        <a href="index.html#features" class="hover:text-[#b6ff22]">Features</a>
-        <a href="feed.html" class="hover:text-[#b6ff22]">Feed</a>
-        <a href="index.html" class="hover:text-[#b6ff22]">Home</a>
-        <button id="theme-toggle" class="px-4 py-2 rounded-2xl bg-slate-700 text-white font-bold hover:scale-105 transition">🌙</button>
+      <div class="flex items-center gap-4 text-sm font-semibold text-slate-300">
         <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-[#b6ff22] cursor-pointer bg-slate-700" style="background:#eee;" />
-  <!-- User Profile Modal -->
+      </div>
   <div id="profile-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
     <div class="bg-white dark:bg-[#181a20] text-black dark:text-white rounded-2xl p-8 w-full max-w-md relative">
       <button id="close-profile" class="absolute top-3 right-3 text-2xl">&times;</button>
@@ -262,27 +258,19 @@
       // ...existing code...
     };
 
-    // --- Theme toggle ---
-    const themeToggle = document.getElementById('theme-toggle');
-
+    // --- Theme toggle logic (profile modal only) ---
     function setTheme(theme) {
       if (theme === 'light') {
         document.documentElement.classList.remove('dark');
         document.body.classList.remove('dark');
         document.body.classList.add('light');
-        themeToggle.textContent = '☀️';
       } else {
         document.documentElement.classList.add('dark');
         document.body.classList.remove('light');
         document.body.classList.add('dark');
-        themeToggle.textContent = '🌙';
       }
       localStorage.setItem('theme', theme);
     }
-    themeToggle.onclick = () => {
-      const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
-      setTheme(current);
-    };
     setTheme(localStorage.getItem('theme') || 'dark');
 
     // --- Profile Modal Logic ---
@@ -373,14 +361,16 @@
     const profileThemeToggle = document.getElementById('profile-theme-toggle');
     function updateProfileThemeBtn() {
       const theme = localStorage.getItem('theme') || 'dark';
-      profileThemeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+      if (profileThemeToggle) profileThemeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
     }
     updateProfileThemeBtn();
-    profileThemeToggle.onclick = () => {
-      const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
-      setTheme(current);
-      updateProfileThemeBtn();
-    };
+    if (profileThemeToggle) {
+      profileThemeToggle.onclick = () => {
+        const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
+        setTheme(current);
+        updateProfileThemeBtn();
+      };
+    }
 
     // --- Logout ---
     document.getElementById('logout-btn').onclick = async () => {
