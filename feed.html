@@ -202,8 +202,30 @@
       <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <h2 class="text-2xl font-black mb-5">Your Profile</h2>
       <div class="flex flex-col items-center gap-4">
-        <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
+        <button id="profile-photo-picker-btn" type="button" class="relative group">
+          <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
+          <span class="absolute inset-0 rounded-full bg-black/55 text-white text-xs font-black hidden group-hover:grid place-items-center">Change</span>
+        </button>
+
         <div id="profile-username-display" class="font-black text-lg text-center"></div>
+
+        <div id="profile-image-picker" class="hidden w-full soft-card rounded-3xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h3 class="font-black">Choose Profile Image</h3>
+              <p class="text-xs text-slate-500">Upload your own or pick a default avatar.</p>
+            </div>
+            <button id="close-profile-image-picker" type="button" class="w-8 h-8 rounded-full soft-card font-black">×</button>
+          </div>
+
+          <label class="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brogreen text-black font-black cursor-pointer">
+            Upload Image
+            <input type="file" id="profile-image-upload" accept="image/*" class="hidden" />
+          </label>
+
+          <div id="default-avatar-grid" class="grid grid-cols-3 gap-3"></div>
+        </div>
+
         <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
         <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold">Toggle Theme</button>
         <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Save Profile</button>
@@ -226,9 +248,9 @@
     </div>
   </div>
 
-  <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(420px,1fr)_360px] xl:grid-cols-[300px_minmax(520px,760px)_380px] md:justify-center">
+  <div class="min-h-screen xl:grid xl:grid-cols-[300px_minmax(520px,760px)_380px] xl:justify-center">
     <!-- Left X-style Rail -->
-    <aside class="hidden md:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+    <aside class="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col">
         <a href="feed.html" class="flex items-center gap-3 mb-6">
           <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10">
@@ -259,7 +281,7 @@
           </button>
         </nav>
 
-        <button id="left-post-btn" class="hidden">Post</button>
+        <button id="left-post-btn" class="mt-5 w-full rounded-full bg-brogreen text-black py-4 font-black text-lg">Post</button>
 
         <div class="mt-6 space-y-4">
           <section class="panel rounded-3xl p-4">
@@ -276,31 +298,24 @@
           </section>
         </div>
 
-        <button id="left-profile-card" class="mt-auto flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 text-left">
-          <img id="profile-btn" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
-          <div class="min-w-0 flex-1">
-            <div id="left-profile-name" class="font-black truncate">User</div>
-            <div class="text-xs text-slate-500 truncate">@bro</div>
-          </div>
-          <span class="text-slate-500 font-black">•••</span>
-        </button>
+        <div class="mt-auto"></div>
       </div>
     </aside>
 
     <!-- Mobile Header -->
-    <header class="md:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
+    <header class="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
       <nav class="px-4 py-3 flex items-center justify-between gap-3">
         <button id="mobile-menu-btn" class="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu">☰</button>
         <a href="feed.html" class="flex items-center gap-2">
           <img src="mainlogo.png" class="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity">
           <span class="font-black">BroLiquidity</span>
         </a>
-        <button id="mobile-post-btn" class="hidden">Post</button>
+        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black">Post</button>
       </nav>
     </header>
 
     <!-- Center Feed -->
-    <main class="min-h-screen border-x border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+    <main class="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
         <div class="grid grid-cols-2 text-center font-black">
           <button id="tab-for-you" class="feed-tab active-tab py-4">For you</button>
@@ -320,7 +335,7 @@
                 <button title="Cashtag">$</button>
                 <button title="Community">💬</button>
               </div>
-              <button id="composer-post-btn" class="hidden">Post</button>
+              <button id="composer-post-btn" class="px-6 py-2 rounded-full bg-brogreen text-black font-black">Post</button>
             </div>
           </div>
         </div>
@@ -355,8 +370,19 @@
     </main>
 
     <!-- Right Market Rail -->
-    <aside class="hidden md:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
+    <aside class="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
+        <button id="right-profile-card" class="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left">
+          <div class="flex items-center gap-3 min-w-0">
+            <img id="right-profile-photo" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" class="w-12 h-12 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
+            <div class="min-w-0">
+              <div id="right-profile-name" class="font-black truncate">User</div>
+              <div id="right-profile-handle" class="text-xs text-slate-500 truncate">@bro</div>
+            </div>
+          </div>
+          <span class="text-slate-500 font-black">•••</span>
+        </button>
+
         <div class="relative">
           <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
           <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
@@ -367,8 +393,8 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Markets</p>
-              <h2 class="font-black text-xl">Market Watchlists</h2>
-              <p class="text-xs text-slate-500 mt-1">Stocks, options, crypto, search, and paper trading only.</p>
+              <h2 class="font-black text-xl">Paper Trading Hub</h2>
+              <p class="text-xs text-slate-500 mt-1">Robinhood-style watchlists. No real trading.</p>
             </div>
             <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
           </div>
@@ -453,7 +479,7 @@
     <div id="mobile-drawer-content" class="space-y-4"></div>
   </aside>
 
-  <button id="mobile-floating-post" class="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-3xl shadow-2xl hover:scale-105 transition">+</button>
+  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1210,10 +1236,46 @@
       bindTickerButtons();
     }
 
+    function renderDefaultAvatarGrid() {
+      const grid = $("default-avatar-grid");
+      if (!grid) return;
+      grid.innerHTML = Array.from({ length: 15 }, (_, i) => {
+        const n = i + 1;
+        return `
+          <button type="button" class="default-avatar-btn rounded-2xl p-2 soft-card hover:ring-2 hover:ring-brogreen transition" data-src="default${n}.png">
+            <img src="default${n}.png" alt="Default avatar ${n}" class="w-full aspect-square rounded-2xl object-cover bg-slate-100 dark:bg-white/10">
+          </button>
+        `;
+      }).join("");
+
+      document.querySelectorAll(".default-avatar-btn").forEach(btn => {
+        btn.onclick = async () => {
+          await setProfilePhoto(btn.dataset.src, false);
+          $("profile-image-picker").classList.add("hidden");
+        };
+      });
+    }
+
+    async function setProfilePhoto(url, updateAuth = true) {
+      if (!currentUser || !url) return;
+      await db.collection("profiles").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
+      if (updateAuth && currentUser.updateProfile) {
+        try { await currentUser.updateProfile({ photoURL: url }); } catch(e) {}
+      }
+      $("profile-photo").src = url;
+      const main = $("profile-btn");
+      if (main) main.src = url;
+      const right = $("right-profile-photo");
+      if (right) right.src = url;
+    }
+
     function loadProfile(user) {
       const username = user.displayName || user.email || "User";
       $("profile-username-display").textContent = username;
-      $("left-profile-name").textContent = username;
+      const rightName = $("right-profile-name");
+      const rightHandle = $("right-profile-handle");
+      if (rightName) rightName.textContent = username;
+      if (rightHandle) rightHandle.textContent = "@" + (user.email ? user.email.split("@")[0] : "bro");
       const fallback = "https://ui-avatars.com/api/?name=" + encodeURIComponent(username) + "&background=050816&color=B6FF22";
 
       db.collection("profiles").doc(user.uid).get().then(doc => {
@@ -1221,10 +1283,16 @@
         $("profile-bio").value = data.bio || "";
         const photo = data.photoURL || user.photoURL || fallback;
         $("profile-photo").src = photo;
-        $("profile-btn").src = photo;
+        const main = $("profile-btn");
+        if (main) main.src = photo;
+        const rightPhoto = $("right-profile-photo");
+        if (rightPhoto) rightPhoto.src = photo;
       }).catch(() => {
         $("profile-photo").src = fallback;
-        $("profile-btn").src = fallback;
+        const main = $("profile-btn");
+        if (main) main.src = fallback;
+        const rightPhoto = $("right-profile-photo");
+        if (rightPhoto) rightPhoto.src = fallback;
       });
     }
 
@@ -1239,7 +1307,7 @@
     }
 
     function wireEvents() {
-      ["mobile-floating-post", "composer-open", "composer-image-open"].forEach(id => {
+      ["left-post-btn", "mobile-post-btn", "mobile-floating-post", "composer-open", "composer-post-btn", "composer-image-open"].forEach(id => {
         $(id).onclick = () => openModal("post-modal");
       });
       $("close-post-modal").onclick = () => closeModal("post-modal");
@@ -1258,10 +1326,23 @@
         closeModal("ticker-modal");
       };
 
-      $("profile-btn").onclick = () => openModal("profile-modal");
-      $("left-profile-card").onclick = () => openModal("profile-modal");
+      const profileBtn = $("profile-btn");
+      if (profileBtn) profileBtn.onclick = () => openModal("profile-modal");
+      $("right-profile-card").onclick = () => openModal("profile-modal");
       $("profile-nav-btn").onclick = () => openModal("profile-modal");
       $("close-profile").onclick = () => closeModal("profile-modal");
+      $("profile-photo-picker-btn").onclick = () => $("profile-image-picker").classList.toggle("hidden");
+      $("close-profile-image-picker").onclick = () => $("profile-image-picker").classList.add("hidden");
+
+      $("profile-image-upload").onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+        const ref = storage.ref("profile_photos/" + currentUser.uid + "_" + Date.now() + "_" + file.name);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        await setProfilePhoto(url, true);
+        $("profile-image-picker").classList.add("hidden");
+      };
 
       $("left-create-community").onclick = () => openModal("create-community-modal");
       $("close-create-community").onclick = () => closeModal("create-community-modal");
@@ -1369,6 +1450,7 @@
     renderMarketLists();
     renderWatchlist();
     renderPaperPositions();
+    renderDefaultAvatarGrid();
 
     auth.onAuthStateChanged(async user => {
       if (!user) {
