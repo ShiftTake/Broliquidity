@@ -12,13 +12,12 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          fontFamily: { sans: ["Inter", "sans-serif"] },
           colors: {
-            broblue: '#125CFF',
-            brogreen: '#B6FF22',
-            ink: '#050816',
-            terminal: '#070A15',
-            panel: '#0B1024'
+            broblue: "#125CFF",
+            brogreen: "#B6FF22",
+            ink: "#050816",
+            panel: "#0B1024"
           }
         }
       }
@@ -29,17 +28,17 @@
     :root { color-scheme: dark; }
     * { scroll-behavior: smooth; }
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: "Inter", sans-serif;
       background:
-        radial-gradient(circle at 8% 0%, rgba(18, 92, 255, .24), transparent 32%),
-        radial-gradient(circle at 92% 2%, rgba(182, 255, 34, .14), transparent 28%),
+        radial-gradient(circle at 15% 0%, rgba(18, 92, 255, .24), transparent 34%),
+        radial-gradient(circle at 88% 6%, rgba(182, 255, 34, .15), transparent 30%),
         linear-gradient(135deg, #050816 0%, #070A15 52%, #03040B 100%);
       color: #fff;
       min-height: 100vh;
     }
     body.light {
       color-scheme: light;
-      background: linear-gradient(135deg, #F6F8FF 0%, #FFFFFF 58%, #F2FFE2 100%);
+      background: linear-gradient(135deg, #F6F8FF 0%, #FFFFFF 56%, #F2FFE2 100%);
       color: #101827;
     }
     .glass {
@@ -49,7 +48,7 @@
       backdrop-filter: blur(18px);
     }
     body.light .glass {
-      background: rgba(255,255,255,.9);
+      background: rgba(255,255,255,.92);
       border-color: rgba(15,23,42,.09);
       box-shadow: 0 16px 42px rgba(15,23,42,.08);
     }
@@ -65,15 +64,29 @@
       background: linear-gradient(180deg, rgba(12,18,42,.96), rgba(6,9,21,.92));
       border: 1px solid rgba(182,255,34,.12);
     }
-    body.light .terminal-card { background: rgba(255,255,255,.92); border-color: rgba(18,92,255,.12); }
+    body.light .terminal-card {
+      background: rgba(255,255,255,.94);
+      border-color: rgba(18,92,255,.12);
+    }
     .ticker-track { animation: ticker 32s linear infinite; min-width: max-content; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .active-tab { color: #B6FF22; border-bottom-color: #B6FF22; }
-    body.light .active-tab { color: #125CFF; border-bottom-color: #125CFF; }
-    .chip-active { background: rgba(182,255,34,.16); color: #B6FF22; border-color: rgba(182,255,34,.38); }
-    body.light .chip-active { background: rgba(18,92,255,.08); color: #125CFF; border-color: rgba(18,92,255,.24); }
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .active-pill {
+      background: rgba(182,255,34,.16);
+      color: #B6FF22;
+      border-color: rgba(182,255,34,.38);
+    }
+    body.light .active-pill {
+      background: rgba(18,92,255,.08);
+      color: #125CFF;
+      border-color: rgba(18,92,255,.24);
+    }
+    .modal-open { display: flex !important; }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   </style>
 </head>
 
