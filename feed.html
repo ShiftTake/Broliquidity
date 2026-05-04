@@ -4,142 +4,75 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroLiquidity | Feed</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: { sans: ["Inter", "sans-serif"] },
-          colors: {
-            broblue: "#125CFF",
-            brogreen: "#B6FF22",
-            ink: "#050816",
-            panel: "#0B1024"
-          }
+          colors: { broblue: "#125CFF", brogreen: "#B6FF22", ink: "#050816", panel: "#0B1024" }
         }
       }
     };
   </script>
-
   <style>
     :root { color-scheme: dark; }
-    * { scroll-behavior: smooth; }
     body {
       font-family: "Inter", sans-serif;
-      background:
-        radial-gradient(circle at 15% 0%, rgba(18, 92, 255, .24), transparent 34%),
-        radial-gradient(circle at 88% 6%, rgba(182, 255, 34, .15), transparent 30%),
+      background: radial-gradient(circle at 15% 0%, rgba(18,92,255,.22), transparent 34%),
+        radial-gradient(circle at 88% 6%, rgba(182,255,34,.14), transparent 30%),
         linear-gradient(135deg, #050816 0%, #070A15 52%, #03040B 100%);
-      color: #fff;
       min-height: 100vh;
+      color: white;
     }
     body.light {
-      color-scheme: light;
-      background: linear-gradient(135deg, #F6F8FF 0%, #FFFFFF 56%, #F2FFE2 100%);
+      background: linear-gradient(135deg, #f6f8ff 0%, #fff 56%, #f2ffe2 100%);
       color: #101827;
     }
     .glass {
-      background: rgba(10, 15, 34, .82);
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(15,23,42,.09);
+      box-shadow: 0 16px 42px rgba(15,23,42,.08);
+      backdrop-filter: blur(18px);
+      color: #101827;
+    }
+    .dark .glass {
+      background: rgba(10,15,34,.84);
       border: 1px solid rgba(255,255,255,.10);
       box-shadow: 0 18px 48px rgba(0,0,0,.28);
-      backdrop-filter: blur(18px);
-    }
-    body.light .glass {
-      background: rgba(255,255,255,.92);
-      border-color: rgba(15,23,42,.09);
-      box-shadow: 0 16px 42px rgba(15,23,42,.08);
+      color: white;
     }
     .soft-card {
+      background: rgba(15,23,42,.035);
+      border: 1px solid rgba(15,23,42,.08);
+    }
+    .dark .soft-card {
       background: rgba(255,255,255,.055);
       border: 1px solid rgba(255,255,255,.085);
     }
-    body.light .soft-card {
-      background: rgba(15,23,42,.035);
-      border-color: rgba(15,23,42,.08);
-    }
-    .terminal-card {
-      background: linear-gradient(180deg, rgba(12,18,42,.96), rgba(6,9,21,.92));
-      border: 1px solid rgba(182,255,34,.12);
-    }
-    body.light .terminal-card {
-      background: rgba(255,255,255,.94);
-      border-color: rgba(18,92,255,.12);
-    }
     .ticker-track { animation: ticker 32s linear infinite; min-width: max-content; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .active-pill {
-      background: rgba(182,255,34,.16);
-      color: #B6FF22;
-      border-color: rgba(182,255,34,.38);
-    }
-    body.light .active-pill {
-      background: rgba(18,92,255,.08);
-      color: #125CFF;
-      border-color: rgba(18,92,255,.24);
-    }
+    .active-pill { background: rgba(18,92,255,.08); color: #125CFF; border-color: rgba(18,92,255,.24); }
+    .dark .active-pill { background: rgba(182,255,34,.16); color: #B6FF22; border-color: rgba(182,255,34,.38); }
     .modal-open { display: flex !important; }
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .spark-bar {
-      width: 100%;
-      border-radius: 999px 999px 0 0;
-      background: linear-gradient(180deg, rgba(182,255,34,.95), rgba(182,255,34,.22));
-      box-shadow: 0 0 10px rgba(182,255,34,.22);
-      min-height: 10px;
-    }
-    .spark-bar.red { background: linear-gradient(180deg, rgba(239,68,68,.95), rgba(239,68,68,.22)); box-shadow: 0 0 10px rgba(239,68,68,.22); }
-
   </style>
 </head>
 
 <body class="font-sans antialiased">
-
-  <!-- Ticker Quick View Modal -->
-  <div id="ticker-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="glass rounded-3xl p-6 w-full max-w-md relative overflow-hidden">
-      <button id="close-ticker-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
-      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Mini Terminal</p>
-      <div class="flex items-end justify-between gap-4 mb-4">
-        <div>
-          <h2 id="ticker-symbol" class="text-3xl font-black">$---</h2>
-          <p id="ticker-name" class="text-sm text-slate-400">Ticker quick view</p>
-        </div>
-        <div class="text-right">
-          <div id="ticker-price" class="text-2xl font-black">--</div>
-          <div id="ticker-change" class="text-sm font-black text-brogreen">--</div>
-        </div>
-      </div>
-      <div class="soft-card rounded-3xl p-4">
-        <div class="h-24 flex items-end gap-1" id="ticker-sparkline"></div>
-      </div>
-      <div class="grid grid-cols-3 gap-2 mt-4 text-center text-xs font-black">
-        <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Mentions</div><div id="ticker-mentions" class="text-brogreen text-lg">--</div></div>
-        <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Bias</div><div id="ticker-bias" class="text-brogreen text-lg">--</div></div>
-        <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Desk</div><div id="ticker-desk" class="text-lg">Stocks</div></div>
-      </div>
-      <p class="text-[11px] text-slate-500 mt-4">Demo market data. Swap this for Finnhub, Polygon, IEX Cloud, or Alpha Vantage when ready.</p>
-    </div>
-  </div>
   <!-- Profile Modal -->
   <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="glass rounded-3xl p-6 w-full max-w-md relative">
-      <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+      <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <h2 class="text-2xl font-black mb-5">Your Profile</h2>
       <div class="flex flex-col items-center gap-4">
         <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
         <div id="profile-username-display" class="font-black text-lg text-center"></div>
         <input type="file" id="photo-upload" accept="image/*" class="text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
-        <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
-        <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold hover:bg-white/10 transition">Toggle Theme</button>
-        <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] transition">Save Profile</button>
-        <button id="logout-btn" class="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black hover:bg-red-500 transition">Logout</button>
+        <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
+        <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold">Toggle Theme</button>
+        <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Save Profile</button>
+        <button id="logout-btn" class="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black">Logout</button>
       </div>
     </div>
   </div>
@@ -147,45 +80,36 @@
   <!-- Create Community Modal -->
   <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="glass rounded-3xl p-6 w-full max-w-lg relative">
-      <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+      <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
       <h2 class="text-2xl font-black mb-1">Create a Community</h2>
-      <p class="text-sm text-slate-400 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
-
-      <label class="text-xs font-bold uppercase text-slate-400">Community name</label>
-      <input id="community-name" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" placeholder="ex: Options Flow, CFA Level 1, IB Analysts" />
-
-      <label class="text-xs font-bold uppercase text-slate-400">Description</label>
-      <textarea id="community-desc" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="What should people discuss here?"></textarea>
-
-      <label class="text-xs font-bold uppercase text-slate-400">Community image</label>
-      <input type="file" id="community-image" accept="image/*" class="mt-2 mb-5 block w-full text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
-
-      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Create Community</button>
-      <div id="community-create-error" class="text-red-300 text-sm mt-3 hidden"></div>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
+      <input id="community-name" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 focus:border-brogreen outline-none font-semibold" placeholder="Community name" />
+      <textarea id="community-desc" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="Description"></textarea>
+      <input type="file" id="community-image" accept="image/*" class="mb-5 block w-full text-sm text-slate-500 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
+      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
+      <div id="community-create-error" class="text-red-500 text-sm mt-3 hidden"></div>
     </div>
   </div>
 
   <!-- Post Modal -->
   <div id="post-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="glass rounded-3xl p-6 w-full max-w-2xl relative">
-      <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+      <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
       <h2 class="text-2xl font-black mb-1">Drop it on the floor</h2>
-      <p class="text-sm text-slate-400 mb-5">Post to your timeline or a community you belong to.</p>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mb-5">Post to your timeline or a community you belong to.</p>
 
       <form id="post-form" class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <select id="post-destination" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+          <select id="post-destination" class="px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-bold">
             <option value="timeline">My Timeline</option>
             <option value="community">Community</option>
           </select>
-
-          <select id="community-select" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold hidden">
+          <select id="community-select" class="px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-bold hidden">
             <option value="">Select Community</option>
           </select>
-
-          <select id="post-subject" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+          <select id="post-subject" class="px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-bold">
             <option value="">Subject</option>
             <option value="stocks">Stocks</option>
             <option value="options">Options</option>
@@ -196,69 +120,71 @@
             <option value="rich-list">Rich List</option>
             <option value="other">Other</option>
           </select>
-
-          <select id="post-label" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+          <select id="post-label" class="px-4 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-bold">
             <option value="">Label</option>
           </select>
         </div>
 
-        <textarea id="post-content" maxlength="700" placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white/8 border border-white/10 focus:border-brogreen outline-none min-h-[150px] font-semibold resize-y"></textarea>
+        <textarea id="post-content" maxlength="700" placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none min-h-[140px] font-semibold resize-y"></textarea>
 
-        <div id="post-image-preview" class="hidden rounded-3xl overflow-hidden border border-white/10 bg-black/20"></div>
-
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-          <label class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl soft-card font-black hover:bg-white/10 cursor-pointer transition">
-            <span>🖼️ Add Image</span>
-            <input id="post-image" type="file" accept="image/*" class="hidden" />
-          </label>
-          <button type="button" id="remove-post-image" class="hidden px-4 py-3 rounded-2xl soft-card font-black text-red-300 hover:bg-red-500/10 transition">Remove Image</button>
-          <span class="text-xs text-slate-500">Charts, screenshots, memes, and trade setups.</span>
+        <div class="soft-card rounded-2xl p-3">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <label class="text-sm font-black">Attach image</label>
+            <label class="cursor-pointer px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black">
+              Upload
+              <input id="post-image-upload" type="file" accept="image/*" class="hidden" />
+            </label>
+          </div>
+          <img id="post-image-preview" class="hidden w-full max-h-64 object-cover rounded-2xl border border-slate-200 dark:border-white/10" alt="Post preview" />
         </div>
+
+        <label class="flex items-center gap-3 soft-card rounded-2xl p-3 cursor-pointer">
+          <input id="allow-comments" type="checkbox" checked class="w-5 h-5 accent-lime-400">
+          <span class="font-bold text-sm">Allow comments on this post</span>
+        </label>
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div id="post-error" class="text-red-300 text-sm hidden"></div>
+            <div id="post-error" class="text-red-500 text-sm hidden"></div>
             <div class="text-xs text-slate-500"><span id="char-count">0</span>/700 characters</div>
           </div>
-          <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Post</button>
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Post</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-40 border-b border-white/10 bg-[#050816]/80 backdrop-blur-2xl">
+  <header class="sticky top-0 z-40 border-b border-black/10 dark:border-white/10 bg-white/85 dark:bg-[#050816]/80 backdrop-blur-2xl">
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
       <a href="feed.html" class="flex items-center gap-3 min-w-fit">
-        <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg shadow-blue-950/30">
+        <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-black/10 dark:border-white/10">
         <div class="hidden sm:block">
           <h1 class="font-black text-xl tracking-tight">BroLiquidity</h1>
-          <p class="text-[11px] text-slate-400 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
+          <p class="text-[11px] text-slate-500 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
         </div>
       </a>
 
       <div class="relative flex-1 max-w-2xl">
-        <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search tickers, richest people, communities, users..." />
+        <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search tickers, richest people, communities, users..." />
         <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
         <div id="search-results" class="absolute left-0 right-0 top-14 glass rounded-2xl p-2 hidden max-h-96 overflow-y-auto z-50"></div>
       </div>
 
       <div class="flex items-center gap-2">
-        <button id="open-post-modal-top" class="hidden sm:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">+ Post</button>
+        <button id="open-post-modal-top" class="hidden sm:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black">+ Post</button>
         <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen cursor-pointer bg-slate-700" />
       </div>
     </nav>
 
-    <div class="overflow-hidden border-t border-white/5 bg-black/20">
-      <div class="ticker-track flex gap-6 py-2 text-xs font-black text-slate-300">
+    <div class="overflow-hidden border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-black/20">
+      <div class="ticker-track flex gap-6 py-2 text-xs font-black text-slate-600 dark:text-slate-300">
         <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
         <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_330px] gap-6">
-    <!-- Left Rail -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_360px] gap-6">
     <aside class="hidden lg:block space-y-4 sticky top-28 self-start">
       <section class="glass rounded-3xl p-4">
         <div class="flex items-center justify-between mb-3">
@@ -270,30 +196,15 @@
 
       <section class="glass rounded-3xl p-4">
         <h2 class="font-black mb-3">Subscribed Desks</h2>
-        <div id="subscribed-desks-list" class="space-y-2 text-sm"></div>
+        <div id="subscribed-desks" class="space-y-2 text-sm"></div>
       </section>
 
       <section class="glass rounded-3xl p-4">
         <h2 class="font-black mb-3">Following</h2>
         <div id="following-list" class="space-y-2 text-sm"></div>
       </section>
-
-      <section class="glass rounded-3xl p-4">
-        <h2 class="font-black mb-3">Feed Filters</h2>
-        <div class="space-y-2 text-sm font-bold">
-          <button data-filter="all" class="category-pill active-pill w-full text-left px-3 py-2 rounded-xl border border-white/10">All Feed</button>
-          <button data-filter="stocks" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Stocks</button>
-          <button data-filter="options" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Options</button>
-          <button data-filter="crypto" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Crypto</button>
-          <button data-filter="jobs" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Jobs</button>
-          <button data-filter="careers" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Careers</button>
-          <button data-filter="licenses" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Licenses</button>
-          <button data-filter="rich-list" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Rich List</button>
-        </div>
-      </section>
     </aside>
 
-    <!-- Center Feed -->
     <section class="min-w-0 space-y-5">
       <section class="glass rounded-3xl p-5 sm:p-6 overflow-hidden relative">
         <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-broblue via-brogreen to-broblue"></div>
@@ -301,115 +212,77 @@
           <div>
             <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen">The Feed</p>
             <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-1">What’s moving, bro?</h2>
-            <p class="text-sm text-slate-400 mt-1 max-w-2xl">A finance-bro trading floor for markets, jobs, licensing, career moves, and wealth obsession.</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">Markets, jobs, licensing, career moves, and wealth obsession.</p>
           </div>
-          <button id="open-post-modal-hero" class="px-4 sm:px-5 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">+ Post</button>
+          <button id="open-post-modal-hero" class="px-4 sm:px-5 py-3 rounded-2xl bg-brogreen text-black font-black">+ Post</button>
         </div>
 
         <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button data-filter="stocks" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
-            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Stocks</div>
-          </button>
-          <button data-filter="options" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
-            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Options</div>
-          </button>
-          <button data-filter="jobs" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
-            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Finance Jobs</div>
-          </button>
-          <button data-filter="rich-list" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
-            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Rich List</div>
-          </button>
+          <button data-filter="stocks" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Stocks</div></button>
+          <button data-filter="options" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Options</div></button>
+          <button data-filter="jobs" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Finance Jobs</div></button>
+          <button data-filter="rich-list" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Rich List</div></button>
         </div>
       </section>
 
       <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h3 class="text-xl font-black">Recent Posts</h3>
-          <p id="feed-context" class="text-sm text-slate-400">All desks, newest first.</p>
+          <p id="feed-context" class="text-sm text-slate-500 dark:text-slate-400">All desks, newest first.</p>
         </div>
         <div class="flex gap-2">
-          <select id="filter-category" class="lg:hidden px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
-            <option value="all">All</option>
-            <option value="stocks">Stocks</option>
-            <option value="options">Options</option>
-            <option value="crypto">Crypto</option>
-            <option value="jobs">Jobs</option>
-            <option value="careers">Careers</option>
-            <option value="licenses">Licenses</option>
-            <option value="rich-list">Rich List</option>
-            <option value="other">Other</option>
+          <select id="filter-category" class="lg:hidden px-3 py-2 rounded-xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 text-sm font-bold outline-none">
+            <option value="all">All</option><option value="stocks">Stocks</option><option value="options">Options</option><option value="crypto">Crypto</option><option value="jobs">Jobs</option><option value="careers">Careers</option><option value="licenses">Licenses</option><option value="rich-list">Rich List</option><option value="other">Other</option>
           </select>
-          <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
-            <option value="newest">Newest</option>
-            <option value="bullish">Most Bullish</option>
-            <option value="bearish">Most Bearish</option>
-            <option value="active">Most Active</option>
+          <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 text-sm font-bold outline-none">
+            <option value="newest">Newest</option><option value="bullish">Most Uptrended</option><option value="bearish">Most Downtrended</option><option value="active">Most Active</option>
           </select>
         </div>
       </section>
 
       <ul id="posts-list" class="space-y-4"></ul>
-      <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-400 font-bold">Loading feed...</div>
+      <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-500 font-bold">Loading feed...</div>
     </section>
 
-    <!-- Right Rail -->
     <aside class="hidden xl:block space-y-4 sticky top-28 self-start">
+      <section class="glass rounded-3xl p-5">
+        <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Markets</p>
+        <h2 class="font-black text-xl mt-1 mb-4">Top 10 Stocks</h2>
+        <div id="top-stocks-list" class="space-y-2"></div>
+      </section>
+
+      <section class="glass rounded-3xl p-5">
+        <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Crypto</p>
+        <h2 class="font-black text-xl mt-1 mb-4">Top 5 Crypto</h2>
+        <div id="top-crypto-list" class="space-y-2"></div>
+      </section>
+
       <section class="glass rounded-3xl p-5">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Watchlist</p>
+            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">My Custom Watchlist</p>
             <h2 class="font-black text-xl mt-1">My Tickers</h2>
           </div>
           <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
         </div>
         <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
-          <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white/8 border border-white/10 outline-none text-sm font-bold uppercase" placeholder="AAPL" />
+          <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-bold uppercase" placeholder="AAPL" />
           <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
         </div>
-        <div id="watchlist-list" class="space-y-3"></div>
-        <p class="text-[11px] text-slate-500 mt-3">Static demo pricing for now. Connect a market API later.</p>
+        <div id="watchlist-list" class="space-y-2"></div>
       </section>
 
       <section class="glass rounded-3xl p-5">
         <div class="flex items-center justify-between mb-3">
-          <div>
-            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Saved</p>
-            <h2 class="font-black text-xl mt-1">Saved Posts</h2>
-          </div>
-          <span id="saved-count" class="text-xs font-black px-2 py-1 rounded-full soft-card">0</span>
+          <h2 class="font-black text-xl">My Saved Posts</h2>
+          <span id="saved-count" class="text-xs font-black px-2 py-1 rounded-full bg-brogreen/15 text-brogreen">0</span>
         </div>
-        <p class="text-xs text-slate-400">Saved locally for the prototype. Move this to Firestore for cross-device saves.</p>
-      </section>
-
-      <section class="glass rounded-3xl p-5">
-        <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Free Bloomberg-ish</p>
-        <h2 class="font-black text-xl mt-1 mb-4">Richest People</h2>
-        <div id="rich-list" class="space-y-3"></div>
-      </section>
-
-
-      <section class="glass rounded-3xl p-5">
-        <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Market</p>
-        <h2 class="font-black text-xl mt-1 mb-4">Trending Tickers</h2>
-        <div id="market-list" class="space-y-3"></div>
-      </section>
-
-      <section class="glass rounded-3xl p-5">
-        <h2 class="font-black text-xl mb-3">Trending Tags</h2>
-        <div class="flex flex-wrap gap-2 text-xs font-black">
-          <span class="px-3 py-2 rounded-full soft-card">#CFA</span>
-          <span class="px-3 py-2 rounded-full soft-card">#IB</span>
-          <span class="px-3 py-2 rounded-full soft-card">#OptionsFlow</span>
-          <span class="px-3 py-2 rounded-full soft-card">#Series7</span>
-          <span class="px-3 py-2 rounded-full soft-card">#PE</span>
-          <span class="px-3 py-2 rounded-full soft-card">#NVDA</span>
-        </div>
+        <div id="saved-posts-list" class="space-y-2"></div>
       </section>
     </aside>
   </main>
 
-  <!-- Floating Mobile Post Button -->
-  <button id="open-post-modal-floating" class="sm:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-3xl bg-brogreen text-black font-black text-2xl shadow-2xl shadow-lime-500/20">+</button>
+  <button id="open-post-modal-floating" class="sm:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-3xl bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -436,14 +309,12 @@
     let selectedFilter = "all";
     let unsubscribePosts = null;
     let communitiesCache = [];
+    let currentPostsCache = [];
 
     const $ = (id) => document.getElementById(id);
     const escapeHTML = (str = "") => String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
     function openModal(id) { $(id).classList.add("modal-open"); $(id).classList.remove("hidden"); }
     function closeModal(id) { $(id).classList.remove("modal-open"); $(id).classList.add("hidden"); }
@@ -465,32 +336,7 @@
       localStorage.setItem("theme", theme);
     }
 
-    setTheme(localStorage.getItem("theme") || "dark");
-
-    function getSavedPosts() {
-      return JSON.parse(localStorage.getItem("broliquidity_saved_posts") || "[]");
-    }
-
-    function setSavedPosts(ids) {
-      localStorage.setItem("broliquidity_saved_posts", JSON.stringify([...new Set(ids)]));
-      renderSavedCount();
-    }
-
-    function isPostSaved(id) {
-      return getSavedPosts().includes(String(id));
-    }
-
-    function toggleSavedPost(id) {
-      const sid = String(id);
-      const current = getSavedPosts();
-      setSavedPosts(current.includes(sid) ? current.filter(x => x !== sid) : [...current, sid]);
-      subscribeToPosts();
-    }
-
-    function renderSavedCount() {
-      const el = $("saved-count");
-      if (el) el.textContent = getSavedPosts().length;
-    }
+    setTheme(localStorage.getItem("theme") || "light");
 
     const labelOptions = {
       stocks: ["Thesis", "News", "Earnings", "Question"],
@@ -503,113 +349,55 @@
       other: ["General", "Question"]
     };
 
+    const topStocks = [
+      ["NVDA", "949.50", "+2.35%"], ["AAPL", "201.36", "+1.08%"], ["TSLA", "187.89", "-0.91%"],
+      ["SPY", "525.69", "+0.27%"], ["QQQ", "449.02", "+0.67%"], ["MSFT", "423.85", "+0.81%"],
+      ["AMZN", "184.70", "+1.12%"], ["META", "493.20", "+0.55%"], ["AMD", "158.35", "-0.34%"], ["COIN", "252.33", "+3.21%"]
+    ];
+
+    const topCrypto = [
+      ["BTC", "67,420", "+1.20%"], ["ETH", "3,290", "+0.86%"], ["SOL", "148.20", "+2.60%"],
+      ["XRP", "0.62", "-0.40%"], ["DOGE", "0.15", "+3.80%"]
+    ];
+
     const demoPosts = [
-      { id: "demo1", category: "stocks", label: "Thesis", author: "wallstreetwolf", content: "$NVDA keeps trading like gravity got laid off. Anyone trimming or just letting the winners pay rent?", createdAt: { seconds: Math.floor(Date.now()/1000) - 2200 }, bullish: 42, bearish: 5, comments: 12, destination: "timeline" },
-      { id: "demo2", category: "licenses", label: "Series 7", author: "siegrinder", content: "Series 7 options section is humbling me. Covered calls make sense until the practice exam starts yelling.", createdAt: { seconds: Math.floor(Date.now()/1000) - 6400 }, bullish: 18, bearish: 1, comments: 9, destination: "timeline" },
-      { id: "demo3", category: "jobs", label: "Interview", author: "exceladdict", content: "Got a superday for an analyst role. What technicals are they actually asking in 2026? Also is $JPM still the king of analyst training?", createdAt: { seconds: Math.floor(Date.now()/1000) - 9100 }, bullish: 25, bearish: 0, comments: 17, destination: "timeline" },
-      { id: "demo4", category: "rich-list", label: "Billionaires", author: "cap_table_king", content: "The richest people list is basically a leaderboard for owning distribution, compute, luxury, or payments. Pick your fighter: $TSLA, $META, or $ORCL.", createdAt: { seconds: Math.floor(Date.now()/1000) - 12600 }, bullish: 31, bearish: 3, comments: 6, destination: "timeline" }
+      { id: "demo1", category: "stocks", label: "Thesis", author: "wallstreetwolf", content: "$NVDA keeps trading like gravity got laid off. Anyone trimming or just letting the winners pay rent?", createdAt: { seconds: Math.floor(Date.now()/1000) - 2200 }, bullish: 42, bearish: 5, comments: 2, allowComments: true },
+      { id: "demo2", category: "licenses", label: "Series 7", author: "siegrinder", content: "Series 7 options section is humbling me. Covered calls make sense until the practice exam starts yelling.", createdAt: { seconds: Math.floor(Date.now()/1000) - 6400 }, bullish: 18, bearish: 1, comments: 0, allowComments: true },
+      { id: "demo3", category: "jobs", label: "Interview", author: "exceladdict", content: "Got a superday for an analyst role. What technicals are they actually asking in 2026?", createdAt: { seconds: Math.floor(Date.now()/1000) - 9100 }, bullish: 25, bearish: 0, comments: 0, allowComments: false },
+      { id: "demo4", category: "rich-list", label: "Billionaires", author: "cap_table_king", content: "The richest people list is basically a leaderboard for owning distribution, compute, luxury, or payments. Pick your fighter.", createdAt: { seconds: Math.floor(Date.now()/1000) - 12600 }, bullish: 31, bearish: 3, comments: 1, allowComments: true }
     ];
-
-    const demoFollowing = [
-      { name: "wallstreetwolf", role: "Equity hot takes", avatar: "WW" },
-      { name: "siegrinder", role: "Licensing grind", avatar: "SG" },
-      { name: "cap_table_king", role: "Founder wealth watch", avatar: "CK" },
-      { name: "exceladdict", role: "Analyst recruiting", avatar: "EA" }
-    ];
-
-    const richPeople = [
-      { name: "Elon Musk", source: "Tesla / SpaceX / xAI", tag: "Founder Mode" },
-      { name: "Jeff Bezos", source: "Amazon / Blue Origin", tag: "Cash Machine" },
-      { name: "Mark Zuckerberg", source: "Meta", tag: "AI + Ads" },
-      { name: "Larry Ellison", source: "Oracle", tag: "Enterprise Whale" },
-      { name: "Bernard Arnault", source: "LVMH", tag: "Luxury Boss" }
-    ];
-
-    const demoPrices = {
-      AAPL: { name: "Apple", price: "201.36", change: "+1.08%", spark: [22, 28, 25, 34, 38, 42, 48, 46, 51, 58, 62, 66], mentions: 84, bias: "68% Bull" },
-      NVDA: { name: "NVIDIA", price: "949.50", change: "+2.35%", spark: [18, 26, 31, 29, 42, 50, 55, 52, 64, 70, 76, 88], mentions: 211, bias: "81% Bull" },
-      TSLA: { name: "Tesla", price: "187.89", change: "-0.91%", spark: [78, 74, 69, 71, 62, 55, 58, 49, 44, 39, 41, 35], mentions: 155, bias: "52% Bear" },
-      SPY: { name: "S&P 500 ETF", price: "525.69", change: "+0.27%", spark: [40, 42, 43, 44, 45, 46, 47, 48, 48, 50, 51, 52], mentions: 132, bias: "61% Bull" },
-      QQQ: { name: "Nasdaq 100 ETF", price: "447.90", change: "+0.67%", spark: [35, 38, 42, 39, 46, 52, 57, 54, 60, 65, 68, 72], mentions: 97, bias: "65% Bull" },
-      COIN: { name: "Coinbase", price: "252.33", change: "+3.21%", spark: [21, 33, 29, 41, 55, 49, 61, 72, 68, 77, 82, 91], mentions: 69, bias: "74% Bull" },
-      JPM: { name: "JPMorgan Chase", price: "198.45", change: "+0.44%", spark: [42, 44, 41, 47, 49, 53, 50, 55, 58, 57, 61, 63], mentions: 43, bias: "59% Bull" },
-      META: { name: "Meta Platforms", price: "491.22", change: "+1.76%", spark: [32, 37, 40, 45, 48, 52, 59, 57, 65, 69, 73, 79], mentions: 76, bias: "72% Bull" },
-      ORCL: { name: "Oracle", price: "124.70", change: "+0.88%", spark: [34, 36, 33, 38, 44, 47, 45, 49, 54, 58, 56, 60], mentions: 28, bias: "63% Bull" },
-      BTC: { name: "Bitcoin", price: "67,420", change: "+1.20%", spark: [38, 42, 39, 47, 52, 58, 55, 61, 67, 64, 71, 75], mentions: 188, bias: "69% Bull" }
-    };
-
-    function priceData(ticker) {
-      return demoPrices[String(ticker || "").toUpperCase()] || { name: "Unknown Asset", price: "--", change: "+0.00%", spark: [20, 30, 25, 35, 40, 38, 50, 45, 55, 60, 58, 66], mentions: 0, bias: "Neutral" };
-    }
-
-    function renderSparklineBars(values, isNegative = false) {
-      const max = Math.max(...values, 1);
-      return values.map(v => `<div class="spark-bar ${isNegative ? "red" : ""}" style="height:${Math.max(10, Math.round((v / max) * 90))}%"></div>`).join("");
-    }
 
     function formatContent(content) {
-      const safe = escapeHTML(content || "");
-      return safe.replace(/\$([A-Z]{1,5})\b/g, (match, ticker) => {
-        return `<button type="button" class="cashtag text-brogreen font-black hover:underline" data-ticker="${ticker}">${match}</button>`;
+      return escapeHTML(content).replace(/\$([A-Z]{1,5})/g, (match, ticker) => {
+        return `<button class="text-brogreen font-black hover:underline" onclick="runSearch('${ticker}')">${match}</button>`;
       });
     }
 
-    function showTickerPreview(ticker) {
-      const symbol = String(ticker || "").toUpperCase();
-      const data = priceData(symbol);
-      const negative = String(data.change).startsWith("-");
-      $("ticker-symbol").textContent = "$" + symbol;
-      $("ticker-name").textContent = data.name;
-      $("ticker-price").textContent = data.price;
-      $("ticker-change").textContent = data.change;
-      $("ticker-change").className = "text-sm font-black " + (negative ? "text-red-400" : "text-brogreen");
-      $("ticker-sparkline").innerHTML = renderSparklineBars(data.spark, negative);
-      $("ticker-mentions").textContent = data.mentions;
-      $("ticker-bias").textContent = data.bias;
-      $("ticker-bias").className = "text-lg " + (String(data.bias).includes("Bear") ? "text-red-400" : "text-brogreen");
-      openModal("ticker-modal");
+    function getSavedIds() {
+      return JSON.parse(localStorage.getItem("broliquidity_saved_posts") || "[]");
     }
 
-    function renderMarketList() {
-      const tickers = ["NVDA", "SPY", "TSLA", "BTC", "META"];
-      const el = $("market-list");
-      if (!el) return;
-      el.innerHTML = tickers.map(ticker => {
-        const data = priceData(ticker);
-        const negative = String(data.change).startsWith("-");
-        return `
-          <button class="ticker-preview-btn w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition" data-ticker="${ticker}">
-            <div class="flex items-center justify-between mb-2">
-              <div><div class="font-black">$${ticker}</div><div class="text-xs text-slate-400">${data.name}</div></div>
-              <div class="text-right"><div class="font-black">${data.price}</div><div class="text-xs font-black ${negative ? "text-red-400" : "text-brogreen"}">${data.change}</div></div>
-            </div>
-            <div class="h-10 flex items-end gap-1">${renderSparklineBars(data.spark, negative)}</div>
-          </button>
-        `;
-      }).join("");
-      document.querySelectorAll(".ticker-preview-btn").forEach(btn => btn.onclick = () => showTickerPreview(btn.dataset.ticker));
+    function setSavedIds(ids) {
+      localStorage.setItem("broliquidity_saved_posts", JSON.stringify(ids));
+      renderSavedPosts();
+      renderPosts(currentPostsCache.length ? currentPostsCache : demoPosts);
     }
 
-    function renderRichList() {
-      $("rich-list").innerHTML = richPeople.map((p, i) => `
-        <button class="w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition search-rich" data-name="${escapeHTML(p.name)}">
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <div class="text-xs text-slate-500 font-black">#${i + 1}</div>
-              <div class="font-black">${escapeHTML(p.name)}</div>
-              <div class="text-xs text-slate-400">${escapeHTML(p.source)}</div>
-            </div>
-            <span class="text-[10px] px-2 py-1 rounded-full bg-brogreen/15 text-brogreen font-black">${escapeHTML(p.tag)}</span>
-          </div>
+    function toggleSavePost(id) {
+      const ids = getSavedIds();
+      setSavedIds(ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+    }
+
+    function renderSavedPosts() {
+      const ids = getSavedIds();
+      $("saved-count").textContent = ids.length;
+      const posts = (currentPostsCache.length ? currentPostsCache : demoPosts).filter(p => ids.includes(p.id));
+      $("saved-posts-list").innerHTML = posts.length ? posts.slice(0, 6).map(p => `
+        <button class="w-full soft-card rounded-2xl p-3 text-left">
+          <div class="font-black text-sm">@${escapeHTML(p.author)}</div>
+          <div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(p.content)}</div>
         </button>
-      `).join("");
-
-      document.querySelectorAll(".search-rich").forEach(btn => {
-        btn.onclick = () => {
-          $("search-bar").value = btn.dataset.name;
-          runSearch(btn.dataset.name);
-        };
-      });
+      `).join("") : `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No saved posts yet.</div>`;
     }
 
     function getWatchlist() {
@@ -618,29 +406,47 @@
 
     function setWatchlist(items) {
       localStorage.setItem("broliquidity_watchlist", JSON.stringify(items));
-      renderWatchlist();
+      renderCustomWatchlist();
     }
 
-    function renderWatchlist() {
-      const items = getWatchlist();
-      $("watchlist-list").innerHTML = items.map(ticker => {
-        const data = priceData(ticker);
-        const positive = !String(data.change).startsWith("-");
+    function renderMarketList(id, rows) {
+      $(id).innerHTML = rows.map(([ticker, price, change]) => {
+        const positive = !change.startsWith("-");
         return `
-          <button class="ticker-preview-btn w-full rounded-2xl p-3 flex items-center justify-between text-left border ${positive ? "bg-brogreen/10 border-brogreen/20" : "bg-red-500/10 border-red-500/20"}" data-ticker="${escapeHTML(ticker)}">
+          <button onclick="runSearch('${ticker}')" class="w-full soft-card rounded-2xl p-3 flex items-center justify-between">
             <div>
-              <div class="font-black">$${escapeHTML(ticker)}</div>
-              <div class="text-xs text-slate-400">${escapeHTML(data.name)}</div>
+              <div class="font-black">${ticker}</div>
+              <div class="text-xs text-slate-500">${price}</div>
             </div>
-            <div class="text-right">
-              <div class="font-black text-sm">${data.price}</div>
-              <div class="${positive ? "text-brogreen" : "text-red-400"} font-black text-xs">${data.change}</div>
-            </div>
-          </button>
-        `;
+            <div class="${positive ? "text-brogreen" : "text-red-500"} font-black text-sm">${change}</div>
+          </button>`;
       }).join("");
-      document.querySelectorAll(".ticker-preview-btn").forEach(btn => btn.onclick = () => showTickerPreview(btn.dataset.ticker));
     }
+
+    function renderCustomWatchlist() {
+      const prices = Object.fromEntries([...topStocks, ...topCrypto].map(r => [r[0], r]));
+      $("watchlist-list").innerHTML = getWatchlist().map(ticker => {
+        const data = prices[ticker] || [ticker, "--", "+0.00%"];
+        const positive = !data[2].startsWith("-");
+        return `
+          <div class="soft-card rounded-2xl p-3 flex items-center justify-between">
+            <button onclick="runSearch('${ticker}')" class="text-left">
+              <div class="font-black">${escapeHTML(ticker)}</div>
+              <div class="text-xs text-slate-500">${data[1]}</div>
+            </button>
+            <div class="flex items-center gap-2">
+              <div class="${positive ? "text-brogreen" : "text-red-500"} font-black text-sm">${data[2]}</div>
+              <button class="text-xs font-black text-slate-400" onclick="removeWatchlistTicker('${ticker}')">×</button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function removeWatchlistTicker(ticker) {
+      setWatchlist(getWatchlist().filter(t => t !== ticker));
+    }
+
+    window.removeWatchlistTicker = removeWatchlistTicker;
 
     async function loadCommunities() {
       const select = $("community-select");
@@ -662,42 +468,44 @@
       }
 
       renderCommunities();
+      renderSubscribedAndFollowing();
     }
 
     function renderCommunities() {
-      const list = $("communities-list");
-      if (!communitiesCache.length) {
-        list.innerHTML = `
-          <div class="soft-card rounded-2xl p-3 text-sm text-slate-400">
-            No desks yet. Create the first one.
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = communitiesCache.slice(0, 8).map((c, idx) => {
-        const active = Math.max(7, (c.members?.length || 1) * 3 + idx * 4);
-        const openInterest = Math.max(1, idx * 6 + (c.members?.length || 1));
-        return `
-          <button class="community-filter w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition" data-id="${c.id}">
-            <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
-            <div class="text-xs text-slate-400 line-clamp-2">${escapeHTML(c.description || "Finance discussion desk")}</div>
-            <div class="mt-2 flex items-center justify-between text-[10px] font-black text-slate-500">
-              <span>${active} active traders</span><span>${openInterest} open interest</span>
-            </div>
-          </button>
-        `;
-      }).join("");
+      $("communities-list").innerHTML = communitiesCache.length ? communitiesCache.slice(0, 8).map(c => `
+        <button class="community-filter w-full soft-card rounded-2xl p-3 text-left" data-id="${c.id}">
+          <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
+          <div class="text-xs text-slate-500">Active traders: ${Math.floor(Math.random()*900)+80}</div>
+        </button>`).join("") :
+        `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No desks yet. Create the first one.</div>`;
 
       document.querySelectorAll(".community-filter").forEach(btn => {
         btn.onclick = () => {
           $("community-select").value = btn.dataset.id;
-          openModal("post-modal");
           $("post-destination").value = "community";
           $("community-select").classList.remove("hidden");
+          openModal("post-modal");
         };
       });
-      renderSubscribedAndFollowing();
+    }
+
+    function renderSubscribedAndFollowing() {
+      $("subscribed-desks").innerHTML = communitiesCache.length ? communitiesCache.slice(0, 3).map(c => `
+        <button class="w-full soft-card rounded-2xl p-3 text-left">
+          <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
+          <div class="text-xs text-slate-500">Subscribed</div>
+        </button>`).join("") :
+        `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">Join a desk to see it here.</div>`;
+
+      $("following-list").innerHTML = [
+        ["wallstreetwolf", "Equity hot takes"],
+        ["siegrinder", "Licensing grind"],
+        ["cap_table_king", "Founder wealth watch"]
+      ].map(([u,bio]) => `
+        <button class="w-full soft-card rounded-2xl p-3 text-left flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-[#050816] text-brogreen font-black grid place-items-center">${u.slice(0,2).toUpperCase()}</div>
+          <div><div class="font-black">@${u}</div><div class="text-xs text-slate-500">${bio}</div></div>
+        </button>`).join("");
     }
 
     async function createCommunity() {
@@ -705,8 +513,8 @@
       const desc = $("community-desc").value.trim();
       const file = $("community-image").files[0];
       const err = $("community-create-error");
-
       err.classList.add("hidden");
+
       if (!currentUser) return;
       if (!name) {
         err.textContent = "Community name required.";
@@ -723,12 +531,8 @@
         }
 
         await db.collection("communities").add({
-          name,
-          description: desc,
-          image: imageUrl,
-          creator: currentUser.uid,
-          moderators: [currentUser.uid],
-          members: [currentUser.uid],
+          name, description: desc, image: imageUrl, creator: currentUser.uid,
+          moderators: [currentUser.uid], members: [currentUser.uid],
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -770,174 +574,200 @@
       const category = $("post-subject").value;
       const label = $("post-label").value;
       const content = $("post-content").value.trim();
-      const imageFile = $("post-image")?.files?.[0] || null;
+      const allowComments = $("allow-comments").checked;
 
-      if (destination === "community" && !community) {
-        error.textContent = "Select a community.";
-        error.classList.remove("hidden");
-        return;
-      }
-      if (!category) {
-        error.textContent = "Select a subject.";
-        error.classList.remove("hidden");
-        return;
-      }
-      if (!label) {
-        error.textContent = "Select a label.";
-        error.classList.remove("hidden");
-        return;
-      }
-      if (!content && !imageFile) {
-        error.textContent = "Add text or an image before posting.";
-        error.classList.remove("hidden");
-        return;
-      }
+      if (destination === "community" && !community) return showPostError("Select a community.");
+      if (!category) return showPostError("Select a subject.");
+      if (!label) return showPostError("Select a label.");
+      if (!content) return showPostError("Post content cannot be empty.");
 
       let imageUrl = "";
-      let username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
+      const imageFile = $("post-image-upload").files[0];
+
       try {
         if (imageFile) {
-          if (!imageFile.type.startsWith("image/")) throw new Error("Invalid image type");
-          const imageRef = storage.ref("post_images/" + currentUser.uid + "_" + Date.now() + "_" + imageFile.name);
-          await imageRef.put(imageFile);
-          imageUrl = await imageRef.getDownloadURL();
+          const ref = storage.ref("post_images/" + currentUser.uid + "_" + Date.now() + "_" + imageFile.name);
+          await ref.put(imageFile);
+          imageUrl = await ref.getDownloadURL();
         }
 
+        const username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
         await db.collection("posts").add({
-          content,
-          imageUrl,
-          category,
-          label,
-          destination,
+          content, category, label, destination,
           community: destination === "community" ? community : "",
-          author: username,
-          authorId: currentUser.uid,
-          bullish: 0,
-          bearish: 0,
-          comments: 0,
+          author: username, authorId: currentUser.uid,
+          imageUrl, allowComments,
+          bullish: 0, bearish: 0, comments: 0,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         $("post-content").value = "";
-        $("post-image").value = "";
-        $("post-image-preview").innerHTML = "";
-        $("post-image-preview").classList.add("hidden");
-        $("remove-post-image").classList.add("hidden");
         $("char-count").textContent = "0";
+        $("post-image-upload").value = "";
+        $("post-image-preview").classList.add("hidden");
+        $("post-image-preview").src = "";
+        $("allow-comments").checked = true;
         closeModal("post-modal");
       } catch (e) {
-        error.textContent = "Failed to post. Check Firestore rules.";
-        error.classList.remove("hidden");
+        showPostError("Failed to post. Check Firestore rules and Storage rules.");
       }
     }
 
-    function renderPosts(posts) {
-      const list = $("posts-list");
-      const filtered = selectedFilter === "all"
-        ? posts
-        : posts.filter(p => p.category === selectedFilter || p.community === selectedFilter);
+    function showPostError(msg) {
+      $("post-error").textContent = msg;
+      $("post-error").classList.remove("hidden");
+    }
 
+    function renderPosts(posts) {
+      currentPostsCache = posts;
+      const filtered = selectedFilter === "all" ? posts : posts.filter(p => p.category === selectedFilter);
       if (!filtered.length) {
-        list.innerHTML = `
-          <li class="glass rounded-3xl p-10 text-center text-slate-500">
-            <div class="text-3xl mb-2">📉</div>
-            <div class="font-black text-white">No liquidity in this desk yet.</div>
-            <div class="text-sm text-slate-400 mt-1">Be the first bro to move this market.</div>
-          </li>
-        `;
+        $("posts-list").innerHTML = `<li class="glass rounded-3xl p-6 text-center"><div class="font-black">No liquidity in this desk yet.</div><div class="text-sm text-slate-500 mt-1">Be the first bro to move this desk.</div></li>`;
+        renderSavedPosts();
         return;
       }
 
-      list.innerHTML = filtered.map(post => {
-        const bull = Number(post.bullish || 0);
-        const bear = Number(post.bearish || 0);
-        const totalVotes = Math.max(1, bull + bear);
-        const bullPct = Math.round((bull / totalVotes) * 100);
+      const savedIds = getSavedIds();
+      $("posts-list").innerHTML = filtered.map(post => {
+        const bull = post.bullish || 0;
+        const bear = post.bearish || 0;
+        const total = Math.max(1, bull + bear);
+        const bullPct = Math.round((bull / total) * 100);
         const commName = communitiesCache.find(c => c.id === post.community)?.name || "timeline";
-        const isBullish = bull >= bear;
-
+        const commentsAllowed = post.allowComments !== false;
         return `
-          <li class="glass rounded-3xl p-5 border-l-4 ${isBullish ? "border-brogreen" : "border-red-500"} hover:border-opacity-100 transition">
+          <li class="glass rounded-3xl p-5 border-l-4 ${bull >= bear ? "border-brogreen" : "border-red-500"}">
             <div class="flex items-start gap-3">
-              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=0B1024&color=B6FF22" class="w-11 h-11 rounded-full border border-white/10" alt="">
+              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=050816&color=B6FF22" class="w-11 h-11 rounded-full border border-slate-200 dark:border-white/10" alt="">
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-black text-broblue">@${escapeHTML(post.author || "anonymousbro")}</span>
                   <span class="text-xs text-slate-500">• ${formatDate(post.createdAt)}</span>
-                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-black uppercase text-slate-400">c/${escapeHTML(commName)}</span>
-                  ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full active-pill font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
+                  <span class="text-[10px] px-2 py-1 rounded-full bg-slate-100 dark:bg-white/8 font-black uppercase">c/${escapeHTML(commName)}</span>
+                  ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-brogreen/15 text-broblue dark:text-brogreen font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
                 </div>
 
-                ${post.content ? `<p class="mt-3 text-sm sm:text-base font-medium leading-relaxed text-black dark:text-white font-semibold tracking-tight">${formatContent(post.content || "")}</p>` : ""}
-                ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" alt="Post image" class="mt-4 w-full max-h-[460px] object-cover rounded-3xl border border-white/10 bg-black/20" loading="lazy">` : ""}
+                <p class="mt-3 text-[15px] leading-relaxed text-black dark:text-white font-semibold tracking-tight">${formatContent(post.content || "")}</p>
+                ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" class="mt-4 w-full max-h-[420px] object-cover rounded-3xl border border-slate-200 dark:border-white/10" alt="Post image">` : ""}
 
-                <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-white/5">
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between text-[10px] font-black mb-1">
+                <div class="mt-4 flex items-center gap-3">
+                  <div class="w-44 max-w-full">
+                    <div class="flex justify-between text-[10px] font-black mb-1">
                       <span class="text-brogreen">${bullPct}% Bullish</span>
-                      <span class="text-red-400">${100 - bullPct}% Bearish</span>
+                      <span class="text-red-500">${100 - bullPct}% Bearish</span>
                     </div>
-                    <div class="h-2 bg-red-500/30 rounded-full overflow-hidden">
-                      <div class="h-full bg-brogreen shadow-[0_0_8px_#B6FF22]" style="width:${bullPct}%"></div>
+                    <div class="h-2 bg-red-500/25 rounded-full overflow-hidden">
+                      <div class="h-full bg-brogreen" style="width:${bullPct}%"></div>
                     </div>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-brogreen text-black uppercase" data-id="${post.id}" data-field="bullish">↗ Uptrend ${bull}</button>
-                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-red-500 text-white uppercase" data-id="${post.id}" data-field="bearish">↘ Downtrend ${bear}</button>
-                    <button class="save-post-btn text-[10px] font-black px-3 py-2 rounded-xl soft-card uppercase ${isPostSaved(post.id) ? "text-brogreen" : "text-slate-300"}" data-id="${post.id}">${isPostSaved(post.id) ? "✓ Saved" : "🔖 Save"}</button>
-                    <span class="text-xs font-bold text-slate-500">💬 ${post.comments || 0}</span>
-                  </div>
+                  <button class="vote-btn px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-id="${post.id}" data-field="bullish">↗ UPTREND ${bull}</button>
+                  <button class="vote-btn px-3 py-2 rounded-xl bg-red-500 text-white text-xs font-black" data-id="${post.id}" data-field="bearish">↘ DOWNTREND ${bear}</button>
+                  <button class="save-btn px-3 py-2 rounded-xl soft-card text-xs font-black ${savedIds.includes(post.id) ? "text-brogreen" : "text-slate-500"}" data-id="${post.id}">🔖 ${savedIds.includes(post.id) ? "SAVED" : "SAVE"}</button>
+                  <button class="comment-toggle px-3 py-2 rounded-xl soft-card text-xs font-black ${commentsAllowed ? "" : "opacity-50 cursor-not-allowed"}" data-id="${post.id}" ${commentsAllowed ? "" : "disabled"}>💬 ${post.comments || 0}</button>
+                </div>
+
+                <div id="comments-${post.id}" class="comments-box hidden mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                  ${commentsAllowed ? `
+                    <div class="flex gap-2">
+                      <input id="comment-input-${post.id}" class="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-200 dark:bg-white/8 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Add a comment..." />
+                      <button class="add-comment-btn px-4 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-id="${post.id}">Reply</button>
+                    </div>
+                    <div id="comment-list-${post.id}" class="mt-3 space-y-2 text-sm"></div>
+                  ` : `<div class="text-sm text-slate-500 font-bold">Comments are turned off for this post.</div>`}
                 </div>
               </div>
             </div>
-          </li>
-        `;
+          </li>`;
       }).join("");
 
       document.querySelectorAll(".vote-btn").forEach(btn => {
         btn.onclick = async () => {
           const id = btn.dataset.id;
           const field = btn.dataset.field;
-          if (String(id).startsWith("demo")) return;
-          try {
-            await db.collection("posts").doc(id).update({
-              [field]: firebase.firestore.FieldValue.increment(1)
-            });
-          } catch (e) {
-            console.warn("Vote failed:", e);
+          if (String(id).startsWith("demo")) {
+            const post = demoPosts.find(p => p.id === id);
+            if (post) post[field] = (post[field] || 0) + 1;
+            renderPosts(currentPostsCache);
+            return;
           }
+          try { await db.collection("posts").doc(id).update({ [field]: firebase.firestore.FieldValue.increment(1) }); } catch(e) {}
         };
       });
 
-      document.querySelectorAll(".save-post-btn").forEach(btn => {
-        btn.onclick = () => toggleSavedPost(btn.dataset.id);
+      document.querySelectorAll(".save-btn").forEach(btn => {
+        btn.onclick = () => toggleSavePost(btn.dataset.id);
       });
 
-      document.querySelectorAll(".cashtag").forEach(tag => {
-        tag.onclick = () => showTickerPreview(tag.dataset.ticker);
+      document.querySelectorAll(".comment-toggle").forEach(btn => {
+        btn.onclick = async () => {
+          const box = $("comments-" + btn.dataset.id);
+          box.classList.toggle("hidden");
+          if (!box.classList.contains("hidden")) await loadComments(btn.dataset.id);
+        };
       });
+
+      document.querySelectorAll(".add-comment-btn").forEach(btn => {
+        btn.onclick = () => addComment(btn.dataset.id);
+      });
+
+      renderSavedPosts();
+    }
+
+    async function loadComments(postId) {
+      const list = $("comment-list-" + postId);
+      if (!list || String(postId).startsWith("demo")) {
+        if (list) list.innerHTML = `<div class="soft-card rounded-xl p-3 text-slate-500">Demo comments show once connected to Firestore.</div>`;
+        return;
+      }
+      try {
+        const snap = await db.collection("posts").doc(postId).collection("comments").orderBy("createdAt", "asc").limit(25).get();
+        list.innerHTML = snap.empty ? `<div class="text-slate-500 font-bold">No comments yet.</div>` : snap.docs.map(d => {
+          const c = d.data();
+          return `<div class="soft-card rounded-xl p-3"><span class="font-black">@${escapeHTML(c.author || "bro")}</span><span class="text-slate-500 text-xs"> • ${formatDate(c.createdAt)}</span><div>${escapeHTML(c.content || "")}</div></div>`;
+        }).join("");
+      } catch(e) {
+        list.innerHTML = `<div class="text-red-500 font-bold">Could not load comments.</div>`;
+      }
+    }
+
+    async function addComment(postId) {
+      const input = $("comment-input-" + postId);
+      const content = input.value.trim();
+      if (!content || !currentUser) return;
+      if (String(postId).startsWith("demo")) {
+        input.value = "";
+        alert("Demo post comments require Firestore posts. Real posts will save comments.");
+        return;
+      }
+      const username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
+      try {
+        await db.collection("posts").doc(postId).collection("comments").add({
+          content, author: username, authorId: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection("posts").doc(postId).update({ comments: firebase.firestore.FieldValue.increment(1) });
+        input.value = "";
+        await loadComments(postId);
+      } catch(e) {
+        alert("Could not add comment. Check Firestore rules.");
+      }
     }
 
     function subscribeToPosts() {
       if (unsubscribePosts) unsubscribePosts();
       const sort = $("sort-posts").value;
-
       try {
         unsubscribePosts = db.collection("posts").orderBy("createdAt", "desc").limit(50).onSnapshot(snapshot => {
           let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-          if (sort === "bullish") posts.sort((a, b) => (b.bullish || 0) - (a.bullish || 0));
-          if (sort === "bearish") posts.sort((a, b) => (b.bearish || 0) - (a.bearish || 0));
-          if (sort === "active") posts.sort((a, b) => ((b.comments || 0) + (b.bullish || 0) + (b.bearish || 0)) - ((a.comments || 0) + (a.bullish || 0) + (a.bearish || 0)));
-
+          if (sort === "bullish") posts.sort((a,b) => (b.bullish || 0) - (a.bullish || 0));
+          if (sort === "bearish") posts.sort((a,b) => (b.bearish || 0) - (a.bearish || 0));
+          if (sort === "active") posts.sort((a,b) => ((b.comments || 0)+(b.bullish || 0)+(b.bearish || 0)) - ((a.comments || 0)+(a.bullish || 0)+(a.bearish || 0)));
           renderPosts(posts.length ? posts : demoPosts);
           $("loading").style.display = "none";
-        }, err => {
-          console.warn("Feed snapshot failed:", err);
+        }, () => {
           renderPosts(demoPosts);
           $("loading").style.display = "none";
         });
-      } catch (e) {
+      } catch(e) {
         renderPosts(demoPosts);
         $("loading").style.display = "none";
       }
@@ -946,90 +776,46 @@
     function setFilter(filter) {
       selectedFilter = filter;
       $("filter-category").value = filter;
-      document.querySelectorAll(".category-pill").forEach(btn => {
-        btn.classList.toggle("active-pill", btn.dataset.filter === filter);
-      });
+      document.querySelectorAll(".category-pill").forEach(btn => btn.classList.toggle("active-pill", btn.dataset.filter === filter));
       $("feed-context").textContent = filter === "all" ? "All desks, newest first." : `${filter.replace("-", " ")} desk, newest first.`;
       subscribeToPosts();
     }
 
     async function runSearch(query) {
-      const q = query.trim();
+      const q = String(query || "").trim();
       const results = $("search-results");
-      if (!q) {
-        results.classList.add("hidden");
-        results.innerHTML = "";
-        return;
-      }
-
-      const lower = q.toLowerCase();
-      let html = "";
+      $("search-bar").value = q;
+      if (!q) { results.classList.add("hidden"); results.innerHTML = ""; return; }
 
       const ticker = q.toUpperCase();
-      if (demoPrices[ticker]) {
-        const data = demoPrices[ticker];
-        html += `
-          <div class="p-3 rounded-2xl soft-card mb-2">
-            <div class="text-xs text-slate-400 font-black">TICKER</div>
-            <div class="flex justify-between items-center">
-              <div class="font-black text-lg">${ticker}</div>
-              <div class="font-black text-brogreen">${data[0]} ${data[1]}</div>
-            </div>
-          </div>
-        `;
+      const marketRows = [...topStocks, ...topCrypto];
+      const tickerMatch = marketRows.find(r => r[0] === ticker);
+      let html = "";
+
+      if (tickerMatch) {
+        const positive = !tickerMatch[2].startsWith("-");
+        html += `<div class="p-3 rounded-2xl soft-card mb-2">
+          <div class="text-xs text-slate-500 font-black">TICKER</div>
+          <div class="flex justify-between items-center"><div class="font-black text-lg">${tickerMatch[0]}</div><div class="${positive ? "text-brogreen" : "text-red-500"} font-black">${tickerMatch[1]} ${tickerMatch[2]}</div></div>
+        </div>`;
       }
 
-      const richMatches = richPeople.filter(p => p.name.toLowerCase().includes(lower) || p.source.toLowerCase().includes(lower));
-      if (richMatches.length) {
-        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">RICHEST PEOPLE</div>`;
-        html += richMatches.map(p => `
-          <div class="p-3 rounded-2xl hover:bg-white/10">
-            <div class="font-black">${escapeHTML(p.name)}</div>
-            <div class="text-xs text-slate-400">${escapeHTML(p.source)} • ${escapeHTML(p.tag)}</div>
-          </div>
-        `).join("");
-      }
-
-      const communityMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(lower));
+      const communityMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(q.toLowerCase()));
       if (communityMatches.length) {
         html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
-        html += communityMatches.map(c => `
-          <div class="p-3 rounded-2xl hover:bg-white/10">
-            <div class="font-black">c/${escapeHTML(c.name)}</div>
-            <div class="text-xs text-slate-400">${escapeHTML(c.description || "")}</div>
-          </div>
-        `).join("");
+        html += communityMatches.map(c => `<div class="p-3 rounded-2xl hover:bg-black/5 dark:hover:bg-white/10"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></div>`).join("");
       }
 
-      try {
-        const users = await db.collection("profiles")
-          .where("displayName", ">=", q)
-          .where("displayName", "<=", q + "\uf8ff")
-          .limit(5)
-          .get();
-
-        if (!users.empty) {
-          html += `<div class="text-xs text-slate-500 font-black px-2 py-1">USERS</div>`;
-          users.forEach(doc => {
-            const u = doc.data();
-            html += `
-              <div class="p-3 rounded-2xl hover:bg-white/10">
-                <div class="font-black">u/${escapeHTML(u.displayName || u.username || doc.id)}</div>
-              </div>
-            `;
-          });
-        }
-      } catch(e) {}
-
-      results.innerHTML = html || `<div class="p-3 text-slate-400 font-bold">No results found.</div>`;
+      results.innerHTML = html || `<div class="p-3 text-slate-500 font-bold">No results found.</div>`;
       results.classList.remove("hidden");
     }
+
+    window.runSearch = runSearch;
 
     function loadProfile(user) {
       const username = user.displayName || user.email || "User";
       $("profile-username-display").textContent = username;
-      const fallback = "https://ui-avatars.com/api/?name=" + encodeURIComponent(username) + "&background=0B1024&color=B6FF22";
-
+      const fallback = "https://ui-avatars.com/api/?name=" + encodeURIComponent(username) + "&background=050816&color=B6FF22";
       db.collection("profiles").doc(user.uid).get().then(doc => {
         const data = doc.exists ? doc.data() : {};
         $("profile-bio").value = data.bio || "";
@@ -1042,77 +828,19 @@
       });
     }
 
-    function renderSubscribedAndFollowing() {
-      const subscribed = $("subscribed-desks-list");
-      if (subscribed) {
-        const mine = communitiesCache.filter(c => Array.isArray(c.members) && currentUser && c.members.includes(currentUser.uid)).slice(0, 6);
-        subscribed.innerHTML = (mine.length ? mine : communitiesCache.slice(0, 4)).map(c => `
-          <button class="community-filter w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition" data-id="${c.id}">
-            <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
-            <div class="text-xs text-slate-400">${Array.isArray(c.members) ? c.members.length : 1} members • ${(c.description || "Finance desk").slice(0, 42)}</div>
-          </button>
-        `).join("") || `<div class="soft-card rounded-2xl p-3 text-sm text-slate-400">Join a desk to see it here.</div>`;
-      }
-
-      const following = $("following-list");
-      if (following) {
-        following.innerHTML = demoFollowing.map(u => `
-          <button class="w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
-            <div class="flex items-center gap-3">
-              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=0B1024&color=B6FF22" class="w-8 h-8 rounded-full border border-white/10" alt="">
-              <div class="min-w-0">
-                <div class="font-black truncate">@${escapeHTML(u.name)}</div>
-                <div class="text-xs text-slate-400 truncate">${escapeHTML(u.role)}</div>
-              </div>
-            </div>
-          </button>
-        `).join("");
-      }
-    }
-
     function wireEvents() {
-      ["open-post-modal-top", "open-post-modal-hero", "open-post-modal-floating"].forEach(id => {
-        $(id).onclick = () => openModal("post-modal");
-      });
+      ["open-post-modal-top", "open-post-modal-hero", "open-post-modal-floating"].forEach(id => $(id).onclick = () => openModal("post-modal"));
       $("close-post-modal").onclick = () => closeModal("post-modal");
-      $("close-ticker-modal").onclick = () => closeModal("ticker-modal");
       $("profile-btn").onclick = () => openModal("profile-modal");
       $("close-profile").onclick = () => closeModal("profile-modal");
       $("open-create-community").onclick = () => openModal("create-community-modal");
       $("close-create-community").onclick = () => closeModal("create-community-modal");
-
       $("create-community-btn").onclick = createCommunity;
       $("post-subject").onchange = updatePostLabels;
       $("post-form").onsubmit = submitPost;
-
-      $("post-destination").onchange = () => {
-        $("community-select").classList.toggle("hidden", $("post-destination").value !== "community");
-      };
-
-      $("post-content").oninput = () => {
-        $("char-count").textContent = $("post-content").value.length;
-      };
-
-      $("post-image").onchange = (e) => {
-        const file = e.target.files[0];
-        const preview = $("post-image-preview");
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        preview.innerHTML = `<img src="${url}" class="w-full max-h-[360px] object-cover" alt="Image preview">`;
-        preview.classList.remove("hidden");
-        $("remove-post-image").classList.remove("hidden");
-      };
-
-      $("remove-post-image").onclick = () => {
-        $("post-image").value = "";
-        $("post-image-preview").innerHTML = "";
-        $("post-image-preview").classList.add("hidden");
-        $("remove-post-image").classList.add("hidden");
-      };
-
-      $("profile-theme-toggle").onclick = () => {
-        setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
-      };
+      $("post-destination").onchange = () => $("community-select").classList.toggle("hidden", $("post-destination").value !== "community");
+      $("post-content").oninput = () => $("char-count").textContent = $("post-content").value.length;
+      $("profile-theme-toggle").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
 
       $("save-profile").onclick = async () => {
         if (!currentUser) return;
@@ -1132,52 +860,42 @@
         $("profile-btn").src = url;
       };
 
-      $("logout-btn").onclick = async () => {
-        await auth.signOut();
-        window.location.href = "login.html";
+      $("post-image-upload").onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        $("post-image-preview").src = url;
+        $("post-image-preview").classList.remove("hidden");
       };
 
+      $("logout-btn").onclick = async () => { await auth.signOut(); window.location.href = "login.html"; };
       $("sort-posts").onchange = subscribeToPosts;
       $("filter-category").onchange = () => setFilter($("filter-category").value);
-
-      document.querySelectorAll(".category-pill").forEach(btn => {
-        btn.onclick = () => setFilter(btn.dataset.filter);
-      });
-
-      $("search-bar").addEventListener("input", (e) => runSearch(e.target.value));
-      $("search-bar").addEventListener("keydown", (e) => {
-        if (e.key === "Escape") $("search-results").classList.add("hidden");
-      });
-
+      document.querySelectorAll(".category-pill").forEach(btn => btn.onclick = () => setFilter(btn.dataset.filter));
+      $("search-bar").addEventListener("input", e => runSearch(e.target.value));
+      $("search-bar").addEventListener("keydown", e => { if (e.key === "Escape") $("search-results").classList.add("hidden"); });
       $("add-watchlist-btn").onclick = () => $("watchlist-form").classList.toggle("hidden");
       $("save-watchlist-btn").onclick = () => {
         const ticker = $("watchlist-input").value.trim().toUpperCase();
         if (!ticker) return;
-        const items = [...new Set([...getWatchlist(), ticker])];
-        setWatchlist(items);
+        setWatchlist([...new Set([...getWatchlist(), ticker])]);
         $("watchlist-input").value = "";
         $("watchlist-form").classList.add("hidden");
       };
-
-      document.addEventListener("click", (e) => {
-        if (!$("search-results").contains(e.target) && e.target !== $("search-bar")) {
-          $("search-results").classList.add("hidden");
-        }
+      document.addEventListener("click", e => {
+        if (!$("search-results").contains(e.target) && e.target !== $("search-bar")) $("search-results").classList.add("hidden");
       });
     }
 
     wireEvents();
-    renderWatchlist();
-    renderRichList();
-    renderMarketList();
-    renderSavedCount();
+    renderMarketList("top-stocks-list", topStocks);
+    renderMarketList("top-crypto-list", topCrypto);
+    renderCustomWatchlist();
+    renderSavedPosts();
     renderSubscribedAndFollowing();
 
     auth.onAuthStateChanged(async user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) { window.location.href = "login.html"; return; }
       currentUser = user;
       loadProfile(user);
       await loadCommunities();
