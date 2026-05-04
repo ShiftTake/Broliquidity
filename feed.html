@@ -27,38 +27,27 @@
   <style>
     :root { color-scheme: light; }
 
-    * { scroll-behavior: smooth; }
-
     body {
       font-family: "Inter", sans-serif;
       min-height: 100vh;
       color: #0f172a;
-      background:
-        radial-gradient(circle at 10% 0%, rgba(18, 92, 255, .08), transparent 32%),
-        radial-gradient(circle at 92% 3%, rgba(182, 255, 34, .20), transparent 28%),
-        linear-gradient(135deg, #f8fafc 0%, #ffffff 52%, #f7ffe8 100%);
+      background: #f8fafc;
     }
 
     body.dark {
       color-scheme: dark;
       color: #fff;
-      background:
-        radial-gradient(circle at 15% 0%, rgba(18, 92, 255, .24), transparent 34%),
-        radial-gradient(circle at 88% 6%, rgba(182, 255, 34, .15), transparent 30%),
-        linear-gradient(135deg, #050816 0%, #070A15 52%, #03040B 100%);
+      background: #050816;
     }
 
-    .glass {
-      background: rgba(255,255,255,.92);
+    .panel {
+      background: #ffffff;
       border: 1px solid rgba(15,23,42,.09);
-      box-shadow: 0 16px 42px rgba(15,23,42,.08);
-      backdrop-filter: blur(18px);
     }
 
-    body.dark .glass {
-      background: rgba(10, 15, 34, .84);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 18px 48px rgba(0,0,0,.28);
+    body.dark .panel {
+      background: #050816;
+      border-color: rgba(255,255,255,.12);
     }
 
     .soft-card {
@@ -68,38 +57,38 @@
 
     body.dark .soft-card {
       background: rgba(255,255,255,.055);
-      border: 1px solid rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.10);
     }
 
     .modal-open { display: flex !important; }
 
-    .active-pill {
-      background: rgba(18,92,255,.08);
-      color: #125CFF;
-      border-color: rgba(18,92,255,.25);
+    .active-tab {
+      color: #050816;
+      border-bottom: 4px solid #B6FF22;
     }
 
-    body.dark .active-pill {
-      background: rgba(182,255,34,.16);
+    body.dark .active-tab {
+      color: #ffffff;
+    }
+
+    .active-nav {
+      background: rgba(182,255,34,.18);
+      color: #0f172a;
+    }
+
+    body.dark .active-nav {
       color: #B6FF22;
-      border-color: rgba(182,255,34,.38);
     }
-
-    .ticker-track { animation: ticker 32s linear infinite; min-width: max-content; }
-    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-    .drawer-backdrop { background: rgba(0,0,0,.56); }
-    .drawer-panel { transform: translateX(-100%); transition: transform .22s ease; }
-    .drawer-panel.open { transform: translateX(0); }
 
     .mini-spark {
       width: 5px;
       border-radius: 999px 999px 0 0;
-      background: linear-gradient(180deg, rgba(182,255,34,.95), rgba(182,255,34,.20));
+      background: linear-gradient(180deg, rgba(22, 163, 74, .95), rgba(22, 163, 74, .15));
       min-height: 5px;
     }
+
     .mini-spark.red {
-      background: linear-gradient(180deg, rgba(239,68,68,.95), rgba(239,68,68,.20));
+      background: linear-gradient(180deg, rgba(239,68,68,.95), rgba(239,68,68,.15));
     }
 
     .line-clamp-2 {
@@ -108,58 +97,16 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 
 <body class="font-sans antialiased">
-  <!-- Hamburger Drawer -->
-  <div id="drawer-backdrop" class="fixed inset-0 drawer-backdrop z-[60] hidden"></div>
-  <aside id="side-drawer" class="drawer-panel fixed left-0 top-0 bottom-0 w-[340px] max-w-[88vw] bg-white dark:bg-[#080d21] z-[70] overflow-y-auto border-r border-slate-200 dark:border-white/10 p-5">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <img src="mainlogo.png" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-white/10" alt="BroLiquidity">
-        <div>
-          <div class="font-black text-xl">BroLiquidity</div>
-          <div class="text-xs font-bold text-slate-500">Trading floor menu</div>
-        </div>
-      </div>
-      <button id="close-drawer" class="w-10 h-10 rounded-2xl soft-card text-xl font-black">×</button>
-    </div>
-
-    <div class="space-y-4">
-      <section class="glass rounded-3xl p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-black">Communities</h2>
-          <button id="drawer-create-community" class="text-xs font-black text-brogreen">+ New</button>
-        </div>
-        <div id="drawer-communities" class="space-y-2"></div>
-      </section>
-
-      <section class="glass rounded-3xl p-4">
-        <h2 class="font-black mb-3">Following</h2>
-        <div id="drawer-following" class="space-y-2"></div>
-      </section>
-
-      <section class="glass rounded-3xl p-4">
-        <h2 class="font-black mb-3">Followers</h2>
-        <div id="drawer-followers" class="space-y-2"></div>
-      </section>
-
-      <section class="glass rounded-3xl p-4">
-        <h2 class="font-black mb-3">Trending Topics</h2>
-        <div id="drawer-trending" class="flex flex-wrap gap-2 text-xs font-black"></div>
-      </section>
-
-      <section class="glass rounded-3xl p-4">
-        <h2 class="font-black mb-3">My Saved Posts</h2>
-        <div id="drawer-saved-posts" class="space-y-2 text-sm"></div>
-      </section>
-    </div>
-  </aside>
-
   <!-- Ticker Quick View Modal -->
   <div id="ticker-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="glass rounded-3xl p-6 w-full max-w-md relative overflow-hidden">
+    <div class="panel rounded-3xl p-6 w-full max-w-md relative overflow-hidden shadow-2xl">
       <button id="close-ticker-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Mini Terminal</p>
       <div class="flex items-end justify-between gap-4 mb-4">
@@ -180,27 +127,14 @@
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Bias</div><div id="ticker-bias" class="text-brogreen text-lg">--</div></div>
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Type</div><div id="ticker-type" class="text-lg">Stock</div></div>
       </div>
-      <p class="text-[11px] text-slate-500 mt-4">Prototype market data. Connect Finnhub, Polygon, IEX Cloud, Twelve Data, or CoinGecko when ready.</p>
-    </div>
-  </div>
-
-  <!-- Create Community Modal -->
-  <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="glass rounded-3xl p-6 w-full max-w-lg relative">
-      <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
-      <h2 class="text-2xl font-black mb-1">Create a Community</h2>
-      <p class="text-sm text-slate-500 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
-      <input id="community-name" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" placeholder="Community name">
-      <textarea id="community-desc" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows="3" placeholder="Description"></textarea>
-      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
-      <div id="community-create-error" class="text-red-500 text-sm mt-3 hidden"></div>
+      <button id="ticker-add-btn" class="mt-4 w-full px-4 py-3 rounded-2xl bg-brogreen text-black font-black">Add to Watchlist</button>
+      <p class="text-[11px] text-slate-500 mt-4">Prototype market data. Connect Polygon, Finnhub, IEX Cloud, Twelve Data, or CoinGecko for live pricing.</p>
     </div>
   </div>
 
   <!-- Post Modal -->
   <div id="post-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="glass rounded-3xl p-6 w-full max-w-2xl relative">
+    <div class="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl">
       <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
       <h2 class="text-2xl font-black mb-1">Drop it on the floor</h2>
@@ -260,7 +194,7 @@
 
   <!-- Profile Modal -->
   <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="glass rounded-3xl p-6 w-full max-w-md relative">
+    <div class="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
       <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
       <h2 class="text-2xl font-black mb-5">Your Profile</h2>
       <div class="flex flex-col items-center gap-4">
@@ -274,147 +208,225 @@
     </div>
   </div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/85 backdrop-blur-2xl">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3 min-w-fit">
-        <button id="open-drawer" class="w-12 h-12 rounded-2xl soft-card grid place-items-center" aria-label="Open menu">
-          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <a href="feed.html" class="flex items-center gap-3">
-          <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 dark:border-white/10">
-          <div class="hidden sm:block">
-            <h1 class="font-black text-xl tracking-tight">BroLiquidity</h1>
-            <p class="text-[11px] text-slate-500 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
+  <!-- Create Community Modal -->
+  <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+    <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl">
+      <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
+      <h2 class="text-2xl font-black mb-1">Create a Community</h2>
+      <p class="text-sm text-slate-500 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
+      <input id="community-name" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" placeholder="Community name">
+      <textarea id="community-desc" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows="3" placeholder="Description"></textarea>
+      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
+      <div id="community-create-error" class="text-red-500 text-sm mt-3 hidden"></div>
+    </div>
+  </div>
+
+  <div class="min-h-screen xl:grid xl:grid-cols-[300px_minmax(520px,760px)_380px] xl:justify-center">
+    <!-- Left X-style Rail -->
+    <aside class="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+      <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col">
+        <a href="feed.html" class="flex items-center gap-3 mb-6">
+          <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10">
+          <div>
+            <h1 class="font-black text-xl leading-tight">BroLiquidity</h1>
+            <p class="text-[11px] text-slate-500 font-bold">Trades • Licenses • Jobs</p>
           </div>
         </a>
-      </div>
 
-      <div class="relative flex-1 max-w-2xl">
-        <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search stocks, crypto, people, communities..." />
-        <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-        <div id="search-results" class="absolute left-0 right-0 top-14 glass rounded-2xl p-2 hidden max-h-96 overflow-y-auto z-50"></div>
-      </div>
+        <nav class="space-y-2 text-xl font-bold">
+          <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home">
+            <span>🏠</span><span>Home</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore">
+            <span>🔎</span><span>Explore</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities">
+            <span>💬</span><span>Communities</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="following">
+            <span>👥</span><span>Following</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bookmarks">
+            <span>🔖</span><span>Bookmarks</span>
+          </button>
+          <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
+            <span>👤</span><span>Profile</span>
+          </button>
+        </nav>
 
-      <div class="flex items-center gap-2">
-        <button id="open-post-modal-top" class="hidden sm:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black">+ Post</button>
-        <img id="profile-btn" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen cursor-pointer bg-slate-700" />
-      </div>
-    </nav>
+        <button id="left-post-btn" class="mt-5 w-full rounded-full bg-brogreen text-black py-4 font-black text-lg">Post</button>
 
-    <div class="overflow-hidden border-t border-slate-200 dark:border-white/5 bg-slate-900 dark:bg-black/20">
-      <div id="ticker-strip" class="ticker-track flex gap-6 py-2 text-xs font-black text-slate-200"></div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6">
-    <!-- Center Feed -->
-    <section class="min-w-0 space-y-5">
-      <section class="glass rounded-3xl p-5 sm:p-6 overflow-hidden relative">
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-broblue via-brogreen to-broblue"></div>
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen">Your Feed</p>
-            <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-1">Recent + recommended liquidity</h2>
-            <p class="text-sm text-slate-500 mt-1 max-w-2xl">Recommended posts are weighted by your stock watchlist, followed users, and subscribed communities.</p>
-          </div>
-          <button id="open-post-modal-hero" class="px-4 sm:px-5 py-3 rounded-2xl bg-brogreen text-black font-black">+ Post</button>
-        </div>
-
-        <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button data-filter="stocks" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Stocks</div></button>
-          <button data-filter="options" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Options</div></button>
-          <button data-filter="crypto" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Crypto</div></button>
-          <button data-filter="jobs" class="category-pill soft-card rounded-2xl p-3 text-left"><div class="text-xs text-slate-500 font-bold">Desk</div><div class="font-black">Finance Jobs</div></button>
-        </div>
-      </section>
-
-      <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h3 class="text-xl font-black">Recommended Posts</h3>
-          <p class="text-sm text-slate-500">Based on watchlist, following, and subscribed desks.</p>
-        </div>
-      </section>
-      <ul id="recommended-posts-list" class="space-y-4"></ul>
-
-      <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-        <div>
-          <h3 class="text-xl font-black">Recent Posts</h3>
-          <p id="feed-context" class="text-sm text-slate-500">All desks, newest first.</p>
-        </div>
-        <div class="flex gap-2">
-          <select id="filter-category" class="px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none">
-            <option value="all">All</option><option value="stocks">Stocks</option><option value="options">Options</option><option value="crypto">Crypto</option><option value="jobs">Jobs</option><option value="careers">Careers</option><option value="licenses">Licenses</option><option value="rich-list">Rich List</option><option value="other">Other</option>
-          </select>
-          <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none">
-            <option value="newest">Newest</option><option value="bullish">Most Uptrended</option><option value="bearish">Most Downtrended</option><option value="active">Most Active</option>
-          </select>
-        </div>
-      </section>
-
-      <ul id="posts-list" class="space-y-4"></ul>
-      <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-500 font-bold">Loading feed...</div>
-    </section>
-
-    <!-- Right Rail -->
-    <aside class="hidden xl:block space-y-4 sticky top-28 self-start">
-      <section class="glass rounded-3xl p-5">
-        <div class="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Markets</p>
-            <h2 class="font-black text-xl mt-1">Watchlist</h2>
-            <p class="text-xs text-slate-500 mt-1">Robinhood-style stock and crypto search.</p>
-          </div>
-        </div>
-
-        <div class="relative mb-4">
-          <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks or crypto..." />
-          <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-          <div id="asset-search-results" class="hidden absolute left-0 right-0 top-14 glass rounded-2xl p-2 z-50 max-h-96 overflow-y-auto"></div>
-        </div>
-
-        <div class="space-y-5">
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Top 10 Stocks</h3>
-              <span class="text-[10px] font-black px-2 py-1 rounded-full bg-brogreen/15 text-brogreen">EQUITIES</span>
-            </div>
-            <div id="popular-stocks-list" class="space-y-2"></div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Top 5 Crypto</h3>
-              <span class="text-[10px] font-black px-2 py-1 rounded-full bg-broblue/15 text-broblue">CRYPTO</span>
-            </div>
-            <div id="popular-crypto-list" class="space-y-2"></div>
-          </div>
-
-          <div class="pt-4 border-t border-slate-200 dark:border-white/10">
+        <div class="mt-6 space-y-4">
+          <section class="panel rounded-3xl p-4">
             <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">My Custom Watchlist</h3>
-                <p class="text-[11px] text-slate-500">Add specific equities or crypto.</p>
+              <h2 class="font-black">Communities</h2>
+              <button id="left-create-community" class="text-xs font-black text-brogreen">+ New</button>
+            </div>
+            <div id="left-communities" class="space-y-2"></div>
+          </section>
+
+          <section class="panel rounded-3xl p-4">
+            <h2 class="font-black mb-3">Following</h2>
+            <div id="left-following" class="space-y-2"></div>
+          </section>
+        </div>
+
+        <button id="left-profile-card" class="mt-auto flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-white/10 text-left">
+          <img id="profile-btn" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
+          <div class="min-w-0 flex-1">
+            <div id="left-profile-name" class="font-black truncate">User</div>
+            <div class="text-xs text-slate-500 truncate">@bro</div>
+          </div>
+          <span class="text-slate-500 font-black">•••</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Header -->
+    <header class="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
+      <nav class="px-4 py-3 flex items-center justify-between gap-3">
+        <button id="mobile-menu-btn" class="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu">☰</button>
+        <a href="feed.html" class="flex items-center gap-2">
+          <img src="mainlogo.png" class="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity">
+          <span class="font-black">BroLiquidity</span>
+        </a>
+        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black">Post</button>
+      </nav>
+    </header>
+
+    <!-- Center Feed -->
+    <main class="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+      <div class="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
+        <div class="grid grid-cols-2 text-center font-black">
+          <button id="tab-for-you" class="feed-tab active-tab py-4">For you</button>
+          <button id="tab-following" class="feed-tab py-4 text-slate-500">Following</button>
+        </div>
+      </div>
+
+      <section class="border-b border-slate-200 dark:border-white/10 p-4">
+        <div class="flex gap-3">
+          <img src="https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22" class="w-12 h-12 rounded-full" alt="">
+          <div class="flex-1">
+            <button id="composer-open" class="w-full text-left text-xl text-slate-500 font-semibold py-2">What’s happening?</button>
+            <div class="flex items-center justify-between mt-4">
+              <div class="flex items-center gap-4 text-broblue text-lg">
+                <button id="composer-image-open" title="Image">🖼️</button>
+                <button title="Poll">📊</button>
+                <button title="Cashtag">$</button>
+                <button title="Community">💬</button>
               </div>
-              <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
+              <button id="composer-post-btn" class="px-6 py-2 rounded-full bg-brogreen text-black font-black">Post</button>
             </div>
-            <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
-              <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL" maxlength="8" />
-              <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
-            </div>
-            <div id="watchlist-list" class="space-y-2"></div>
           </div>
         </div>
       </section>
 
-      <section class="glass rounded-3xl p-5">
-        <h2 class="font-black text-xl mb-3">Trending Topics</h2>
-        <div id="right-trending" class="flex flex-wrap gap-2 text-xs font-black"></div>
+      <section id="recommended-section" class="border-b border-slate-200 dark:border-white/10">
+        <div class="px-4 py-3 flex items-center justify-between">
+          <div>
+            <h2 class="font-black text-lg">Recommended Posts</h2>
+            <p class="text-xs text-slate-500">Weighted by watchlist, following, and subscribed communities.</p>
+          </div>
+        </div>
+        <ul id="recommended-posts-list"></ul>
       </section>
-    </aside>
-  </main>
 
-  <button id="open-post-modal-floating" class="sm:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-3xl bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
+      <section>
+        <div class="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10">
+          <div>
+            <h2 class="font-black text-lg">Recent Posts</h2>
+            <p id="feed-context" class="text-xs text-slate-500">All desks, newest first.</p>
+          </div>
+          <select id="sort-posts" class="px-3 py-2 rounded-full bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none">
+            <option value="newest">Newest</option>
+            <option value="bullish">Most Uptrended</option>
+            <option value="bearish">Most Downtrended</option>
+            <option value="active">Most Active</option>
+          </select>
+        </div>
+        <ul id="posts-list"></ul>
+        <div id="loading" class="p-6 text-center text-slate-500 font-bold">Loading feed...</div>
+      </section>
+    </main>
+
+    <!-- Right Market Rail -->
+    <aside class="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
+      <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
+        <div class="relative">
+          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
+          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <section class="panel rounded-3xl p-4">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Markets</p>
+              <h2 class="font-black text-xl">Watchlist</h2>
+            </div>
+            <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
+          </div>
+
+          <div class="relative mb-4">
+            <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks or crypto..." />
+            <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <div id="asset-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Top 10 Stocks</h3>
+                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-brogreen/15 text-green-600">EQUITIES</span>
+              </div>
+              <div id="popular-stocks-list" class="space-y-2"></div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Top 5 Crypto</h3>
+                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-broblue/15 text-broblue">CRYPTO</span>
+              </div>
+              <div id="popular-crypto-list" class="space-y-2"></div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">My Watchlist</h3>
+                  <p class="text-[11px] text-slate-500">Add stocks or crypto assets.</p>
+                </div>
+                <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
+              </div>
+              <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
+                <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL" maxlength="8" />
+                <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
+              </div>
+              <div id="watchlist-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel rounded-3xl p-4">
+          <h2 class="font-black text-xl mb-3">Trending Topics</h2>
+          <div id="right-trending" class="space-y-3"></div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Mobile Drawer -->
+  <div id="mobile-drawer-backdrop" class="fixed inset-0 bg-black/60 hidden z-[60]"></div>
+  <aside id="mobile-drawer" class="fixed left-0 top-0 bottom-0 w-[330px] max-w-[88vw] bg-white dark:bg-[#050816] z-[70] -translate-x-full transition-transform border-r border-slate-200 dark:border-white/10 p-5 overflow-y-auto">
+    <div class="flex items-center justify-between mb-5">
+      <div class="font-black text-xl">Menu</div>
+      <button id="close-mobile-drawer" class="w-10 h-10 rounded-2xl soft-card text-xl font-black">×</button>
+    </div>
+    <div id="mobile-drawer-content" class="space-y-4"></div>
+  </aside>
+
+  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -438,10 +450,12 @@
     const storage = firebase.storage();
 
     let currentUser = null;
+    let currentPosts = [];
     let selectedFilter = "all";
+    let feedTab = "for-you";
     let unsubscribePosts = null;
     let communitiesCache = [];
-    let currentPosts = [];
+    let activeTicker = "";
 
     const $ = (id) => document.getElementById(id);
 
@@ -451,16 +465,6 @@
 
     function openModal(id) { $(id).classList.add("modal-open"); $(id).classList.remove("hidden"); }
     function closeModal(id) { $(id).classList.remove("modal-open"); $(id).classList.add("hidden"); }
-
-    function openDrawer() {
-      $("drawer-backdrop").classList.remove("hidden");
-      $("side-drawer").classList.add("open");
-    }
-
-    function closeDrawer() {
-      $("side-drawer").classList.remove("open");
-      setTimeout(() => $("drawer-backdrop").classList.add("hidden"), 180);
-    }
 
     function formatDate(ts) {
       if (!ts) return "Just now";
@@ -550,8 +554,7 @@
 
     function setSavedPosts(ids) {
       localStorage.setItem("broliquidity_saved_posts", JSON.stringify([...new Set(ids)]));
-      renderDrawerSavedPosts();
-      renderPosts(currentPosts);
+      renderPosts(currentPosts.length ? currentPosts : demoPosts);
       renderRecommendedPosts();
     }
 
@@ -569,9 +572,9 @@
       };
     }
 
-    function renderSparkline(values, negative = false) {
+    function renderSparkline(values, negative = false, height = 38) {
       const max = Math.max(...values, 1);
-      return values.map(v => `<div class="mini-spark ${negative ? "red" : ""}" style="height:${Math.max(6, Math.round((v / max) * 38))}px"></div>`).join("");
+      return values.map(v => `<div class="mini-spark ${negative ? "red" : ""}" style="height:${Math.max(6, Math.round((v / max) * height))}px"></div>`).join("");
     }
 
     function renderTickerRow(ticker, remove = false) {
@@ -588,7 +591,7 @@
               </div>
               <div class="text-right">
                 <div class="font-black text-sm">${escapeHTML(d.price)}</div>
-                <div class="${negative ? "text-red-500" : "text-brogreen"} font-black text-xs">${escapeHTML(d.change)}</div>
+                <div class="${negative ? "text-red-500" : "text-green-600"} font-black text-xs">${escapeHTML(d.change)}</div>
               </div>
             </div>
             <div class="h-10 flex items-end gap-1 mt-2">${renderSparkline(d.spark, negative)}</div>
@@ -601,12 +604,6 @@
     function renderMarketLists() {
       $("popular-stocks-list").innerHTML = topStocks.map(t => renderTickerRow(t)).join("");
       $("popular-crypto-list").innerHTML = topCrypto.map(t => renderTickerRow(t)).join("");
-      $("ticker-strip").innerHTML = [...topStocks.slice(0, 5), ...topCrypto.slice(0, 3), ...topStocks.slice(0, 5), ...topCrypto.slice(0, 3)]
-        .map(t => {
-          const d = assetData(t);
-          const up = !d.change.startsWith("-");
-          return `<button class="ticker-btn" data-ticker="${t}"><span>${t}</span> <span class="${up ? "text-brogreen" : "text-red-400"}">${d.change}</span></button>`;
-        }).join("");
       bindTickerButtons();
     }
 
@@ -636,37 +633,36 @@
       const t = String(ticker || "").toUpperCase();
       const d = assetData(t);
       const negative = d.change.startsWith("-");
+      activeTicker = t;
       $("ticker-symbol").textContent = "$" + t;
       $("ticker-name").textContent = d.name;
       $("ticker-price").textContent = d.price;
       $("ticker-change").textContent = d.change;
-      $("ticker-change").className = "text-sm font-black " + (negative ? "text-red-500" : "text-brogreen");
-      $("ticker-sparkline").innerHTML = renderSparkline(d.spark, negative).replaceAll("38", "88");
+      $("ticker-change").className = "text-sm font-black " + (negative ? "text-red-500" : "text-green-600");
+      $("ticker-sparkline").innerHTML = renderSparkline(d.spark, negative, 88);
       $("ticker-mentions").textContent = d.mentions;
       $("ticker-bias").textContent = d.bias;
-      $("ticker-bias").className = "text-lg " + (String(d.bias).includes("Bear") ? "text-red-500" : "text-brogreen");
+      $("ticker-bias").className = "text-lg " + (String(d.bias).includes("Bear") ? "text-red-500" : "text-green-600");
       $("ticker-type").textContent = d.type;
       openModal("ticker-modal");
     }
 
     function formatContent(content) {
       return escapeHTML(content || "").replace(/\$([A-Z]{1,5})\b/g, (match, ticker) => {
-        return `<button type="button" class="cashtag text-brogreen font-black hover:underline" data-ticker="${ticker}">${match}</button>`;
+        return `<button type="button" class="cashtag text-green-600 dark:text-brogreen font-black hover:underline" data-ticker="${ticker}">${match}</button>`;
       });
     }
 
     function scoreRecommendedPost(post) {
       const watch = getWatchlist();
       const followedNames = following.map(u => u.name);
-      const subscribedIds = communitiesCache.filter(c => Array.isArray(c.members) && currentUser && c.members.includes(currentUser.uid)).map(c => c.id);
       let score = 0;
 
       watch.forEach(t => {
         if ((post.content || "").toUpperCase().includes("$" + t)) score += 8;
       });
       if (followedNames.includes(post.author)) score += 6;
-      if (subscribedIds.includes(post.community)) score += 5;
-      if (post.category === "stocks" || post.category === "crypto") score += 2;
+      if (post.category === "stocks" || post.category === "crypto") score += 3;
       score += Math.min(6, Math.floor(((post.bullish || 0) + (post.comments || 0)) / 8));
       return score;
     }
@@ -687,37 +683,37 @@
       const saved = getSavedPosts().includes(String(post.id));
 
       return `
-        <li class="glass rounded-3xl p-5 border-l-4 ${bull >= bear ? "border-brogreen" : "border-red-500"}">
+        <li class="border-b border-slate-200 dark:border-white/10 p-4 hover:bg-slate-50 dark:hover:bg-white/[.03] transition">
           <div class="flex items-start gap-3">
             <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=050816&color=B6FF22" class="w-11 h-11 rounded-full border border-slate-200 dark:border-white/10" alt="">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-black text-broblue">@${escapeHTML(post.author || "anonymousbro")}</span>
-                <span class="text-xs text-slate-500">• ${formatDate(post.createdAt)}</span>
-                <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-[10px] font-black uppercase text-slate-500">c/${escapeHTML(commName)}</span>
-                ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full active-pill font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
+                <span class="font-black">@${escapeHTML(post.author || "anonymousbro")}</span>
+                <span class="text-sm text-slate-500">• ${formatDate(post.createdAt)}</span>
+                <span class="text-xs text-slate-500">c/${escapeHTML(commName)}</span>
+                ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-white/8 text-broblue font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
                 ${recommended ? `<span class="text-[10px] px-2 py-1 rounded-full bg-brogreen text-black font-black uppercase">Recommended</span>` : ""}
               </div>
 
-              ${post.content ? `<p class="mt-3 text-sm sm:text-base leading-relaxed text-black dark:text-white font-semibold tracking-tight">${formatContent(post.content || "")}</p>` : ""}
-              ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" alt="Post image" class="mt-4 w-full max-h-[460px] object-cover rounded-3xl border border-slate-200 dark:border-white/10 bg-black/20" loading="lazy">` : ""}
+              ${post.content ? `<p class="mt-2 text-[15px] leading-relaxed text-black dark:text-white font-medium">${formatContent(post.content || "")}</p>` : ""}
+              ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" alt="Post image" class="mt-3 w-full max-h-[520px] object-cover rounded-3xl border border-slate-200 dark:border-white/10 bg-black/20" loading="lazy">` : ""}
 
-              <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-slate-200 dark:border-white/5">
-                <div class="flex-1">
-                  <div class="flex items-center justify-between text-[10px] font-black mb-1">
-                    <span class="text-brogreen">${bullPct}% Bullish</span>
-                    <span class="text-red-500">${100 - bullPct}% Bearish</span>
-                  </div>
-                  <div class="h-2 bg-red-500/30 rounded-full overflow-hidden">
-                    <div class="h-full bg-brogreen" style="width:${bullPct}%"></div>
-                  </div>
+              <div class="mt-3">
+                <div class="flex items-center justify-between text-[10px] font-black mb-1">
+                  <span class="text-green-600">${bullPct}% Bullish</span>
+                  <span class="text-red-500">${100 - bullPct}% Bearish</span>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-brogreen text-black uppercase" data-id="${post.id}" data-field="bullish">↗ Uptrend ${bull}</button>
-                  <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-red-500 text-white uppercase" data-id="${post.id}" data-field="bearish">↘ Downtrend ${bear}</button>
-                  <button class="save-post-btn text-[10px] font-black px-3 py-2 rounded-xl soft-card uppercase ${saved ? "text-brogreen" : "text-slate-500"}" data-id="${post.id}">${saved ? "✓ Saved" : "🔖 Save"}</button>
-                  <button class="comment-toggle text-[10px] font-black px-3 py-2 rounded-xl soft-card uppercase" data-id="${post.id}" ${post.allowComments === false ? "disabled" : ""}>💬 ${post.allowComments === false ? "Off" : (post.comments || 0)}</button>
+                <div class="h-1.5 bg-red-500/30 rounded-full overflow-hidden">
+                  <div class="h-full bg-brogreen" style="width:${bullPct}%"></div>
                 </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between max-w-lg text-slate-500">
+                <button class="comment-toggle hover:text-broblue text-sm font-bold" data-id="${post.id}" ${post.allowComments === false ? "disabled" : ""}>💬 ${post.allowComments === false ? "Off" : (post.comments || 0)}</button>
+                <button class="vote-btn hover:text-green-600 text-sm font-bold" data-id="${post.id}" data-field="bullish">↗ ${bull}</button>
+                <button class="vote-btn hover:text-red-500 text-sm font-bold" data-id="${post.id}" data-field="bearish">↘ ${bear}</button>
+                <button class="save-post-btn hover:text-broblue text-sm font-bold ${saved ? "text-broblue" : ""}" data-id="${post.id}">${saved ? "🔖 Saved" : "🔖"}</button>
+                <button class="text-sm font-bold hover:text-broblue">↗ Share</button>
               </div>
 
               <div id="comments-${post.id}" class="hidden mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
@@ -737,16 +733,16 @@
 
     function renderPosts(posts) {
       currentPosts = posts;
+      const basePosts = feedTab === "following" ? posts.filter(p => following.some(u => u.name === p.author)) : posts;
       const filtered = selectedFilter === "all"
-        ? posts
-        : posts.filter(p => p.category === selectedFilter || p.community === selectedFilter);
+        ? basePosts
+        : basePosts.filter(p => p.category === selectedFilter || p.community === selectedFilter);
 
       $("posts-list").innerHTML = filtered.length
         ? filtered.map(p => renderPostCard(p)).join("")
-        : `<li class="glass rounded-3xl p-10 text-center text-slate-500"><div class="font-black">No liquidity here yet.</div></li>`;
+        : `<li class="p-10 text-center text-slate-500 border-b border-slate-200 dark:border-white/10"><div class="font-black">No liquidity here yet.</div></li>`;
 
       bindPostActions();
-      renderDrawerSavedPosts();
       renderRecommendedPosts();
     }
 
@@ -830,26 +826,18 @@
 
     function setFilter(filter) {
       selectedFilter = filter;
-      $("filter-category").value = filter;
-      document.querySelectorAll(".category-pill").forEach(btn => btn.classList.toggle("active-pill", btn.dataset.filter === filter));
+      document.querySelectorAll(".left-nav").forEach(btn => btn.classList.remove("active-nav"));
       $("feed-context").textContent = filter === "all" ? "All desks, newest first." : `${filter.replace("-", " ")} desk, newest first.`;
       renderPosts(currentPosts.length ? currentPosts : demoPosts);
     }
 
     async function loadCommunities() {
-      const select = $("community-select");
-      select.innerHTML = '<option value="">Select Community</option>';
       communitiesCache = [];
 
       try {
         const snap = await db.collection("communities").orderBy("createdAt", "desc").limit(20).get();
         snap.forEach(doc => {
-          const c = { id: doc.id, ...doc.data() };
-          communitiesCache.push(c);
-          const opt = document.createElement("option");
-          opt.value = doc.id;
-          opt.textContent = c.name || "Unnamed Community";
-          select.appendChild(opt);
+          communitiesCache.push({ id: doc.id, ...doc.data() });
         });
       } catch (e) {}
 
@@ -861,37 +849,50 @@
         ];
       }
 
-      renderDrawerContent();
+      const select = $("community-select");
+      select.innerHTML = '<option value="">Select Community</option>';
+      communitiesCache.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = c.name || "Unnamed Community";
+        select.appendChild(opt);
+      });
+
+      renderLeftRail();
     }
 
-    function renderDrawerContent() {
-      $("drawer-communities").innerHTML = communitiesCache.map(c => `
-        <button class="drawer-community w-full soft-card rounded-2xl p-3 text-left" data-id="${c.id}">
+    function renderLeftRail() {
+      const communitiesHTML = communitiesCache.map(c => `
+        <button class="community-btn w-full soft-card rounded-2xl p-3 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-id="${c.id}">
           <div class="font-black">c/${escapeHTML(c.name)}</div>
           <div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(c.description || "Finance desk")}</div>
         </button>
       `).join("");
 
-      $("drawer-following").innerHTML = following.map(renderUserMini).join("");
-      $("drawer-followers").innerHTML = followers.map(renderUserMini).join("");
+      $("left-communities").innerHTML = communitiesHTML;
 
-      const tags = trendingTopics.map(t => `<button class="px-3 py-2 rounded-full soft-card">${escapeHTML(t)}</button>`).join("");
-      $("drawer-trending").innerHTML = tags;
-      $("right-trending").innerHTML = tags;
+      const followingHTML = following.map(renderUserMini).join("");
+      $("left-following").innerHTML = followingHTML;
 
-      document.querySelectorAll(".drawer-community").forEach(btn => {
-        btn.onclick = () => {
-          setFilter(btn.dataset.id);
-          closeDrawer();
-        };
+      document.querySelectorAll(".community-btn").forEach(btn => {
+        btn.onclick = () => setFilter(btn.dataset.id);
       });
 
-      renderDrawerSavedPosts();
+      const trendingHTML = trendingTopics.map((t, i) => `
+        <button class="block w-full text-left">
+          <div class="text-xs text-slate-500">Trending in Finance</div>
+          <div class="font-black">${escapeHTML(t)}</div>
+          <div class="text-xs text-slate-500">${(i + 2) * 7}.4K posts</div>
+        </button>
+      `).join("");
+      $("right-trending").innerHTML = trendingHTML;
+
+      renderMobileDrawerContent();
     }
 
     function renderUserMini(u) {
       return `
-        <button class="w-full soft-card rounded-2xl p-3 text-left">
+        <button class="w-full soft-card rounded-2xl p-3 text-left hover:bg-slate-100 dark:hover:bg-white/10">
           <div class="flex items-center gap-3">
             <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22" class="w-9 h-9 rounded-full border border-slate-200 dark:border-white/10" alt="">
             <div class="min-w-0">
@@ -903,12 +904,32 @@
       `;
     }
 
-    function renderDrawerSavedPosts() {
-      const saved = getSavedPosts();
-      const posts = (currentPosts.length ? currentPosts : demoPosts).filter(p => saved.includes(String(p.id)));
-      $("drawer-saved-posts").innerHTML = posts.length
-        ? posts.map(p => `<button class="w-full soft-card rounded-2xl p-3 text-left"><div class="font-black">@${escapeHTML(p.author)}</div><div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(p.content)}</div></button>`).join("")
-        : `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No saved posts yet.</div>`;
+    function renderMobileDrawerContent() {
+      $("mobile-drawer-content").innerHTML = `
+        <section class="panel rounded-3xl p-4">
+          <h2 class="font-black mb-3">Communities</h2>
+          <div class="space-y-2">${communitiesCache.map(c => `<button class="mobile-community w-full soft-card rounded-2xl p-3 text-left" data-id="${c.id}"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></button>`).join("")}</div>
+        </section>
+        <section class="panel rounded-3xl p-4">
+          <h2 class="font-black mb-3">Following</h2>
+          <div class="space-y-2">${following.map(renderUserMini).join("")}</div>
+        </section>
+        <section class="panel rounded-3xl p-4">
+          <h2 class="font-black mb-3">Followers</h2>
+          <div class="space-y-2">${followers.map(renderUserMini).join("")}</div>
+        </section>
+        <section class="panel rounded-3xl p-4">
+          <h2 class="font-black mb-3">Trending Topics</h2>
+          <div class="flex flex-wrap gap-2">${trendingTopics.map(t => `<button class="px-3 py-2 rounded-full soft-card text-xs font-black">${escapeHTML(t)}</button>`).join("")}</div>
+        </section>
+      `;
+
+      document.querySelectorAll(".mobile-community").forEach(btn => {
+        btn.onclick = () => {
+          setFilter(btn.dataset.id);
+          closeMobileDrawer();
+        };
+      });
     }
 
     async function createCommunity() {
@@ -957,8 +978,6 @@
 
     async function submitPost(e) {
       e.preventDefault();
-      const error = $("post-error");
-      error.classList.add("hidden");
 
       const destination = $("post-destination").value;
       const community = $("community-select").value;
@@ -974,6 +993,7 @@
       if (!content && !imageFile) return showPostError("Add text or an image before posting.");
 
       let imageUrl = "";
+
       try {
         if (imageFile) {
           const imageRef = storage.ref("post_images/" + currentUser.uid + "_" + Date.now() + "_" + imageFile.name);
@@ -1041,6 +1061,7 @@
 
       box.classList.remove("hidden");
       bindTickerButtons();
+
       document.querySelectorAll(".add-asset-btn").forEach(btn => {
         btn.onclick = () => {
           setWatchlist([...getWatchlist(), btn.dataset.ticker]);
@@ -1050,78 +1071,84 @@
       });
     }
 
-    async function runSearch(q) {
+    function runGlobalSearch(q) {
       const query = String(q || "").trim();
-      const results = $("search-results");
+      const box = $("global-search-results");
       if (!query) {
-        results.classList.add("hidden");
-        results.innerHTML = "";
+        box.classList.add("hidden");
+        box.innerHTML = "";
         return;
       }
 
-      const t = query.toUpperCase();
+      const upper = query.toUpperCase();
       let html = "";
 
-      if (assets[t]) {
-        const d = assetData(t);
-        html += `
-          <button class="ticker-btn w-full p-3 rounded-2xl soft-card mb-2 text-left" data-ticker="${t}">
-            <div class="text-xs text-slate-500 font-black">ASSET</div>
-            <div class="flex justify-between">
-              <div><div class="font-black text-lg">$${t}</div><div class="text-xs text-slate-500">${escapeHTML(d.name)}</div></div>
-              <div class="${d.change.startsWith("-") ? "text-red-500" : "text-brogreen"} font-black">${d.price} ${d.change}</div>
-            </div>
-          </button>
-        `;
+      const assetMatches = Object.keys(assets).filter(t => t.includes(upper) || assets[t].name.toUpperCase().includes(upper)).slice(0, 5);
+      if (assetMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">ASSETS</div>`;
+        html += assetMatches.map(t => {
+          const d = assetData(t);
+          return `<button class="ticker-btn w-full text-left soft-card rounded-2xl p-3 mb-2" data-ticker="${t}"><div class="font-black">$${t}</div><div class="text-xs text-slate-500">${escapeHTML(d.name)} • ${d.type}</div></button>`;
+        }).join("");
       }
 
       const commMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(query.toLowerCase()));
       if (commMatches.length) {
         html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
-        html += commMatches.map(c => `<div class="p-3 rounded-2xl soft-card mb-2"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></div>`).join("");
+        html += commMatches.map(c => `<button class="w-full text-left soft-card rounded-2xl p-3 mb-2"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></button>`).join("");
       }
 
-      const userMatches = [...following, ...followers].filter(u => u.name.toLowerCase().includes(query.toLowerCase()));
-      if (userMatches.length) {
-        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">USERS</div>`;
-        html += userMatches.map(renderUserMini).join("");
-      }
-
-      results.innerHTML = html || `<div class="p-3 text-slate-500 font-bold">No results found.</div>`;
-      results.classList.remove("hidden");
+      box.innerHTML = html || `<div class="p-3 text-slate-500 font-bold">No results found.</div>`;
+      box.classList.remove("hidden");
       bindTickerButtons();
     }
 
     function loadProfile(user) {
       const username = user.displayName || user.email || "User";
       $("profile-username-display").textContent = username;
+      $("left-profile-name").textContent = username;
       const fallback = "https://ui-avatars.com/api/?name=" + encodeURIComponent(username) + "&background=050816&color=B6FF22";
 
       db.collection("profiles").doc(user.uid).get().then(doc => {
         const data = doc.exists ? doc.data() : {};
         $("profile-bio").value = data.bio || "";
-        $("profile-photo").src = data.photoURL || user.photoURL || fallback;
-        $("profile-btn").src = data.photoURL || user.photoURL || fallback;
+        const photo = data.photoURL || user.photoURL || fallback;
+        $("profile-photo").src = photo;
+        $("profile-btn").src = photo;
       }).catch(() => {
         $("profile-photo").src = fallback;
         $("profile-btn").src = fallback;
       });
     }
 
-    function wireEvents() {
-      $("open-drawer").onclick = openDrawer;
-      $("close-drawer").onclick = closeDrawer;
-      $("drawer-backdrop").onclick = closeDrawer;
+    function openMobileDrawer() {
+      $("mobile-drawer-backdrop").classList.remove("hidden");
+      $("mobile-drawer").classList.remove("-translate-x-full");
+    }
 
-      ["open-post-modal-top", "open-post-modal-hero", "open-post-modal-floating"].forEach(id => $(id).onclick = () => openModal("post-modal"));
+    function closeMobileDrawer() {
+      $("mobile-drawer").classList.add("-translate-x-full");
+      setTimeout(() => $("mobile-drawer-backdrop").classList.add("hidden"), 180);
+    }
+
+    function wireEvents() {
+      ["left-post-btn", "mobile-post-btn", "mobile-floating-post", "composer-open", "composer-post-btn", "composer-image-open"].forEach(id => {
+        $(id).onclick = () => openModal("post-modal");
+      });
       $("close-post-modal").onclick = () => closeModal("post-modal");
 
       $("close-ticker-modal").onclick = () => closeModal("ticker-modal");
+      $("ticker-add-btn").onclick = () => {
+        if (activeTicker) setWatchlist([...getWatchlist(), activeTicker]);
+        closeModal("ticker-modal");
+      };
 
       $("profile-btn").onclick = () => openModal("profile-modal");
+      $("left-profile-card").onclick = () => openModal("profile-modal");
+      $("profile-nav-btn").onclick = () => openModal("profile-modal");
       $("close-profile").onclick = () => closeModal("profile-modal");
 
-      $("drawer-create-community").onclick = () => openModal("create-community-modal");
+      $("left-create-community").onclick = () => openModal("create-community-modal");
       $("close-create-community").onclick = () => closeModal("create-community-modal");
       $("create-community-btn").onclick = createCommunity;
 
@@ -1147,6 +1174,7 @@
       };
 
       $("profile-theme-toggle").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
+      $("theme-toggle-rail").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
 
       $("save-profile").onclick = async () => {
         if (!currentUser) return;
@@ -1160,8 +1188,44 @@
       };
 
       $("sort-posts").onchange = subscribeToPosts;
-      $("filter-category").onchange = () => setFilter($("filter-category").value);
-      document.querySelectorAll(".category-pill").forEach(btn => btn.onclick = () => setFilter(btn.dataset.filter));
+
+      $("tab-for-you").onclick = () => {
+        feedTab = "for-you";
+        $("tab-for-you").classList.add("active-tab");
+        $("tab-for-you").classList.remove("text-slate-500");
+        $("tab-following").classList.remove("active-tab");
+        $("tab-following").classList.add("text-slate-500");
+        $("recommended-section").classList.remove("hidden");
+        renderPosts(currentPosts.length ? currentPosts : demoPosts);
+      };
+
+      $("tab-following").onclick = () => {
+        feedTab = "following";
+        $("tab-following").classList.add("active-tab");
+        $("tab-following").classList.remove("text-slate-500");
+        $("tab-for-you").classList.remove("active-tab");
+        $("tab-for-you").classList.add("text-slate-500");
+        $("recommended-section").classList.add("hidden");
+        renderPosts(currentPosts.length ? currentPosts : demoPosts);
+      };
+
+      document.querySelectorAll(".left-nav").forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll(".left-nav").forEach(b => b.classList.remove("active-nav"));
+          btn.classList.add("active-nav");
+          const view = btn.dataset.view;
+          if (view === "home") setFilter("all");
+          if (view === "communities") setFilter("stocks");
+          if (view === "following") $("tab-following").click();
+          if (view === "bookmarks") {
+            const saved = getSavedPosts();
+            const posts = (currentPosts.length ? currentPosts : demoPosts).filter(p => saved.includes(String(p.id)));
+            $("recommended-section").classList.add("hidden");
+            $("posts-list").innerHTML = posts.length ? posts.map(p => renderPostCard(p)).join("") : `<li class="p-10 text-center text-slate-500">No saved posts yet.</li>`;
+            bindPostActions();
+          }
+        };
+      });
 
       $("add-watchlist-btn").onclick = () => $("watchlist-form").classList.toggle("hidden");
       $("save-watchlist-btn").onclick = () => {
@@ -1173,18 +1237,21 @@
       };
 
       $("asset-search").oninput = e => searchAssets(e.target.value);
-      $("search-bar").oninput = e => runSearch(e.target.value);
+      $("global-search").oninput = e => runGlobalSearch(e.target.value);
+
+      $("mobile-menu-btn").onclick = openMobileDrawer;
+      $("close-mobile-drawer").onclick = closeMobileDrawer;
+      $("mobile-drawer-backdrop").onclick = closeMobileDrawer;
 
       document.addEventListener("click", e => {
-        if (!$("search-results").contains(e.target) && e.target !== $("search-bar")) $("search-results").classList.add("hidden");
         if (!$("asset-search-results").contains(e.target) && e.target !== $("asset-search")) $("asset-search-results").classList.add("hidden");
+        if (!$("global-search-results").contains(e.target) && e.target !== $("global-search")) $("global-search-results").classList.add("hidden");
       });
     }
 
     wireEvents();
     renderMarketLists();
     renderWatchlist();
-    renderDrawerContent();
 
     auth.onAuthStateChanged(async user => {
       if (!user) {
