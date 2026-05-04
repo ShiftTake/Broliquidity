@@ -403,8 +403,8 @@
         googleBtn.classList.add('hidden');
         document.getElementById('auth-section').classList.add('hidden');
         document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
-        const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
-        console.log('Profile snapshot exists:', profSnap.exists);
+        // Check if profile exists
+        const profSnap = await db.collection('profiles').doc(user.uid).get();
         if (profSnap.exists) {
           profileCreated = true;
           profileForm.classList.add('hidden');
@@ -440,24 +440,26 @@
       document.getElementById('auth-section').classList.add('hidden');
     };
 
-    profileForm.onsubmit = async (e) => {
-      e.preventDefault();
-      if (!currentUser) return;
-      const username = document.getElementById('username').value.trim();
-      const bio = document.getElementById('bio').value.trim();
-      // Set display name to username
-      await currentUser.updateProfile({ displayName: username });
-      await db.collection('profiles').doc(currentUser.uid).set({
-        username,
-        bio,
-        email: currentUser.email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      profileCreated = true;
-      profileForm.classList.add('hidden');
-      postForm.classList.remove('hidden');
-      document.getElementById('auth-section').classList.add('hidden');
-    };
+    // Add this at the end of your main script, after all handlers:
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        userInfo.innerHTML = `<div class='font-bold'>${user.displayName || user.email}</div><div class='text-xs text-slate-400'>${user.email}</div>`;
+        userInfo.classList.remove('hidden');
+        googleBtn.classList.add('hidden');
+        document.getElementById('auth-section').classList.add('hidden');
+        document.querySelectorAll('.interact-btn').forEach(btn => btn.disabled = false);
+        // Check if profile exists
+        const profSnap = await db.collection('profiles').doc(user.uid).get();
+        if (profSnap.exists) {
+          profileCreated = true;
+          profileForm.classList.add('hidden');
+          postForm.classList.remove('hidden');
+        } else {
+          profileForm.classList.remove('hidden');
+        }
+      }
+    });
       postSuccess.classList.remove('hidden');
       setTimeout(() => postSuccess.classList.add('hidden'), 2500);
     };
