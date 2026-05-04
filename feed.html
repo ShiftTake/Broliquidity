@@ -1,3 +1,15 @@
+  <!-- Create Community Modal -->
+  <div id="create-community-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-[#181a20] text-black dark:text-white rounded-2xl p-8 w-full max-w-md relative">
+      <button id="close-create-community" class="absolute top-3 right-3 text-2xl">&times;</button>
+      <h2 class="text-2xl font-black mb-4">Create Community</h2>
+      <input id="community-name" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full mb-2" placeholder="Community Name" />
+      <textarea id="community-desc" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full mb-2" rows="2" placeholder="Description"></textarea>
+      <input type="file" id="community-image" accept="image/*" class="mb-2" />
+      <button id="create-community-btn" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition w-full">Create</button>
+      <div id="community-create-error" class="text-red-400 text-sm mt-2 hidden"></div>
+    </div>
+  </div>
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
@@ -58,7 +70,7 @@
         <a href="feed.html" class="hover:text-[#b6ff22]">Feed</a>
         <a href="index.html" class="hover:text-[#b6ff22]">Home</a>
         <button id="theme-toggle" class="px-4 py-2 rounded-2xl bg-slate-700 text-white font-bold hover:scale-105 transition">🌙</button>
-        <button id="profile-btn" class="px-4 py-2 rounded-2xl bg-blue-600 text-white font-bold hover:scale-105 transition">Profile</button>
+        <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-[#b6ff22] cursor-pointer bg-slate-700" style="background:#eee;" />
   <!-- User Profile Modal -->
   <div id="profile-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
     <div class="bg-white dark:bg-[#181a20] text-black dark:text-white rounded-2xl p-8 w-full max-w-md relative">
@@ -69,6 +81,10 @@
         <input type="file" id="photo-upload" accept="image/*" class="mb-2" />
         <input id="profile-username" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" disabled />
         <textarea id="profile-bio" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" rows="3" placeholder="Add a short bio..."></textarea>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="font-semibold">Theme:</span>
+          <button id="profile-theme-toggle" class="px-4 py-2 rounded-2xl bg-slate-700 text-white font-bold hover:scale-105 transition">🌙</button>
+        </div>
         <button id="save-profile" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Save</button>
         <button id="logout-btn" class="w-full px-4 py-2 rounded-2xl bg-red-600 text-white font-bold hover:scale-105 transition mt-2">Logout</button>
       </div>
@@ -79,16 +95,35 @@
   </header>
   <main class="max-w-3xl mx-auto py-10 px-4">
     <section class="mb-10">
+      <div class="flex flex-col gap-2 mb-4">
+        <div class="flex items-center gap-4">
+          <button id="open-create-community" class="px-4 py-2 rounded-2xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Create Community</button>
+          <select id="community-select" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white dark:bg-slate-900 dark:text-white font-semibold">
+            <option value="">Select a Community</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+          <input id="search-bar" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" placeholder="Search communities or users..." />
+          <button id="search-btn" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:scale-105 transition">Search</button>
+        </div>
+        <div id="search-results" class="bg-white dark:bg-slate-900 text-black dark:text-white rounded-xl mt-2 p-2 hidden"></div>
+      </div>
       <form id="post-form" class="glass p-6 rounded-2xl mb-8 flex flex-col gap-3">
         <h3 class="text-xl font-bold mb-2">Start a Conversation</h3>
-        <select id="post-category" class="mb-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
-          <option value="stocks">Stocks</option>
-          <option value="options">Options</option>
-          <option value="crypto">Crypto</option>
-          <option value="jobs">Jobs</option>
-          <option value="careers">Careers</option>
-          <option value="other">Other</option>
-        </select>
+        <div class="flex gap-2 mb-2">
+          <select id="post-subject" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
+            <option value="">Select Subject</option>
+            <option value="stocks">Stocks</option>
+            <option value="options">Options</option>
+            <option value="crypto">Crypto</option>
+            <option value="jobs">Jobs</option>
+            <option value="careers">Careers</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="post-label" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
+            <option value="">Select Label</option>
+          </select>
+        </div>
         <textarea id="post-content" placeholder="What's on your mind?" class="w-full mb-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none" rows="3"></textarea>
         <div id="post-error" class="text-red-400 text-sm hidden"></div>
         <button type="submit" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Post</button>
@@ -132,6 +167,100 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+    // --- Search Bar Logic ---
+    const searchBar = document.getElementById('search-bar');
+    const searchBtn = document.getElementById('search-btn');
+    const searchResults = document.getElementById('search-results');
+
+    async function searchCommunitiesAndUsers(query) {
+      if (!query.trim()) {
+        searchResults.classList.add('hidden');
+        searchResults.innerHTML = '';
+        return;
+      }
+      let html = '';
+      // Search communities
+      const commSnap = await db.collection('communities').where('name', '>=', query).where('name', '<=', query + '\uf8ff').limit(5).get();
+      if (!commSnap.empty) {
+        html += '<div class="font-bold mb-1">Communities</div>';
+        commSnap.forEach(doc => {
+          const c = doc.data();
+          html += `<div class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded cursor-pointer" onclick="window.location.href='feed.html?community=${doc.id}'"><b>c/${c.name}</b> <span class='text-xs text-slate-400'>${c.description || ''}</span></div>`;
+        });
+      }
+      // Search users
+      const userSnap = await db.collection('profiles').where('displayName', '>=', query).where('displayName', '<=', query + '\uf8ff').limit(5).get();
+      if (!userSnap.empty) {
+        html += '<div class="font-bold mt-2 mb-1">Users</div>';
+        userSnap.forEach(doc => {
+          const u = doc.data();
+          html += `<div class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded cursor-pointer" onclick="window.location.href='profile.html?user=${doc.id}'"><b>u/${u.displayName || u.email || doc.id}</b></div>`;
+        });
+      }
+      if (!html) html = '<div class="text-slate-400">No results found.</div>';
+      searchResults.innerHTML = html;
+      searchResults.classList.remove('hidden');
+    }
+    searchBtn.onclick = () => searchCommunitiesAndUsers(searchBar.value);
+    searchBar.onkeyup = e => { if (e.key === 'Enter') searchCommunitiesAndUsers(searchBar.value); };
+
+    // --- Post Subject/Label Logic ---
+    const postSubject = document.getElementById('post-subject');
+    const postLabel = document.getElementById('post-label');
+    const labelOptions = {
+      stocks: ['General', 'Analysis', 'News', 'Question'],
+      options: ['Strategy', 'Trade', 'Education', 'Question'],
+      crypto: ['General', 'Altcoins', 'NFT', 'Question'],
+      jobs: ['Hiring', 'Looking', 'Advice', 'Question'],
+      careers: ['Advice', 'Experience', 'Question'],
+      other: ['General', 'Question']
+    };
+    postSubject.onchange = function() {
+      const val = postSubject.value;
+      postLabel.innerHTML = '<option value="">Select Label</option>';
+      if (labelOptions[val]) {
+        labelOptions[val].forEach(lab => {
+          const opt = document.createElement('option');
+          opt.value = lab;
+          opt.textContent = lab;
+          postLabel.appendChild(opt);
+        });
+      }
+    };
+
+    // --- Post Form Validation Update ---
+    const postForm = document.getElementById('post-form');
+    postForm.onsubmit = async function(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('post-error');
+      errorDiv.classList.add('hidden');
+      const subject = postSubject.value;
+      const label = postLabel.value;
+      const content = document.getElementById('post-content').value;
+      const community = document.getElementById('community-select').value;
+      if (!community) {
+        errorDiv.textContent = 'Select a community.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+      if (!subject) {
+        errorDiv.textContent = 'Select a subject.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+      if (!label) {
+        errorDiv.textContent = 'Select a label.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+      if (!content.trim()) {
+        errorDiv.textContent = 'Post content cannot be empty.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+      // Post logic here (add to Firestore, etc.)
+      // ...existing code...
+    };
 
     // --- Theme toggle ---
     const themeToggle = document.getElementById('theme-toggle');
@@ -179,13 +308,17 @@
       const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
       userProfile = profSnap.exists ? profSnap.data() : {};
       profileBio.value = userProfile.bio || '';
+      let photoUrl = '';
       if (userProfile.photoURL) {
-        profilePhoto.src = userProfile.photoURL;
+        photoUrl = userProfile.photoURL;
       } else if (currentUser.photoURL) {
-        profilePhoto.src = currentUser.photoURL;
+        photoUrl = currentUser.photoURL;
       } else {
-        profilePhoto.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profileUsername.value);
+        photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profileUsername.value);
       }
+      profilePhoto.src = photoUrl;
+      // Also update nav profile image
+      document.getElementById('profile-btn').src = photoUrl;
     };
     closeProfile.onclick = () => profileModal.classList.add('hidden');
     window.onclick = e => { if (e.target === profileModal) profileModal.classList.add('hidden'); };
@@ -220,7 +353,34 @@
       if (!user) {
         window.location.href = 'login.html';
       }
+      // Set nav profile image on login
+      let photoUrl = '';
+      if (user) {
+        const profRef = db.collection('profiles').doc(user.uid);
+        profRef.get().then(profSnap => {
+          if (profSnap.exists && profSnap.data().photoURL) {
+            photoUrl = profSnap.data().photoURL;
+          } else if (user.photoURL) {
+            photoUrl = user.photoURL;
+          } else {
+            photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email);
+          }
+          document.getElementById('profile-btn').src = photoUrl;
+        });
+      }
     });
+    // --- Profile Modal Theme Toggle ---
+    const profileThemeToggle = document.getElementById('profile-theme-toggle');
+    function updateProfileThemeBtn() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      profileThemeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+    }
+    updateProfileThemeBtn();
+    profileThemeToggle.onclick = () => {
+      const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
+      setTheme(current);
+      updateProfileThemeBtn();
+    };
 
     // --- Logout ---
     document.getElementById('logout-btn').onclick = async () => {
@@ -228,10 +388,67 @@
       window.location.href = 'login.html';
     };
 
-    // --- Post creation ---
+    // --- Community Creation ---
+    const openCreateCommunity = document.getElementById('open-create-community');
+    const createCommunityModal = document.getElementById('create-community-modal');
+    const closeCreateCommunity = document.getElementById('close-create-community');
+    const createCommunityBtn = document.getElementById('create-community-btn');
+    const communityName = document.getElementById('community-name');
+    const communityDesc = document.getElementById('community-desc');
+    const communityImage = document.getElementById('community-image');
+    const communityCreateError = document.getElementById('community-create-error');
+    const communitySelect = document.getElementById('community-select');
+
+    openCreateCommunity.onclick = () => createCommunityModal.classList.remove('hidden');
+    closeCreateCommunity.onclick = () => createCommunityModal.classList.add('hidden');
+    window.onclick = e => { if (e.target === createCommunityModal) createCommunityModal.classList.add('hidden'); };
+
+    async function loadCommunities() {
+      communitySelect.innerHTML = '<option value="">Select a Community</option>';
+      const snapshot = await db.collection('communities').get();
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const opt = document.createElement('option');
+        opt.value = doc.id;
+        opt.textContent = c.name;
+        communitySelect.appendChild(opt);
+      });
+    }
+    loadCommunities();
+
+    createCommunityBtn.onclick = async () => {
+      communityCreateError.classList.add('hidden');
+      if (!communityName.value.trim()) {
+        communityCreateError.textContent = 'Community name required.';
+        communityCreateError.classList.remove('hidden');
+        return;
+      }
+      let imageUrl = '';
+      if (communityImage.files[0]) {
+        const storageRef = firebase.storage().ref('community_images/' + Date.now() + '_' + communityImage.files[0].name);
+        await storageRef.put(communityImage.files[0]);
+        imageUrl = await storageRef.getDownloadURL();
+      }
+      const ref = await db.collection('communities').add({
+        name: communityName.value.trim(),
+        description: communityDesc.value.trim(),
+        image: imageUrl,
+        creator: auth.currentUser.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        moderators: [auth.currentUser.uid],
+        members: [auth.currentUser.uid]
+      });
+      createCommunityModal.classList.add('hidden');
+      communityName.value = '';
+      communityDesc.value = '';
+      communityImage.value = '';
+      await loadCommunities();
+      communitySelect.value = ref.id;
+    };
+
+    // --- Post creation (restricted to selected community) ---
     const postForm = document.getElementById('post-form');
     const postContent = document.getElementById('post-content');
-    const postCategory = document.getElementById('post-category');
     const postError = document.getElementById('post-error');
 
     function showPostError(msg) {
@@ -251,29 +468,38 @@
         showPostError('You must be signed in to post.');
         return;
       }
+      if (!communitySelect.value) {
+        showPostError('Select a community to post in.');
+        return;
+      }
       if (!postContent.value.trim()) {
         showPostError('Post content cannot be empty.');
         return;
       }
       let username = user.displayName;
       if (!username) {
-        // Auto-generate username if not set
         const emailPrefix = user.email ? user.email.split('@')[0] : 'user';
         username = emailPrefix + Math.floor(Math.random() * 10000);
         await user.updateProfile({ displayName: username });
         await db.collection('profiles').doc(user.uid).set({ username }, { merge: true });
       }
+      // Check if user is a member of the community
+      const commSnap = await db.collection('communities').doc(communitySelect.value).get();
+      const comm = commSnap.data();
+      if (!comm.members.includes(user.uid)) {
+        showPostError('You must join this community to post.');
+        return;
+      }
       try {
         await db.collection('posts').add({
           content: postContent.value,
-          category: postCategory.value,
+          community: communitySelect.value,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           author: username,
           bullish: 0,
           bearish: 0
         });
         postContent.value = '';
-        postCategory.value = 'stocks';
       } catch (err) {
         showPostError('Failed to post. Try again.');
       }
