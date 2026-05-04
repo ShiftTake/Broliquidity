@@ -154,7 +154,74 @@
     function renderPosts(posts) {
       postsList.innerHTML = '';
       if (posts.length === 0) {
-        postsList.innerHTML = '<div class="text-slate-400">No posts yet.</div>';
+        // Dummy data for demonstration
+        const dummyPosts = [
+          {
+            id: '1',
+            category: 'stocks',
+            author: 'wallstreetwolf',
+            content: 'AAPL earnings beat expectations! 🚀 Who else is bullish for Q3?',
+            createdAt: { seconds: Math.floor(Date.now() / 1000) - 3600 },
+            bullish: 23,
+            bearish: 2
+          },
+          {
+            id: '2',
+            category: 'crypto',
+            author: 'cryptoking',
+            content: 'ETH 2.0 is finally here. Are you staking or selling?',
+            createdAt: { seconds: Math.floor(Date.now() / 1000) - 7200 },
+            bullish: 15,
+            bearish: 5
+          },
+          {
+            id: '3',
+            category: 'jobs',
+            author: 'financerecruiter',
+            content: 'Hiring for a junior analyst role in NYC. DM for details!',
+            createdAt: { seconds: Math.floor(Date.now() / 1000) - 10800 },
+            bullish: 8,
+            bearish: 0
+          },
+          {
+            id: '4',
+            category: 'options',
+            author: 'optionstrader',
+            content: 'SPY 450c for next week. Who’s in?',
+            createdAt: { seconds: Math.floor(Date.now() / 1000) - 5400 },
+            bullish: 12,
+            bearish: 3
+          },
+          {
+            id: '5',
+            category: 'careers',
+            author: 'cfaprepper',
+            content: 'Passed CFA Level 2! Any tips for Level 3?',
+            createdAt: { seconds: Math.floor(Date.now() / 1000) - 18000 },
+            bullish: 10,
+            bearish: 1
+          }
+        ];
+        dummyPosts.forEach(post => {
+          const li = document.createElement('li');
+          li.className = 'glass p-5 rounded-xl';
+          li.innerHTML = `
+            <div class="text-xs text-slate-400 mb-1">${post.category.toUpperCase()} • ${post.author}</div>
+            <div class="text-white mb-2">${post.content}</div>
+            <div class="text-xs text-slate-500 mb-1">${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
+            <div class="flex gap-3 items-center mt-2">
+              <button class="bullish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs" data-id="${post.id}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15" /><line x1="12" y1="9" x2="12" y2="21" /></svg>
+                Bullish <span>${post.bullish || 0}</span>
+              </button>
+              <button class="bearish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs" data-id="${post.id}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                Bearish <span>${post.bearish || 0}</span>
+              </button>
+            </div>
+          `;
+          postsList.appendChild(li);
+        });
         return;
       }
       posts.forEach(post => {
