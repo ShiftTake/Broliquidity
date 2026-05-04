@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bro Liquidity Feed</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#050816] text-white font-sans min-h-screen">
+  <header class="px-6 py-5">
+    <nav class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="mainlogo.png" alt="Bro Liquidity Logo" class="w-14 h-14 rounded-2xl object-cover">
+        <div>
+          <h1 class="font-black text-xl tracking-tight">Bro Liquidity</h1>
+          <p class="text-xs text-slate-400">Trades. Licenses. Careers.</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-8 text-sm font-semibold text-slate-300">
+        <a href="index.html#features" class="hover:text-[#b6ff22]">Features</a>
+        <a href="feed.html" class="hover:text-[#b6ff22]">Feed</a>
+        <a href="index.html" class="hover:text-[#b6ff22]">Home</a>
+        <button id="logout-btn" class="ml-6 px-6 py-2 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition">Logout</button>
+      </div>
+    </nav>
+  </header>
+  <main class="max-w-3xl mx-auto py-10 px-4">
+    <section class="mb-10">
+      <form id="post-form" class="glass p-6 rounded-2xl mb-8 flex flex-col gap-3">
+        <h3 class="text-xl font-bold mb-2">Start a Conversation</h3>
+        <select id="post-category" class="mb-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
+          <option value="stocks">Stocks</option>
+          <option value="options">Options</option>
+          <option value="crypto">Crypto</option>
+          <option value="jobs">Jobs</option>
+          <option value="careers">Careers</option>
+          <option value="other">Other</option>
+        </select>
+        <textarea id="post-content" placeholder="What's on your mind?" class="w-full mb-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none" rows="3"></textarea>
+        <div id="post-error" class="text-red-400 text-sm hidden"></div>
+        <button type="submit" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Post</button>
+      </form>
+    </section>
+    <section>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <h3 class="text-lg font-bold">Recent Posts</h3>
+        <select id="filter-category" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+          <option value="all">All</option>
+          <option value="stocks">Stocks</option>
+          <option value="options">Options</option>
+          <option value="crypto">Crypto</option>
+          <option value="jobs">Jobs</option>
+          <option value="careers">Careers</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="sort-posts" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
+          <option value="newest">Newest</option>
+          <option value="bullish">Most Bullish</option>
+          <option value="bearish">Most Bearish</option>
+        </select>
+      </div>
+      <ul id="posts-list" class="space-y-4"></ul>
+      <div id="loading" class="text-slate-400 mt-4">Loading...</div>
+    </section>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDd5tPj3G8Emnga-svWIASzojete6vogH0",
+      authDomain: "broliquidity.firebaseapp.com",
+      projectId: "broliquidity",
+      storageBucket: "broliquidity.appspot.com",
+      messagingSenderId: "786880915771",
+      appId: "1:786880915771:web:fe103176ffde52eff06f1e",
+      measurementId: "G-SBMVSQ34L6"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // --- Auth check ---
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      }
+    });
+
+    // --- Logout ---
+    document.getElementById('logout-btn').onclick = async () => {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    };
+
+    // --- Post creation ---
+    const postForm = document.getElementById('post-form');
+    const postContent = document.getElementById('post-content');
+    const postCategory = document.getElementById('post-category');
+    const postError = document.getElementById('post-error');
+
+    function showPostError(msg) {
+      postError.textContent = msg;
+      postError.classList.remove('hidden');
+    }
+    function clearPostError() {
+      postError.textContent = '';
+      postError.classList.add('hidden');
+    }
+
+    postForm.onsubmit = async (e) => {
+      e.preventDefault();
+      clearPostError();
+      const user = auth.currentUser;
+      if (!user) {
+        showPostError('You must be signed in to post.');
+        return;
+      }
+      if (!postContent.value.trim()) {
+        showPostError('Post content cannot be empty.');
+        return;
+      }
+      let username = user.displayName;
+      if (!username) {
+        // Auto-generate username if not set
+        const emailPrefix = user.email ? user.email.split('@')[0] : 'user';
+        username = emailPrefix + Math.floor(Math.random() * 10000);
+        await user.updateProfile({ displayName: username });
+        await db.collection('profiles').doc(user.uid).set({ username }, { merge: true });
+      }
+      try {
+        await db.collection('posts').add({
+          content: postContent.value,
+          category: postCategory.value,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          author: username,
+          bullish: 0,
+          bearish: 0
+        });
+        postContent.value = '';
+        postCategory.value = 'stocks';
+      } catch (err) {
+        showPostError('Failed to post. Try again.');
+      }
+    };
+
+    // --- Fetch and render posts ---
+    const postsList = document.getElementById('posts-list');
+    const loadingDiv = document.getElementById('loading');
+    const filterCategory = document.getElementById('filter-category');
+    const sortPosts = document.getElementById('sort-posts');
+
+    function renderPosts(posts) {
+      postsList.innerHTML = '';
+      if (posts.length === 0) {
+        postsList.innerHTML = '<div class="text-slate-400">No posts yet.</div>';
+        return;
+      }
+      posts.forEach(post => {
+        const li = document.createElement('li');
+        li.className = 'glass p-5 rounded-xl';
+        li.innerHTML = `
+          <div class="text-xs text-slate-400 mb-1">${post.category.toUpperCase()} • ${post.author}</div>
+          <div class="text-white mb-2">${post.content}</div>
+          <div class="text-xs text-slate-500 mb-1">${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : ''}</div>
+          <div class="flex gap-3 items-center mt-2">
+            <button class="bullish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs" data-id="${post.id}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15" /><line x1="12" y1="9" x2="12" y2="21" /></svg>
+              Bullish <span>${post.bullish || 0}</span>
+            </button>
+            <button class="bearish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs" data-id="${post.id}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              Bearish <span>${post.bearish || 0}</span>
+            </button>
+          </div>
+        `;
+        postsList.appendChild(li);
+      });
+      // Add event listeners for voting
+      document.querySelectorAll('.bullish-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = btn.getAttribute('data-id');
+          const postRef = db.collection('posts').doc(id);
+          await postRef.update({ bullish: firebase.firestore.FieldValue.increment(1) });
+        };
+      });
+      document.querySelectorAll('.bearish-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = btn.getAttribute('data-id');
+          const postRef = db.collection('posts').doc(id);
+          await postRef.update({ bearish: firebase.firestore.FieldValue.increment(1) });
+        };
+      });
+    }
+
+    let unsubscribe = null;
+    function subscribeToPosts() {
+      if (unsubscribe) unsubscribe();
+      let q = db.collection('posts');
+      const filter = filterCategory.value;
+      if (filter !== 'all') {
+        q = q.where('category', '==', filter);
+      }
+      q = q.orderBy('createdAt', 'desc');
+      unsubscribe = q.onSnapshot(snapshot => {
+        let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sorting
+        if (sortPosts.value === 'bullish') {
+          posts = posts.sort((a, b) => (b.bullish || 0) - (a.bullish || 0));
+        } else if (sortPosts.value === 'bearish') {
+          posts = posts.sort((a, b) => (b.bearish || 0) - (a.bearish || 0));
+        } else {
+          posts = posts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        }
+        renderPosts(posts);
+        loadingDiv.style.display = 'none';
+      });
+    }
+    filterCategory.onchange = subscribeToPosts;
+    sortPosts.onchange = subscribeToPosts;
+    subscribeToPosts();
+  </script>
+</body>
+</html>

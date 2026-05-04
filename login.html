@@ -54,7 +54,7 @@
       clearLoginError();
       try {
         await auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value);
-        window.location.href = 'index.html#community';
+        window.location.href = 'feed.html';
       } catch (err) {
         showLoginError('Login failed: ' + err.message);
       }
