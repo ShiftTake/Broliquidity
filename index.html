@@ -55,6 +55,7 @@
         <a href="#features" class="hover:text-[#b6ff22]">Features</a>
         <a href="#community" class="hover:text-[#b6ff22]">Community</a>
         <a href="#user-flow" class="hover:text-[#b6ff22]">Get Started</a>
+        <button id="nav-login-btn" class="ml-6 px-6 py-2 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition">Login</button>
       </div>
     </nav>
   </header>
@@ -328,7 +329,7 @@
             };
           });
           </script>
-      <div id="public-feed" class="mb-10"></div>
+      <!-- Post and feed removed for unauthenticated users. Only show after login. -->
       <form id="profile-form" class="glass rounded-3xl p-4 flex flex-col gap-3 items-center mb-8 hidden">
         <input id="username" type="text" placeholder="Username" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" required>
         <textarea id="bio" placeholder="Short bio" class="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full max-w-xs" rows="2"></textarea>
@@ -359,34 +360,15 @@
     const profileForm = document.getElementById('profile-form');
     const postForm = document.getElementById('post-form');
     const postSuccess = document.getElementById('post-success');
-    const publicFeed = document.getElementById('public-feed');
-        // --- Public Feed Logic ---
-        function renderPost(post, id) {
-          return `<div class="glass rounded-2xl p-5 mb-4 text-left">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-xs bg-[#b6ff22]/20 text-[#b6ff22] px-2 py-1 rounded">${post.category || ''}</span>
-              <span class="text-xs text-slate-400">${post.authorName || 'Anonymous'}</span>
-              <span class="text-xs text-slate-500 ml-auto">${post.createdAt && post.createdAt.toDate ? post.createdAt.toDate().toLocaleString() : ''}</span>
-            </div>
-            <div class="font-bold text-lg mb-1">${post.title}</div>
-            <div class="text-slate-200 mb-2">${post.content}</div>
-            <div class="flex gap-2">
-              <button class="interact-btn px-3 py-1 rounded bg-[#b6ff22] text-black font-bold" data-action="vote" data-id="${id}" disabled>Vote</button>
-              <button class="interact-btn px-3 py-1 rounded bg-blue-600 text-white font-bold" data-action="comment" data-id="${id}" disabled>Comment</button>
-            </div>
-          </div>`;
-        }
+    // Removed publicFeed and feed logic for unauthenticated users
 
-        function loadFeed() {
-          db.collection('posts').orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
-            let html = '';
-            snap.forEach(doc => {
-              html += renderPost(doc.data(), doc.id);
-            });
-            publicFeed.innerHTML = html || '<div class="text-slate-400">No posts yet. Be the first to post!</div>';
-          });
-        }
-        loadFeed();
+    // --- Nav Login Button Logic ---
+    const navLoginBtn = document.getElementById('nav-login-btn');
+    if (navLoginBtn) {
+      navLoginBtn.addEventListener('click', function() {
+        document.getElementById('user-flow').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
     let currentUser = null;
     let profileCreated = false;
 
