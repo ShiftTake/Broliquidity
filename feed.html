@@ -74,8 +74,9 @@
       <h2 class="text-2xl font-black mb-4">Your Profile</h2>
       <div class="flex flex-col items-center gap-4">
         <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-[#b6ff22]" style="background:#eee;" />
+        <div id="profile-username-display" class="font-bold text-lg text-center mb-1"></div>
         <input type="file" id="photo-upload" accept="image/*" class="mb-2" />
-        <input id="profile-username" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" disabled />
+        <input id="profile-username" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" disabled style="display:none;" />
         <textarea id="profile-bio" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" rows="3" placeholder="Add a short bio..."></textarea>
         <div class="flex items-center gap-2 mt-2">
           <span class="font-semibold">Theme:</span>
@@ -291,7 +292,9 @@
       profileModal.classList.remove('hidden');
       currentUser = auth.currentUser;
       if (!currentUser) return;
-      profileUsername.value = currentUser.displayName || currentUser.email;
+      const username = currentUser.displayName || currentUser.email;
+      profileUsername.value = username;
+      document.getElementById('profile-username-display').textContent = username;
       // Load profile from Firestore
       const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
       userProfile = profSnap.exists ? profSnap.data() : {};
@@ -302,183 +305,305 @@
       } else if (currentUser.photoURL) {
         photoUrl = currentUser.photoURL;
       } else {
-        photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profileUsername.value);
+        photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username);
       }
       profilePhoto.src = photoUrl;
       // Also update nav profile image
       document.getElementById('profile-btn').src = photoUrl;
     };
-    closeProfile.onclick = () => profileModal.classList.add('hidden');
-    window.onclick = e => { if (e.target === profileModal) profileModal.classList.add('hidden'); };
+  <!DOCTYPE html>
+  <html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BroLiquidity | Feed</title>
 
-    photoUpload.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        profilePhoto.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-      // Upload to Firebase Storage
-      const storageRef = firebase.storage().ref('profile_photos/' + currentUser.uid);
-      await storageRef.put(file);
-      const url = await storageRef.getDownloadURL();
-      await db.collection('profiles').doc(currentUser.uid).set({ photoURL: url }, { merge: true });
-      await currentUser.updateProfile({ photoURL: url });
-    };
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    saveProfile.onclick = async () => {
-      await db.collection('profiles').doc(currentUser.uid).set({ bio: profileBio.value }, { merge: true });
-      userProfile.bio = profileBio.value;
-      profileModal.classList.add('hidden');
-    };
-
-    logoutBtn.onclick = async () => {
-      await auth.signOut();
-      window.location.href = 'login.html';
-    };
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'login.html';
-      }
-      // Set nav profile image on login
-      let photoUrl = '';
-      if (user) {
-        const profRef = db.collection('profiles').doc(user.uid);
-        profRef.get().then(profSnap => {
-          if (profSnap.exists && profSnap.data().photoURL) {
-            photoUrl = profSnap.data().photoURL;
-          } else if (user.photoURL) {
-            photoUrl = user.photoURL;
-          } else {
-            photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email);
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            colors: {
+              broblue: '#125CFF',
+              brogreen: '#B6FF22',
+              ink: '#050816',
+              panel: '#0B1024'
+            }
           }
-          document.getElementById('profile-btn').src = photoUrl;
-        });
-      }
-    });
-    // --- Profile Modal Theme Toggle ---
-    const profileThemeToggle = document.getElementById('profile-theme-toggle');
-    function updateProfileThemeBtn() {
-      const theme = localStorage.getItem('theme') || 'dark';
-      if (profileThemeToggle) profileThemeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
-    }
-    updateProfileThemeBtn();
-    if (profileThemeToggle) {
-      profileThemeToggle.onclick = () => {
-        const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
-        setTheme(current);
-        updateProfileThemeBtn();
+        }
       };
-    }
+    </script>
 
-    // --- Logout ---
-    document.getElementById('logout-btn').onclick = async () => {
-      await auth.signOut();
-      window.location.href = 'login.html';
-    };
-
-    // --- Community Creation ---
-    const openCreateCommunity = document.getElementById('open-create-community');
-    const createCommunityModal = document.getElementById('create-community-modal');
-    const closeCreateCommunity = document.getElementById('close-create-community');
-    const createCommunityBtn = document.getElementById('create-community-btn');
-    const communityName = document.getElementById('community-name');
-    const communityDesc = document.getElementById('community-desc');
-    const communityImage = document.getElementById('community-image');
-    const communityCreateError = document.getElementById('community-create-error');
-    const communitySelect = document.getElementById('community-select');
-
-    openCreateCommunity.onclick = () => createCommunityModal.classList.remove('hidden');
-    closeCreateCommunity.onclick = () => createCommunityModal.classList.add('hidden');
-    window.onclick = e => { if (e.target === createCommunityModal) createCommunityModal.classList.add('hidden'); };
-
-    async function loadCommunities() {
-      communitySelect.innerHTML = '<option value="">Select a Community</option>';
-      const snapshot = await db.collection('communities').get();
-      snapshot.forEach(doc => {
-        const c = doc.data();
-        const opt = document.createElement('option');
-        opt.value = doc.id;
-        opt.textContent = c.name;
-        communitySelect.appendChild(opt);
-      });
-    }
-    loadCommunities();
-
-    createCommunityBtn.onclick = async () => {
-      communityCreateError.classList.add('hidden');
-      if (!communityName.value.trim()) {
-        communityCreateError.textContent = 'Community name required.';
-        communityCreateError.classList.remove('hidden');
-        return;
+    <style>
+      :root { color-scheme: dark; }
+      * { scroll-behavior: smooth; }
+      body {
+        font-family: 'Inter', sans-serif;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(18, 92, 255, .28), transparent 34%),
+          radial-gradient(circle at 85% 8%, rgba(182, 255, 34, .18), transparent 28%),
+          linear-gradient(135deg, #050816 0%, #080B18 48%, #050816 100%);
+        color: #fff;
+        min-height: 100vh;
       }
-      let imageUrl = '';
-      if (communityImage.files[0]) {
-        const storageRef = firebase.storage().ref('community_images/' + Date.now() + '_' + communityImage.files[0].name);
-        await storageRef.put(communityImage.files[0]);
-        imageUrl = await storageRef.getDownloadURL();
+      body.light {
+        color-scheme: light;
+        background: linear-gradient(135deg, #F6F8FF 0%, #FFFFFF 50%, #F3FFE5 100%);
+        color: #111827;
       }
-      const ref = await db.collection('communities').add({
-        name: communityName.value.trim(),
-        description: communityDesc.value.trim(),
-        image: imageUrl,
-        creator: auth.currentUser.uid,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        moderators: [auth.currentUser.uid],
-        members: [auth.currentUser.uid]
-      });
-      createCommunityModal.classList.add('hidden');
-      communityName.value = '';
-      communityDesc.value = '';
-      communityImage.value = '';
-      await loadCommunities();
-      communitySelect.value = ref.id;
-    };
+      .glass {
+        background: rgba(11, 16, 36, 0.78);
+        border: 1px solid rgba(255,255,255,0.10);
+        box-shadow: 0 18px 50px rgba(0,0,0,.28);
+        backdrop-filter: blur(18px);
+      }
+      body.light .glass {
+        background: rgba(255,255,255,0.88);
+        border: 1px solid rgba(15,23,42,0.08);
+        box-shadow: 0 18px 45px rgba(15,23,42,.08);
+      }
+      .soft-card {
+        background: rgba(255,255,255,0.055);
+        border: 1px solid rgba(255,255,255,0.09);
+      }
+      body.light .soft-card {
+        background: rgba(15,23,42,0.035);
+        border: 1px solid rgba(15,23,42,0.08);
+      }
+      .ticker {
+        animation: ticker 28s linear infinite;
+        min-width: max-content;
+      }
+      @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      .active-pill { background: rgba(182,255,34,.16); color: #B6FF22; border-color: rgba(182,255,34,.42); }
+      body.light .active-pill { background: rgba(18,92,255,.08); color: #125CFF; border-color: rgba(18,92,255,.26); }
+    </style>
+  </head>
 
-    // --- Post creation (restricted to selected community) ---
-    const postForm = document.getElementById('post-form');
-    const postContent = document.getElementById('post-content');
-    const postError = document.getElementById('post-error');
+  <body class="font-sans antialiased">
+    <!-- Create Community Modal -->
+    <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+      <div class="glass rounded-3xl p-6 w-full max-w-lg relative">
+        <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+        <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
+        <h2 class="text-2xl font-black mb-1">Create a Community</h2>
+        <p class="text-sm text-slate-400 mb-5">Build a home for traders, analysts, career climbers, or licensing grinders.</p>
 
-    function showPostError(msg) {
-      postError.textContent = msg;
-      postError.classList.remove('hidden');
-    }
-    function clearPostError() {
-      postError.textContent = '';
-      postError.classList.add('hidden');
-    }
+        <label class="text-xs font-bold uppercase text-slate-400">Community name</label>
+        <input id="community-name" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" placeholder="ex: IB Analysts, Options Flow, CFA Level 1" />
 
-    postForm.onsubmit = async (e) => {
-      e.preventDefault();
-      clearPostError();
-      const user = auth.currentUser;
-      if (!user) {
-        showPostError('You must be signed in to post.');
-        return;
-      }
-      if (!communitySelect.value) {
-        showPostError('Select a community to post in.');
-        return;
-      }
-      if (!postContent.value.trim()) {
-        showPostError('Post content cannot be empty.');
-        return;
-      }
-      let username = user.displayName;
-      if (!username) {
-        const emailPrefix = user.email ? user.email.split('@')[0] : 'user';
-        username = emailPrefix + Math.floor(Math.random() * 10000);
-        await user.updateProfile({ displayName: username });
-        await db.collection('profiles').doc(user.uid).set({ username }, { merge: true });
-      }
-      // Check if user is a member of the community
-      const commSnap = await db.collection('communities').doc(communitySelect.value).get();
-      const comm = commSnap.data();
-      if (!comm.members.includes(user.uid)) {
-        showPostError('You must join this community to post.');
-        return;
+        <label class="text-xs font-bold uppercase text-slate-400">Description</label>
+        <textarea id="community-desc" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="What should people discuss here?"></textarea>
+
+        <label class="text-xs font-bold uppercase text-slate-400">Community image</label>
+        <input type="file" id="community-image" accept="image/*" class="mt-2 mb-5 block w-full text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
+
+        <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Create Community</button>
+        <div id="community-create-error" class="text-red-300 text-sm mt-3 hidden"></div>
+      </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+      <div class="glass rounded-3xl p-6 w-full max-w-md relative">
+        <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+        <h2 class="text-2xl font-black mb-5">Your Profile</h2>
+        <div class="flex flex-col items-center gap-4">
+          <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
+          <div id="profile-username-display" class="font-black text-lg text-center"></div>
+          <input type="file" id="photo-upload" accept="image/*" class="text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
+          <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
+          <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold hover:bg-white/10 transition">Toggle Theme</button>
+          <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] transition">Save Profile</button>
+          <button id="logout-btn" class="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black hover:bg-red-500 transition">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-40 border-b border-white/10 bg-[#050816]/80 backdrop-blur-2xl">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <a href="feed.html" class="flex items-center gap-3 min-w-fit">
+          <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg shadow-blue-950/30">
+          <div class="hidden sm:block">
+            <h1 class="font-black text-xl tracking-tight">BroLiquidity</h1>
+            <p class="text-[11px] text-slate-400 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
+          </div>
+        </a>
+
+        <div class="relative flex-1 max-w-2xl">
+          <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search tickers, communities, users, licenses..." />
+          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <div id="search-results" class="absolute left-0 right-0 top-14 glass rounded-2xl p-2 hidden max-h-96 overflow-y-auto z-50"></div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="open-create-community" class="hidden md:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">Create</button>
+          <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen cursor-pointer bg-slate-700" />
+        </div>
+      </nav>
+
+      <div class="overflow-hidden border-t border-white/5 bg-black/20">
+        <div class="ticker flex gap-6 py-2 text-xs font-black text-slate-300">
+          <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
+          <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_310px] gap-6">
+      <!-- Left Rail -->
+      <aside class="hidden lg:block space-y-4 sticky top-28 self-start">
+        <section class="glass rounded-3xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-black">Communities</h2>
+            <button id="open-create-community-side" class="text-xs font-black text-brogreen">+ New</button>
+          </div>
+          <select id="community-select" class="w-full px-3 py-3 rounded-2xl bg-white/8 border border-white/10 outline-none text-sm font-bold mb-4">
+            <option value="">Select a Community</option>
+          </select>
+          <div id="communities-list" class="space-y-2 text-sm"></div>
+        </section>
+
+        <section class="glass rounded-3xl p-4">
+          <h2 class="font-black mb-3">Desks</h2>
+          <div class="space-y-2 text-sm font-bold">
+            <button data-filter="all" class="category-pill active-pill w-full text-left px-3 py-2 rounded-xl border border-white/10">All Feed</button>
+            <button data-filter="stocks" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Stocks</button>
+            <button data-filter="options" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Options</button>
+            <button data-filter="crypto" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Crypto</button>
+            <button data-filter="jobs" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Jobs</button>
+            <button data-filter="careers" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Careers</button>
+            <button data-filter="licenses" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Licenses</button>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Center Feed -->
+      <section class="min-w-0 space-y-5">
+        <section class="glass rounded-3xl p-5 sm:p-6 overflow-hidden relative">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-broblue via-brogreen to-broblue"></div>
+          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+            <div>
+              <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen">The trading floor</p>
+              <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-1">What’s moving, bro?</h2>
+              <p class="text-sm text-slate-400 mt-1">Post trades, interview intel, license questions, or career moves.</p>
+            </div>
+            <button id="open-create-community-mobile" class="lg:hidden px-4 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
+          </div>
+
+          <form id="post-form" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <select id="post-subject" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+                <option value="">Subject</option>
+                <option value="stocks">Stocks</option>
+                <option value="options">Options</option>
+                <option value="crypto">Crypto</option>
+                <option value="jobs">Jobs</option>
+                <option value="careers">Careers</option>
+                <option value="licenses">Licenses</option>
+                <option value="other">Other</option>
+              </select>
+              <select id="post-label" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+                <option value="">Label</option>
+              </select>
+              <select id="mobile-community-select" class="lg:hidden px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+                <option value="">Community</option>
+              </select>
+            </div>
+
+            <textarea id="post-content" maxlength="700" placeholder="Drop your thesis, hot take, interview question, Series 7 pain, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white/8 border border-white/10 focus:border-brogreen outline-none min-h-[120px] font-semibold resize-y"></textarea>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div id="post-error" class="text-red-300 text-sm hidden"></div>
+                <div class="text-xs text-slate-500"><span id="char-count">0</span>/700 characters</div>
+              </div>
+              <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Post to Feed</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-black">Recent Posts</h3>
+            <p id="feed-context" class="text-sm text-slate-400">All desks, newest first.</p>
+          </div>
+          <div class="flex gap-2">
+            <select id="filter-category" class="lg:hidden px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
+              <option value="all">All</option>
+              <option value="stocks">Stocks</option>
+              <option value="options">Options</option>
+              <option value="crypto">Crypto</option>
+              <option value="jobs">Jobs</option>
+              <option value="careers">Careers</option>
+              <option value="licenses">Licenses</option>
+              <option value="other">Other</option>
+            </select>
+            <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
+              <option value="newest">Newest</option>
+              <option value="bullish">Most Bullish</option>
+              <option value="bearish">Most Bearish</option>
+              <option value="active">Most Active</option>
+            </select>
+          </div>
+        </section>
+
+        <ul id="posts-list" class="space-y-4"></ul>
+        <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-400 font-bold">Loading feed...</div>
+      </section>
+
+      <!-- Right Rail -->
+      <aside class="hidden xl:block space-y-4 sticky top-28 self-start">
+        <section class="glass rounded-3xl p-5">
+          <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Market Pulse</p>
+          <h2 class="font-black text-xl mt-1 mb-4">Bro Board</h2>
+          <div class="space-y-3">
+            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Fear/Greed</span><span class="font-black text-brogreen">Risk-On</span></div>
+            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Top Desk</span><span class="font-black">Options</span></div>
+            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Hot Topic</span><span class="font-black">Series 7</span></div>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl p-5">
+          <h2 class="font-black text-xl mb-3">House Rules</h2>
+          <ul class="space-y-3 text-sm text-slate-300">
+            <li class="flex gap-2"><span class="text-brogreen font-black">01</span> No fake P&L screenshots.</li>
+            <li class="flex gap-2"><span class="text-brogreen font-black">02</span> Mark speculation as speculation.</li>
+            <li class="flex gap-2"><span class="text-brogreen font-black">03</span> Jobs, licenses, and career advice welcome.</li>
+            <li class="flex gap-2"><span class="text-brogreen font-black">04</span> No personalized financial advice.</li>
+          </ul>
+        </section>
+
+        <section class="glass rounded-3xl p-5">
+          <h2 class="font-black text-xl mb-3">Trending Tags</h2>
+          <div class="flex flex-wrap gap-2 text-xs font-black">
+            <span class="px-3 py-2 rounded-full soft-card">#CFA</span>
+            <span class="px-3 py-2 rounded-full soft-card">#IB</span>
+            <span class="px-3 py-2 rounded-full soft-card">#OptionsFlow</span>
+            <span class="px-3 py-2 rounded-full soft-card">#Series7</span>
+            <span class="px-3 py-2 rounded-full soft-card">#PE</span>
+            <span class="px-3 py-2 rounded-full soft-card">#NVDA</span>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+    <script>
+      // ...provided script code...
+    </script>
+  </body>
+  </html>
       }
       try {
         await db.collection('posts').add({
