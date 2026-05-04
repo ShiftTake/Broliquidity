@@ -868,7 +868,7 @@
                   ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full active-pill font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
                 </div>
 
-                ${post.content ? `<p class="mt-3 text-sm sm:text-base font-medium leading-relaxed text-slate-100">${formatContent(post.content || "")}</p>` : ""}
+                ${post.content ? `<p class="mt-3 text-sm sm:text-base font-medium leading-relaxed text-black dark:text-white font-semibold tracking-tight">${formatContent(post.content || "")}</p>` : ""}
                 ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" alt="Post image" class="mt-4 w-full max-h-[460px] object-cover rounded-3xl border border-white/10 bg-black/20" loading="lazy">` : ""}
 
                 <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-white/5">
