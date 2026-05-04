@@ -185,7 +185,7 @@
     const navLoginBtn = document.getElementById('nav-login-btn');
     if (navLoginBtn) {
       navLoginBtn.addEventListener('click', function() {
-        document.getElementById('user-flow').scrollIntoView({ behavior: 'smooth' });
+        window.location.href = 'login.html';
       });
     }
     let currentUser = null;
