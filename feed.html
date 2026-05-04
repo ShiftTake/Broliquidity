@@ -107,140 +107,240 @@
       </div>
     </div>
   </div>
-  <!-- ...rest of provided code... -->
-  <style>
-    body.light {
-      background: #fff !important;
-      color: #181a20 !important;
-    }
-    body.dark {
-      background: #050816 !important;
-      color: #fff !important;
-    }
-    .glass {
-      background: rgba(8, 13, 35, 0.78);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 60px rgba(0,0,0,.35);
-    }
-    body.light .glass {
-      background: rgba(255,255,255,0.85);
-      border: 1px solid rgba(0,0,0,0.08);
-      color: #181a20;
-    }
-    body.light .dark\:bg-\[\#181a20\] {
-      background: #fff !important;
-    }
-    body.light .dark\:text-white {
-      color: #181a20 !important;
-    }
-    body.light .dark\:bg-slate-800 {
-      background: #f3f4f6 !important;
-    }
-    body.light .dark\:bg-black\/60 {
-      background: #fff !important;
-    }
-    body.light .dark\:border-\[\#b6ff22\] {
-      border-color: #b6ff22 !important;
-    }
-  </style>
-</head>
-<body class="font-sans min-h-screen dark:bg-[#050816] dark:text-white bg-white text-[#181a20]">
-  <header class="px-6 py-5">
-    <nav class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="mainlogo.png" alt="Bro Liquidity Logo" class="w-14 h-14 rounded-2xl object-cover">
-        <div>
-          <h1 class="font-black text-xl tracking-tight">Bro Liquidity</h1>
-          <p class="text-xs text-slate-400">Trades. Licenses. Careers.</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-4 text-sm font-semibold text-slate-300">
-        <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-[#b6ff22] cursor-pointer bg-slate-700" style="background:#eee;" />
-      </div>
-  <div id="profile-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-    <div class="bg-white dark:bg-[#181a20] text-black dark:text-white rounded-2xl p-8 w-full max-w-md relative">
-      <button id="close-profile" class="absolute top-3 right-3 text-2xl">&times;</button>
-      <h2 class="text-2xl font-black mb-4">Your Profile</h2>
-      <div class="flex flex-col items-center gap-4">
-        <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-[#b6ff22]" style="background:#eee;" />
-        <div id="profile-username-display" class="font-bold text-lg text-center mb-1"></div>
-        <input type="file" id="photo-upload" accept="image/*" class="mb-2" />
-        <input id="profile-username" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" disabled style="display:none;" />
-        <textarea id="profile-bio" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" rows="3" placeholder="Add a short bio..."></textarea>
-        <div class="flex items-center gap-2 mt-2">
-          <span class="font-semibold">Theme:</span>
-          <button id="profile-theme-toggle" class="px-4 py-2 rounded-2xl bg-slate-700 text-white font-bold hover:scale-105 transition">🌙</button>
-        </div>
-        <button id="save-profile" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Save</button>
-        <button id="logout-btn" class="w-full px-4 py-2 rounded-2xl bg-red-600 text-white font-bold hover:scale-105 transition mt-2">Logout</button>
-      </div>
+
+  <!-- Create Community Modal -->
+  <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+    <div class="glass rounded-3xl p-6 w-full max-w-lg relative">
+      <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
+      <h2 class="text-2xl font-black mb-1">Create a Community</h2>
+      <p class="text-sm text-slate-400 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
+
+      <label class="text-xs font-bold uppercase text-slate-400">Community name</label>
+      <input id="community-name" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" placeholder="ex: Options Flow, CFA Level 1, IB Analysts" />
+
+      <label class="text-xs font-bold uppercase text-slate-400">Description</label>
+      <textarea id="community-desc" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="What should people discuss here?"></textarea>
+
+      <label class="text-xs font-bold uppercase text-slate-400">Community image</label>
+      <input type="file" id="community-image" accept="image/*" class="mt-2 mb-5 block w-full text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
+
+      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Create Community</button>
+      <div id="community-create-error" class="text-red-300 text-sm mt-3 hidden"></div>
     </div>
   </div>
-      </div>
-    </nav>
-  </header>
-  <main class="max-w-3xl mx-auto py-10 px-4">
-    <section class="mb-10">
-      <div class="flex flex-col gap-2 mb-4">
-        <div class="flex items-center gap-4">
-          <button id="open-create-community" class="px-4 py-2 rounded-2xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Create Community</button>
-          <select id="community-select" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white dark:bg-slate-900 dark:text-white font-semibold">
-            <option value="">Select a Community</option>
+
+  <!-- Post Modal -->
+  <div id="post-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+    <div class="glass rounded-3xl p-6 w-full max-w-2xl relative">
+      <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
+      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
+      <h2 class="text-2xl font-black mb-1">Drop it on the floor</h2>
+      <p class="text-sm text-slate-400 mb-5">Post to your timeline or a community you belong to.</p>
+
+      <form id="post-form" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <select id="post-destination" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+            <option value="timeline">My Timeline</option>
+            <option value="community">Community</option>
           </select>
-        </div>
-        <div class="flex items-center gap-2 mt-2">
-          <input id="search-bar" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" placeholder="Search communities or users..." />
-          <button id="search-btn" class="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:scale-105 transition">Search</button>
-        </div>
-        <div id="search-results" class="bg-white dark:bg-slate-900 text-black dark:text-white rounded-xl mt-2 p-2 hidden"></div>
-      </div>
-      <form id="post-form" class="glass p-6 rounded-2xl mb-8 flex flex-col gap-3">
-        <h3 class="text-xl font-bold mb-2">Start a Conversation</h3>
-        <div class="flex gap-2 mb-2">
-          <select id="post-subject" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
-            <option value="">Select Subject</option>
+
+          <select id="community-select" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold hidden">
+            <option value="">Select Community</option>
+          </select>
+
+          <select id="post-subject" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+            <option value="">Subject</option>
             <option value="stocks">Stocks</option>
             <option value="options">Options</option>
             <option value="crypto">Crypto</option>
             <option value="jobs">Jobs</option>
             <option value="careers">Careers</option>
+            <option value="licenses">Licenses</option>
+            <option value="rich-list">Rich List</option>
             <option value="other">Other</option>
           </select>
-          <select id="post-label" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none">
-            <option value="">Select Label</option>
+
+          <select id="post-label" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
+            <option value="">Label</option>
           </select>
         </div>
-        <textarea id="post-content" placeholder="What's on your mind?" class="w-full mb-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none" rows="3"></textarea>
-        <div id="post-error" class="text-red-400 text-sm hidden"></div>
-        <button type="submit" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Post</button>
+
+        <textarea id="post-content" maxlength="700" placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white/8 border border-white/10 focus:border-brogreen outline-none min-h-[150px] font-semibold resize-y"></textarea>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div id="post-error" class="text-red-300 text-sm hidden"></div>
+            <div class="text-xs text-slate-500"><span id="char-count">0</span>/700 characters</div>
+          </div>
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Post</button>
+        </div>
       </form>
-    </section>
-    <section>
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <h3 class="text-lg font-bold">Recent Posts</h3>
-        <select id="filter-category" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
-          <option value="all">All</option>
-          <option value="stocks">Stocks</option>
-          <option value="options">Options</option>
-          <option value="crypto">Crypto</option>
-          <option value="jobs">Jobs</option>
-          <option value="careers">Careers</option>
-          <option value="other">Other</option>
-        </select>
-        <select id="sort-posts" class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none">
-          <option value="newest">Newest</option>
-          <option value="bullish">Most Bullish</option>
-          <option value="bearish">Most Bearish</option>
-        </select>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-[#050816]/80 backdrop-blur-2xl">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <a href="feed.html" class="flex items-center gap-3 min-w-fit">
+        <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg shadow-blue-950/30">
+        <div class="hidden sm:block">
+          <h1 class="font-black text-xl tracking-tight">BroLiquidity</h1>
+          <p class="text-[11px] text-slate-400 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
+        </div>
+      </a>
+
+      <div class="relative flex-1 max-w-2xl">
+        <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search tickers, richest people, communities, users..." />
+        <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+        <div id="search-results" class="absolute left-0 right-0 top-14 glass rounded-2xl p-2 hidden max-h-96 overflow-y-auto z-50"></div>
       </div>
+
+      <div class="flex items-center gap-2">
+        <button id="open-post-modal-top" class="hidden sm:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">+ Post</button>
+        <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen cursor-pointer bg-slate-700" />
+      </div>
+    </nav>
+
+    <div class="overflow-hidden border-t border-white/5 bg-black/20">
+      <div class="ticker-track flex gap-6 py-2 text-xs font-black text-slate-300">
+        <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
+        <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_330px] gap-6">
+    <!-- Left Rail -->
+    <aside class="hidden lg:block space-y-4 sticky top-28 self-start">
+      <section class="glass rounded-3xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-black">Desks</h2>
+          <button id="open-create-community" class="text-xs font-black text-brogreen">+ New</button>
+        </div>
+        <div id="communities-list" class="space-y-2 text-sm"></div>
+      </section>
+
+      <section class="glass rounded-3xl p-4">
+        <h2 class="font-black mb-3">Feed Filters</h2>
+        <div class="space-y-2 text-sm font-bold">
+          <button data-filter="all" class="category-pill active-pill w-full text-left px-3 py-2 rounded-xl border border-white/10">All Feed</button>
+          <button data-filter="stocks" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Stocks</button>
+          <button data-filter="options" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Options</button>
+          <button data-filter="crypto" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Crypto</button>
+          <button data-filter="jobs" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Jobs</button>
+          <button data-filter="careers" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Careers</button>
+          <button data-filter="licenses" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Licenses</button>
+          <button data-filter="rich-list" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Rich List</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Center Feed -->
+    <section class="min-w-0 space-y-5">
+      <section class="glass rounded-3xl p-5 sm:p-6 overflow-hidden relative">
+        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-broblue via-brogreen to-broblue"></div>
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen">The Feed</p>
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-1">What’s moving, bro?</h2>
+            <p class="text-sm text-slate-400 mt-1 max-w-2xl">A finance-bro trading floor for markets, jobs, licensing, career moves, and wealth obsession.</p>
+          </div>
+          <button id="open-post-modal-hero" class="px-4 sm:px-5 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">+ Post</button>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button data-filter="stocks" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
+            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Stocks</div>
+          </button>
+          <button data-filter="options" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
+            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Options</div>
+          </button>
+          <button data-filter="jobs" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
+            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Finance Jobs</div>
+          </button>
+          <button data-filter="rich-list" class="category-pill soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
+            <div class="text-xs text-slate-400 font-bold">Desk</div><div class="font-black">Rich List</div>
+          </button>
+        </div>
+      </section>
+
+      <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h3 class="text-xl font-black">Recent Posts</h3>
+          <p id="feed-context" class="text-sm text-slate-400">All desks, newest first.</p>
+        </div>
+        <div class="flex gap-2">
+          <select id="filter-category" class="lg:hidden px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
+            <option value="all">All</option>
+            <option value="stocks">Stocks</option>
+            <option value="options">Options</option>
+            <option value="crypto">Crypto</option>
+            <option value="jobs">Jobs</option>
+            <option value="careers">Careers</option>
+            <option value="licenses">Licenses</option>
+            <option value="rich-list">Rich List</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
+            <option value="newest">Newest</option>
+            <option value="bullish">Most Bullish</option>
+            <option value="bearish">Most Bearish</option>
+            <option value="active">Most Active</option>
+          </select>
+        </div>
+      </section>
+
       <ul id="posts-list" class="space-y-4"></ul>
-      <div id="loading" class="text-slate-400 mt-4">Loading...</div>
+      <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-400 font-bold">Loading feed...</div>
     </section>
+
+    <!-- Right Rail -->
+    <aside class="hidden xl:block space-y-4 sticky top-28 self-start">
+      <section class="glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Watchlist</p>
+            <h2 class="font-black text-xl mt-1">My Tickers</h2>
+          </div>
+          <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
+        </div>
+        <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
+          <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white/8 border border-white/10 outline-none text-sm font-bold uppercase" placeholder="AAPL" />
+          <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
+        </div>
+        <div id="watchlist-list" class="space-y-3"></div>
+        <p class="text-[11px] text-slate-500 mt-3">Static demo pricing for now. Connect a market API later.</p>
+      </section>
+
+      <section class="glass rounded-3xl p-5">
+        <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Free Bloomberg-ish</p>
+        <h2 class="font-black text-xl mt-1 mb-4">Richest People</h2>
+        <div id="rich-list" class="space-y-3"></div>
+      </section>
+
+      <section class="glass rounded-3xl p-5">
+        <h2 class="font-black text-xl mb-3">Trending Tags</h2>
+        <div class="flex flex-wrap gap-2 text-xs font-black">
+          <span class="px-3 py-2 rounded-full soft-card">#CFA</span>
+          <span class="px-3 py-2 rounded-full soft-card">#IB</span>
+          <span class="px-3 py-2 rounded-full soft-card">#OptionsFlow</span>
+          <span class="px-3 py-2 rounded-full soft-card">#Series7</span>
+          <span class="px-3 py-2 rounded-full soft-card">#PE</span>
+          <span class="px-3 py-2 rounded-full soft-card">#NVDA</span>
+        </div>
+      </section>
+    </aside>
   </main>
+
+  <!-- Floating Mobile Post Button -->
+  <button id="open-post-modal-floating" class="sm:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-3xl bg-brogreen text-black font-black text-2xl shadow-2xl shadow-lime-500/20">+</button>
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDd5tPj3G8Emnga-svWIASzojete6vogH0",
@@ -251,607 +351,567 @@
       appId: "1:786880915771:web:fe103176ffde52eff06f1e",
       measurementId: "G-SBMVSQ34L6"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    // --- Search Bar Logic ---
-    const searchBar = document.getElementById('search-bar');
-    const searchBtn = document.getElementById('search-btn');
-    const searchResults = document.getElementById('search-results');
+    const storage = firebase.storage();
 
-    async function searchCommunitiesAndUsers(query) {
-      if (!query.trim()) {
-        searchResults.classList.add('hidden');
-        searchResults.innerHTML = '';
-        return;
-      }
-      let html = '';
-      // Search communities
-      const commSnap = await db.collection('communities').where('name', '>=', query).where('name', '<=', query + '\uf8ff').limit(5).get();
-      if (!commSnap.empty) {
-        html += '<div class="font-bold mb-1">Communities</div>';
-        commSnap.forEach(doc => {
-          const c = doc.data();
-          html += `<div class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded cursor-pointer" onclick="window.location.href='feed.html?community=${doc.id}'"><b>c/${c.name}</b> <span class='text-xs text-slate-400'>${c.description || ''}</span></div>`;
-        });
-      }
-      // Search users
-      const userSnap = await db.collection('profiles').where('displayName', '>=', query).where('displayName', '<=', query + '\uf8ff').limit(5).get();
-      if (!userSnap.empty) {
-        html += '<div class="font-bold mt-2 mb-1">Users</div>';
-        userSnap.forEach(doc => {
-          const u = doc.data();
-          html += `<div class="p-2 hover:bg-blue-100 dark:hover:bg-blue-900 rounded cursor-pointer" onclick="window.location.href='profile.html?user=${doc.id}'"><b>u/${u.displayName || u.email || doc.id}</b></div>`;
-        });
-      }
-      if (!html) html = '<div class="text-slate-400">No results found.</div>';
-      searchResults.innerHTML = html;
-      searchResults.classList.remove('hidden');
+    let currentUser = null;
+    let selectedFilter = "all";
+    let unsubscribePosts = null;
+    let communitiesCache = [];
+
+    const $ = (id) => document.getElementById(id);
+    const escapeHTML = (str = "") => String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+    function openModal(id) { $(id).classList.add("modal-open"); $(id).classList.remove("hidden"); }
+    function closeModal(id) { $(id).classList.remove("modal-open"); $(id).classList.add("hidden"); }
+
+    function formatDate(ts) {
+      if (!ts) return "Just now";
+      const d = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
+      return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     }
-    searchBtn.onclick = () => searchCommunitiesAndUsers(searchBar.value);
-    searchBar.onkeyup = e => { if (e.key === 'Enter') searchCommunitiesAndUsers(searchBar.value); };
 
-    // --- Post Subject/Label Logic ---
-    const postSubject = document.getElementById('post-subject');
-    const postLabel = document.getElementById('post-label');
-    const labelOptions = {
-      stocks: ['General', 'Analysis', 'News', 'Question'],
-      options: ['Strategy', 'Trade', 'Education', 'Question'],
-      crypto: ['General', 'Altcoins', 'NFT', 'Question'],
-      jobs: ['Hiring', 'Looking', 'Advice', 'Question'],
-      careers: ['Advice', 'Experience', 'Question'],
-      other: ['General', 'Question']
-    };
-    postSubject.onchange = function() {
-      const val = postSubject.value;
-      postLabel.innerHTML = '<option value="">Select Label</option>';
-      if (labelOptions[val]) {
-        labelOptions[val].forEach(lab => {
-          const opt = document.createElement('option');
-          opt.value = lab;
-          opt.textContent = lab;
-          postLabel.appendChild(opt);
-        });
+    function setTheme(theme) {
+      if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+        document.body.classList.add("light");
+      } else {
+        document.documentElement.classList.add("dark");
+        document.body.classList.remove("light");
       }
+      localStorage.setItem("theme", theme);
+    }
+
+    setTheme(localStorage.getItem("theme") || "dark");
+
+    const labelOptions = {
+      stocks: ["Thesis", "News", "Earnings", "Question"],
+      options: ["Flow", "YOLO", "Strategy", "Education"],
+      crypto: ["BTC", "Altcoins", "Macro", "Question"],
+      jobs: ["Hiring", "Interview", "Resume", "Comp"],
+      careers: ["Advice", "Story", "Promotion", "Networking"],
+      licenses: ["Series 7", "SIE", "CFA", "CPA"],
+      "rich-list": ["Billionaires", "Net Worth", "Founder", "Lifestyle"],
+      other: ["General", "Question"]
     };
 
-    // --- Post Form Validation Update ---
-    const postForm = document.getElementById('post-form');
-    postForm.onsubmit = async function(e) {
-      e.preventDefault();
-      const errorDiv = document.getElementById('post-error');
-      errorDiv.classList.add('hidden');
-      const subject = postSubject.value;
-      const label = postLabel.value;
-      const content = document.getElementById('post-content').value;
-      const community = document.getElementById('community-select').value;
-      if (!community) {
-        errorDiv.textContent = 'Select a community.';
-        errorDiv.classList.remove('hidden');
+    const demoPosts = [
+      { id: "demo1", category: "stocks", label: "Thesis", author: "wallstreetwolf", content: "NVDA keeps trading like gravity got laid off. Anyone trimming or just letting the winners pay rent?", createdAt: { seconds: Math.floor(Date.now()/1000) - 2200 }, bullish: 42, bearish: 5, comments: 12, destination: "timeline" },
+      { id: "demo2", category: "licenses", label: "Series 7", author: "siegrinder", content: "Series 7 options section is humbling me. Covered calls make sense until the practice exam starts yelling.", createdAt: { seconds: Math.floor(Date.now()/1000) - 6400 }, bullish: 18, bearish: 1, comments: 9, destination: "timeline" },
+      { id: "demo3", category: "jobs", label: "Interview", author: "exceladdict", content: "Got a superday for an analyst role. What technicals are they actually asking in 2026?", createdAt: { seconds: Math.floor(Date.now()/1000) - 9100 }, bullish: 25, bearish: 0, comments: 17, destination: "timeline" },
+      { id: "demo4", category: "rich-list", label: "Billionaires", author: "cap_table_king", content: "The richest people list is basically a leaderboard for owning distribution, compute, luxury, or payments. Pick your fighter.", createdAt: { seconds: Math.floor(Date.now()/1000) - 12600 }, bullish: 31, bearish: 3, comments: 6, destination: "timeline" }
+    ];
+
+    const richPeople = [
+      { name: "Elon Musk", source: "Tesla / SpaceX / xAI", tag: "Founder Mode" },
+      { name: "Jeff Bezos", source: "Amazon / Blue Origin", tag: "Cash Machine" },
+      { name: "Mark Zuckerberg", source: "Meta", tag: "AI + Ads" },
+      { name: "Larry Ellison", source: "Oracle", tag: "Enterprise Whale" },
+      { name: "Bernard Arnault", source: "LVMH", tag: "Luxury Boss" }
+    ];
+
+    const demoPrices = {
+      AAPL: ["201.36", "+1.08%"],
+      NVDA: ["949.50", "+2.35%"],
+      TSLA: ["187.89", "-0.91%"],
+      SPY: ["525.69", "+0.27%"],
+      COIN: ["252.33", "+3.21%"],
+      BTC: ["67,420", "+1.20%"]
+    };
+
+    function renderRichList() {
+      $("rich-list").innerHTML = richPeople.map((p, i) => `
+        <button class="w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition search-rich" data-name="${escapeHTML(p.name)}">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs text-slate-500 font-black">#${i + 1}</div>
+              <div class="font-black">${escapeHTML(p.name)}</div>
+              <div class="text-xs text-slate-400">${escapeHTML(p.source)}</div>
+            </div>
+            <span class="text-[10px] px-2 py-1 rounded-full bg-brogreen/15 text-brogreen font-black">${escapeHTML(p.tag)}</span>
+          </div>
+        </button>
+      `).join("");
+
+      document.querySelectorAll(".search-rich").forEach(btn => {
+        btn.onclick = () => {
+          $("search-bar").value = btn.dataset.name;
+          runSearch(btn.dataset.name);
+        };
+      });
+    }
+
+    function getWatchlist() {
+      return JSON.parse(localStorage.getItem("broliquidity_watchlist") || '["AAPL","NVDA","TSLA","SPY"]');
+    }
+
+    function setWatchlist(items) {
+      localStorage.setItem("broliquidity_watchlist", JSON.stringify(items));
+      renderWatchlist();
+    }
+
+    function renderWatchlist() {
+      const items = getWatchlist();
+      $("watchlist-list").innerHTML = items.map(ticker => {
+        const data = demoPrices[ticker] || ["--", "+0.00%"];
+        const positive = !String(data[1]).startsWith("-");
+        return `
+          <div class="soft-card rounded-2xl p-3 flex items-center justify-between">
+            <div>
+              <div class="font-black">${escapeHTML(ticker)}</div>
+              <div class="text-xs text-slate-400">${data[0]}</div>
+            </div>
+            <div class="${positive ? "text-brogreen" : "text-red-400"} font-black text-sm">${data[1]}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function loadCommunities() {
+      const select = $("community-select");
+      select.innerHTML = '<option value="">Select Community</option>';
+      communitiesCache = [];
+
+      try {
+        const snap = await db.collection("communities").orderBy("createdAt", "desc").limit(20).get();
+        snap.forEach(doc => {
+          const c = { id: doc.id, ...doc.data() };
+          communitiesCache.push(c);
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          opt.textContent = c.name || "Unnamed Community";
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.warn("Community load failed:", err);
+      }
+
+      renderCommunities();
+    }
+
+    function renderCommunities() {
+      const list = $("communities-list");
+      if (!communitiesCache.length) {
+        list.innerHTML = `
+          <div class="soft-card rounded-2xl p-3 text-sm text-slate-400">
+            No desks yet. Create the first one.
+          </div>
+        `;
         return;
       }
-      if (!subject) {
-        errorDiv.textContent = 'Select a subject.';
-        errorDiv.classList.remove('hidden');
+
+      list.innerHTML = communitiesCache.slice(0, 8).map(c => `
+        <button class="community-filter w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition" data-id="${c.id}">
+          <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
+          <div class="text-xs text-slate-400 line-clamp-2">${escapeHTML(c.description || "Finance discussion desk")}</div>
+        </button>
+      `).join("");
+
+      document.querySelectorAll(".community-filter").forEach(btn => {
+        btn.onclick = () => {
+          $("community-select").value = btn.dataset.id;
+          openModal("post-modal");
+          $("post-destination").value = "community";
+          $("community-select").classList.remove("hidden");
+        };
+      });
+    }
+
+    async function createCommunity() {
+      const name = $("community-name").value.trim();
+      const desc = $("community-desc").value.trim();
+      const file = $("community-image").files[0];
+      const err = $("community-create-error");
+
+      err.classList.add("hidden");
+      if (!currentUser) return;
+      if (!name) {
+        err.textContent = "Community name required.";
+        err.classList.remove("hidden");
+        return;
+      }
+
+      let imageUrl = "";
+      try {
+        if (file) {
+          const ref = storage.ref("community_images/" + Date.now() + "_" + file.name);
+          await ref.put(file);
+          imageUrl = await ref.getDownloadURL();
+        }
+
+        await db.collection("communities").add({
+          name,
+          description: desc,
+          image: imageUrl,
+          creator: currentUser.uid,
+          moderators: [currentUser.uid],
+          members: [currentUser.uid],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        $("community-name").value = "";
+        $("community-desc").value = "";
+        $("community-image").value = "";
+        closeModal("create-community-modal");
+        await loadCommunities();
+      } catch (e) {
+        err.textContent = "Failed to create community.";
+        err.classList.remove("hidden");
+      }
+    }
+
+    function updatePostLabels() {
+      const subject = $("post-subject").value;
+      $("post-label").innerHTML = '<option value="">Label</option>';
+      (labelOptions[subject] || []).forEach(label => {
+        const opt = document.createElement("option");
+        opt.value = label;
+        opt.textContent = label;
+        $("post-label").appendChild(opt);
+      });
+    }
+
+    async function submitPost(e) {
+      e.preventDefault();
+      const error = $("post-error");
+      error.classList.add("hidden");
+
+      if (!currentUser) {
+        error.textContent = "You must be signed in.";
+        error.classList.remove("hidden");
+        return;
+      }
+
+      const destination = $("post-destination").value;
+      const community = $("community-select").value;
+      const category = $("post-subject").value;
+      const label = $("post-label").value;
+      const content = $("post-content").value.trim();
+
+      if (destination === "community" && !community) {
+        error.textContent = "Select a community.";
+        error.classList.remove("hidden");
+        return;
+      }
+      if (!category) {
+        error.textContent = "Select a subject.";
+        error.classList.remove("hidden");
         return;
       }
       if (!label) {
-        errorDiv.textContent = 'Select a label.';
-        errorDiv.classList.remove('hidden');
+        error.textContent = "Select a label.";
+        error.classList.remove("hidden");
         return;
       }
-      if (!content.trim()) {
-        errorDiv.textContent = 'Post content cannot be empty.';
-        errorDiv.classList.remove('hidden');
+      if (!content) {
+        error.textContent = "Post content cannot be empty.";
+        error.classList.remove("hidden");
         return;
       }
-      // Post logic here (add to Firestore, etc.)
-      // ...existing code...
-    };
 
-    // --- Theme toggle logic (profile modal only) ---
-    function setTheme(theme) {
-      if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-        document.body.classList.remove('dark');
-        document.body.classList.add('light');
-      } else {
-        document.documentElement.classList.add('dark');
-        document.body.classList.remove('light');
-        document.body.classList.add('dark');
-      }
-      localStorage.setItem('theme', theme);
-    }
-    setTheme(localStorage.getItem('theme') || 'dark');
-
-    // --- Profile Modal Logic ---
-    const profileBtn = document.getElementById('profile-btn');
-    const profileModal = document.getElementById('profile-modal');
-    const closeProfile = document.getElementById('close-profile');
-    const profilePhoto = document.getElementById('profile-photo');
-    const photoUpload = document.getElementById('photo-upload');
-    const profileUsername = document.getElementById('profile-username');
-    const profileBio = document.getElementById('profile-bio');
-    const saveProfile = document.getElementById('save-profile');
-    const logoutBtn = document.getElementById('logout-btn');
-
-    let currentUser = null;
-    let userProfile = {};
-
-    profileBtn.onclick = async () => {
-      profileModal.classList.remove('hidden');
-      currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const username = currentUser.displayName || currentUser.email;
-      profileUsername.value = username;
-      document.getElementById('profile-username-display').textContent = username;
-      // Load profile from Firestore
-      const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
-      userProfile = profSnap.exists ? profSnap.data() : {};
-      profileBio.value = userProfile.bio || '';
-      let photoUrl = '';
-      if (userProfile.photoURL) {
-        photoUrl = userProfile.photoURL;
-      } else if (currentUser.photoURL) {
-        photoUrl = currentUser.photoURL;
-      } else {
-        photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username);
-      }
-      profilePhoto.src = photoUrl;
-      // Also update nav profile image
-      document.getElementById('profile-btn').src = photoUrl;
-    };
-  <!DOCTYPE html>
-  <html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BroLiquidity | Feed</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: { sans: ['Inter', 'sans-serif'] },
-            colors: {
-              broblue: '#125CFF',
-              brogreen: '#B6FF22',
-              ink: '#050816',
-              panel: '#0B1024'
-            }
-          }
-        }
-      };
-    </script>
-
-    <style>
-      :root { color-scheme: dark; }
-      * { scroll-behavior: smooth; }
-      body {
-        font-family: 'Inter', sans-serif;
-        background:
-          radial-gradient(circle at 15% 0%, rgba(18, 92, 255, .28), transparent 34%),
-          radial-gradient(circle at 85% 8%, rgba(182, 255, 34, .18), transparent 28%),
-          linear-gradient(135deg, #050816 0%, #080B18 48%, #050816 100%);
-        color: #fff;
-        min-height: 100vh;
-      }
-      body.light {
-        color-scheme: light;
-        background: linear-gradient(135deg, #F6F8FF 0%, #FFFFFF 50%, #F3FFE5 100%);
-        color: #111827;
-      }
-      .glass {
-        background: rgba(11, 16, 36, 0.78);
-        border: 1px solid rgba(255,255,255,0.10);
-        box-shadow: 0 18px 50px rgba(0,0,0,.28);
-        backdrop-filter: blur(18px);
-      }
-      body.light .glass {
-        background: rgba(255,255,255,0.88);
-        border: 1px solid rgba(15,23,42,0.08);
-        box-shadow: 0 18px 45px rgba(15,23,42,.08);
-      }
-      .soft-card {
-        background: rgba(255,255,255,0.055);
-        border: 1px solid rgba(255,255,255,0.09);
-      }
-      body.light .soft-card {
-        background: rgba(15,23,42,0.035);
-        border: 1px solid rgba(15,23,42,0.08);
-      }
-      .ticker {
-        animation: ticker 28s linear infinite;
-        min-width: max-content;
-      }
-      @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-      .scrollbar-hide::-webkit-scrollbar { display: none; }
-      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      .active-pill { background: rgba(182,255,34,.16); color: #B6FF22; border-color: rgba(182,255,34,.42); }
-      body.light .active-pill { background: rgba(18,92,255,.08); color: #125CFF; border-color: rgba(18,92,255,.26); }
-    </style>
-  </head>
-
-  <body class="font-sans antialiased">
-    <!-- Create Community Modal -->
-    <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-      <div class="glass rounded-3xl p-6 w-full max-w-lg relative">
-        <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
-        <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
-        <h2 class="text-2xl font-black mb-1">Create a Community</h2>
-        <p class="text-sm text-slate-400 mb-5">Build a home for traders, analysts, career climbers, or licensing grinders.</p>
-
-        <label class="text-xs font-bold uppercase text-slate-400">Community name</label>
-        <input id="community-name" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" placeholder="ex: IB Analysts, Options Flow, CFA Level 1" />
-
-        <label class="text-xs font-bold uppercase text-slate-400">Description</label>
-        <textarea id="community-desc" class="mt-1 mb-4 w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="What should people discuss here?"></textarea>
-
-        <label class="text-xs font-bold uppercase text-slate-400">Community image</label>
-        <input type="file" id="community-image" accept="image/*" class="mt-2 mb-5 block w-full text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
-
-        <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Create Community</button>
-        <div id="community-create-error" class="text-red-300 text-sm mt-3 hidden"></div>
-      </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-      <div class="glass rounded-3xl p-6 w-full max-w-md relative">
-        <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card hover:bg-white/10 text-2xl leading-none">&times;</button>
-        <h2 class="text-2xl font-black mb-5">Your Profile</h2>
-        <div class="flex flex-col items-center gap-4">
-          <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
-          <div id="profile-username-display" class="font-black text-lg text-center"></div>
-          <input type="file" id="photo-upload" accept="image/*" class="text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-brogreen file:px-4 file:py-2 file:font-bold file:text-black" />
-          <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
-          <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold hover:bg-white/10 transition">Toggle Theme</button>
-          <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] transition">Save Profile</button>
-          <button id="logout-btn" class="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black hover:bg-red-500 transition">Logout</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Top Navigation -->
-    <header class="sticky top-0 z-40 border-b border-white/10 bg-[#050816]/80 backdrop-blur-2xl">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <a href="feed.html" class="flex items-center gap-3 min-w-fit">
-          <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-12 h-12 rounded-2xl object-cover border border-white/10 shadow-lg shadow-blue-950/30">
-          <div class="hidden sm:block">
-            <h1 class="font-black text-xl tracking-tight">BroLiquidity</h1>
-            <p class="text-[11px] text-slate-400 font-bold tracking-wide">Trades • Licenses • Finance Jobs</p>
-          </div>
-        </a>
-
-        <div class="relative flex-1 max-w-2xl">
-          <input id="search-bar" class="w-full px-5 py-3 pl-11 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search tickers, communities, users, licenses..." />
-          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-          <div id="search-results" class="absolute left-0 right-0 top-14 glass rounded-2xl p-2 hidden max-h-96 overflow-y-auto z-50"></div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="open-create-community" class="hidden md:inline-flex px-4 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.02] transition">Create</button>
-          <img id="profile-btn" src="https://ui-avatars.com/api/?name=User" alt="Profile" class="w-11 h-11 rounded-full object-cover border-2 border-brogreen cursor-pointer bg-slate-700" />
-        </div>
-      </nav>
-
-      <div class="overflow-hidden border-t border-white/5 bg-black/20">
-        <div class="ticker flex gap-6 py-2 text-xs font-black text-slate-300">
-          <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
-          <span>SPY +0.42%</span><span>QQQ +0.67%</span><span>BTC +1.20%</span><span>NVDA +2.11%</span><span>IB HOURS: STILL BRUTAL</span><span>CFA LEVEL 1 GRIND</span><span>SERIES 7 STUDY DESK</span>
-        </div>
-      </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_310px] gap-6">
-      <!-- Left Rail -->
-      <aside class="hidden lg:block space-y-4 sticky top-28 self-start">
-        <section class="glass rounded-3xl p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-black">Communities</h2>
-            <button id="open-create-community-side" class="text-xs font-black text-brogreen">+ New</button>
-          </div>
-          <select id="community-select" class="w-full px-3 py-3 rounded-2xl bg-white/8 border border-white/10 outline-none text-sm font-bold mb-4">
-            <option value="">Select a Community</option>
-          </select>
-          <div id="communities-list" class="space-y-2 text-sm"></div>
-        </section>
-
-        <section class="glass rounded-3xl p-4">
-          <h2 class="font-black mb-3">Desks</h2>
-          <div class="space-y-2 text-sm font-bold">
-            <button data-filter="all" class="category-pill active-pill w-full text-left px-3 py-2 rounded-xl border border-white/10">All Feed</button>
-            <button data-filter="stocks" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Stocks</button>
-            <button data-filter="options" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Options</button>
-            <button data-filter="crypto" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Crypto</button>
-            <button data-filter="jobs" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Jobs</button>
-            <button data-filter="careers" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Careers</button>
-            <button data-filter="licenses" class="category-pill w-full text-left px-3 py-2 rounded-xl border border-white/10 hover:bg-white/5">Licenses</button>
-          </div>
-        </section>
-      </aside>
-
-      <!-- Center Feed -->
-      <section class="min-w-0 space-y-5">
-        <section class="glass rounded-3xl p-5 sm:p-6 overflow-hidden relative">
-          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-broblue via-brogreen to-broblue"></div>
-          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
-            <div>
-              <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen">The trading floor</p>
-              <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-1">What’s moving, bro?</h2>
-              <p class="text-sm text-slate-400 mt-1">Post trades, interview intel, license questions, or career moves.</p>
-            </div>
-            <button id="open-create-community-mobile" class="lg:hidden px-4 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
-          </div>
-
-          <form id="post-form" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <select id="post-subject" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
-                <option value="">Subject</option>
-                <option value="stocks">Stocks</option>
-                <option value="options">Options</option>
-                <option value="crypto">Crypto</option>
-                <option value="jobs">Jobs</option>
-                <option value="careers">Careers</option>
-                <option value="licenses">Licenses</option>
-                <option value="other">Other</option>
-              </select>
-              <select id="post-label" class="px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
-                <option value="">Label</option>
-              </select>
-              <select id="mobile-community-select" class="lg:hidden px-4 py-3 rounded-2xl bg-white/8 border border-white/10 focus:border-brogreen outline-none text-sm font-bold">
-                <option value="">Community</option>
-              </select>
-            </div>
-
-            <textarea id="post-content" maxlength="700" placeholder="Drop your thesis, hot take, interview question, Series 7 pain, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white/8 border border-white/10 focus:border-brogreen outline-none min-h-[120px] font-semibold resize-y"></textarea>
-
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <div id="post-error" class="text-red-300 text-sm hidden"></div>
-                <div class="text-xs text-slate-500"><span id="char-count">0</span>/700 characters</div>
-              </div>
-              <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black hover:scale-[1.01] active:scale-[.99] transition">Post to Feed</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h3 class="text-xl font-black">Recent Posts</h3>
-            <p id="feed-context" class="text-sm text-slate-400">All desks, newest first.</p>
-          </div>
-          <div class="flex gap-2">
-            <select id="filter-category" class="lg:hidden px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
-              <option value="all">All</option>
-              <option value="stocks">Stocks</option>
-              <option value="options">Options</option>
-              <option value="crypto">Crypto</option>
-              <option value="jobs">Jobs</option>
-              <option value="careers">Careers</option>
-              <option value="licenses">Licenses</option>
-              <option value="other">Other</option>
-            </select>
-            <select id="sort-posts" class="px-3 py-2 rounded-xl bg-white/8 border border-white/10 text-sm font-bold outline-none">
-              <option value="newest">Newest</option>
-              <option value="bullish">Most Bullish</option>
-              <option value="bearish">Most Bearish</option>
-              <option value="active">Most Active</option>
-            </select>
-          </div>
-        </section>
-
-        <ul id="posts-list" class="space-y-4"></ul>
-        <div id="loading" class="glass rounded-3xl p-6 text-center text-slate-400 font-bold">Loading feed...</div>
-      </section>
-
-      <!-- Right Rail -->
-      <aside class="hidden xl:block space-y-4 sticky top-28 self-start">
-        <section class="glass rounded-3xl p-5">
-          <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Market Pulse</p>
-          <h2 class="font-black text-xl mt-1 mb-4">Bro Board</h2>
-          <div class="space-y-3">
-            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Fear/Greed</span><span class="font-black text-brogreen">Risk-On</span></div>
-            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Top Desk</span><span class="font-black">Options</span></div>
-            <div class="soft-card rounded-2xl p-3 flex justify-between"><span class="font-bold">Hot Topic</span><span class="font-black">Series 7</span></div>
-          </div>
-        </section>
-
-        <section class="glass rounded-3xl p-5">
-          <h2 class="font-black text-xl mb-3">House Rules</h2>
-          <ul class="space-y-3 text-sm text-slate-300">
-            <li class="flex gap-2"><span class="text-brogreen font-black">01</span> No fake P&L screenshots.</li>
-            <li class="flex gap-2"><span class="text-brogreen font-black">02</span> Mark speculation as speculation.</li>
-            <li class="flex gap-2"><span class="text-brogreen font-black">03</span> Jobs, licenses, and career advice welcome.</li>
-            <li class="flex gap-2"><span class="text-brogreen font-black">04</span> No personalized financial advice.</li>
-          </ul>
-        </section>
-
-        <section class="glass rounded-3xl p-5">
-          <h2 class="font-black text-xl mb-3">Trending Tags</h2>
-          <div class="flex flex-wrap gap-2 text-xs font-black">
-            <span class="px-3 py-2 rounded-full soft-card">#CFA</span>
-            <span class="px-3 py-2 rounded-full soft-card">#IB</span>
-            <span class="px-3 py-2 rounded-full soft-card">#OptionsFlow</span>
-            <span class="px-3 py-2 rounded-full soft-card">#Series7</span>
-            <span class="px-3 py-2 rounded-full soft-card">#PE</span>
-            <span class="px-3 py-2 rounded-full soft-card">#NVDA</span>
-          </div>
-        </section>
-      </aside>
-    </main>
-
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-    <script>
-      // ...provided script code...
-    </script>
-  </body>
-  </html>
-      }
+      let username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
       try {
-        await db.collection('posts').add({
-          content: postContent.value,
-          community: communitySelect.value,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        await db.collection("posts").add({
+          content,
+          category,
+          label,
+          destination,
+          community: destination === "community" ? community : "",
           author: username,
+          authorId: currentUser.uid,
           bullish: 0,
-          bearish: 0
+          bearish: 0,
+          comments: 0,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        postContent.value = '';
-      } catch (err) {
-        showPostError('Failed to post. Try again.');
-      }
-    };
 
-    // --- Fetch and render posts ---
-    const postsList = document.getElementById('posts-list');
-    const loadingDiv = document.getElementById('loading');
-    const filterCategory = document.getElementById('filter-category');
-    const sortPosts = document.getElementById('sort-posts');
+        $("post-content").value = "";
+        $("char-count").textContent = "0";
+        closeModal("post-modal");
+      } catch (e) {
+        error.textContent = "Failed to post. Check Firestore rules.";
+        error.classList.remove("hidden");
+      }
+    }
 
     function renderPosts(posts) {
-      postsList.innerHTML = '';
-      if (posts.length === 0) {
-        // Dummy data for demonstration
-        const dummyPosts = [
-          {
-            id: '1',
-            category: 'stocks',
-            author: 'wallstreetwolf',
-            content: 'AAPL earnings beat expectations! 🚀 Who else is bullish for Q3?',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) - 3600 },
-            bullish: 23,
-            bearish: 2
-          },
-          {
-            id: '2',
-            category: 'crypto',
-            author: 'cryptoking',
-            content: 'ETH 2.0 is finally here. Are you staking or selling?',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) - 7200 },
-            bullish: 15,
-            bearish: 5
-          },
-          {
-            id: '3',
-            category: 'jobs',
-            author: 'financerecruiter',
-            content: 'Hiring for a junior analyst role in NYC. DM for details!',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) - 10800 },
-            bullish: 8,
-            bearish: 0
-          },
-          {
-            id: '4',
-            category: 'options',
-            author: 'optionstrader',
-            content: 'SPY 450c for next week. Who’s in?',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) - 5400 },
-            bullish: 12,
-            bearish: 3
-          },
-          {
-            id: '5',
-            category: 'careers',
-            author: 'cfaprepper',
-            content: 'Passed CFA Level 2! Any tips for Level 3?',
-            createdAt: { seconds: Math.floor(Date.now() / 1000) - 18000 },
-            bullish: 10,
-            bearish: 1
-          }
-        ];
-        dummyPosts.forEach(post => {
-          const li = document.createElement('li');
-          li.className = 'glass p-5 rounded-xl';
-          li.innerHTML = `
-            <div class="text-xs text-slate-400 mb-1">${post.category.toUpperCase()} • ${post.author}</div>
-            <div class="text-white mb-2">${post.content}</div>
-            <div class="text-xs text-slate-500 mb-1">${new Date(post.createdAt.seconds * 1000).toLocaleString()}</div>
-            <div class="flex gap-3 items-center mt-2">
-              <button class="bullish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs" data-id="${post.id}">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15" /><line x1="12" y1="9" x2="12" y2="21" /></svg>
-                Bullish <span>${post.bullish || 0}</span>
-              </button>
-              <button class="bearish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs" data-id="${post.id}">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                Bearish <span>${post.bearish || 0}</span>
-              </button>
-            </div>
-          `;
-          postsList.appendChild(li);
-        });
+      const list = $("posts-list");
+      const filtered = selectedFilter === "all" ? posts : posts.filter(p => p.category === selectedFilter);
+
+      if (!filtered.length) {
+        list.innerHTML = `
+          <li class="glass rounded-3xl p-6 text-center">
+            <div class="text-3xl mb-2">📉</div>
+            <div class="font-black">No posts here yet</div>
+            <div class="text-sm text-slate-400 mt-1">Be the first bro to move this desk.</div>
+          </li>
+        `;
         return;
       }
-      posts.forEach(post => {
-        const li = document.createElement('li');
-        li.className = 'glass p-5 rounded-xl';
-        li.innerHTML = `
-          <div class="text-xs text-slate-400 mb-1">${post.category.toUpperCase()} • ${post.author}</div>
-          <div class="text-white mb-2">${post.content}</div>
-          <div class="text-xs text-slate-500 mb-1">${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleString() : ''}</div>
-          <div class="flex gap-3 items-center mt-2">
-            <button class="bullish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs" data-id="${post.id}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15" /><line x1="12" y1="9" x2="12" y2="21" /></svg>
-              Bullish <span>${post.bullish || 0}</span>
-            </button>
-            <button class="bearish-btn flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs" data-id="${post.id}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-              Bearish <span>${post.bearish || 0}</span>
-            </button>
+
+      list.innerHTML = filtered.map(post => `
+        <li class="glass rounded-3xl p-5 hover:border-brogreen/30 transition">
+          <div class="flex items-start gap-3">
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=0B1024&color=B6FF22" class="w-11 h-11 rounded-full border border-white/10" alt="">
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-black">${escapeHTML(post.author || "anonymousbro")}</span>
+                <span class="text-xs text-slate-500">• ${formatDate(post.createdAt)}</span>
+                <span class="text-[10px] px-2 py-1 rounded-full bg-white/8 border border-white/10 font-black uppercase">${escapeHTML(post.category || "other")}</span>
+                ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full bg-brogreen/15 text-brogreen font-black">${escapeHTML(post.label)}</span>` : ""}
+              </div>
+              <p class="mt-3 text-[15px] leading-relaxed text-slate-100 body-copy">${escapeHTML(post.content || "")}</p>
+              <div class="flex flex-wrap gap-2 mt-4">
+                <button class="vote-btn px-3 py-2 rounded-xl soft-card text-xs font-black hover:bg-green-500/10 text-green-300" data-id="${post.id}" data-field="bullish">🚀 Bullish ${post.bullish || 0}</button>
+                <button class="vote-btn px-3 py-2 rounded-xl soft-card text-xs font-black hover:bg-red-500/10 text-red-300" data-id="${post.id}" data-field="bearish">🐻 Bearish ${post.bearish || 0}</button>
+                <button class="px-3 py-2 rounded-xl soft-card text-xs font-black hover:bg-white/10">💬 ${post.comments || 0}</button>
+                <button class="px-3 py-2 rounded-xl soft-card text-xs font-black hover:bg-white/10">🔖 Save</button>
+              </div>
+            </div>
           </div>
-        `;
-        postsList.appendChild(li);
-      });
-      // Add event listeners for voting
-      document.querySelectorAll('.bullish-btn').forEach(btn => {
-        btn.onclick = async (e) => {
-          const id = btn.getAttribute('data-id');
-          const postRef = db.collection('posts').doc(id);
-          await postRef.update({ bullish: firebase.firestore.FieldValue.increment(1) });
-        };
-      });
-      document.querySelectorAll('.bearish-btn').forEach(btn => {
-        btn.onclick = async (e) => {
-          const id = btn.getAttribute('data-id');
-          const postRef = db.collection('posts').doc(id);
-          await postRef.update({ bearish: firebase.firestore.FieldValue.increment(1) });
+        </li>
+      `).join("");
+
+      document.querySelectorAll(".vote-btn").forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.id;
+          const field = btn.dataset.field;
+          if (String(id).startsWith("demo")) return;
+          try {
+            await db.collection("posts").doc(id).update({
+              [field]: firebase.firestore.FieldValue.increment(1)
+            });
+          } catch (e) {
+            console.warn("Vote failed:", e);
+          }
         };
       });
     }
 
-    let unsubscribe = null;
     function subscribeToPosts() {
-      if (unsubscribe) unsubscribe();
-      let q = db.collection('posts');
-      const filter = filterCategory.value;
-      if (filter !== 'all') {
-        q = q.where('category', '==', filter);
+      if (unsubscribePosts) unsubscribePosts();
+      const sort = $("sort-posts").value;
+
+      try {
+        unsubscribePosts = db.collection("posts").orderBy("createdAt", "desc").limit(50).onSnapshot(snapshot => {
+          let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          if (sort === "bullish") posts.sort((a, b) => (b.bullish || 0) - (a.bullish || 0));
+          if (sort === "bearish") posts.sort((a, b) => (b.bearish || 0) - (a.bearish || 0));
+          if (sort === "active") posts.sort((a, b) => ((b.comments || 0) + (b.bullish || 0) + (b.bearish || 0)) - ((a.comments || 0) + (a.bullish || 0) + (a.bearish || 0)));
+
+          renderPosts(posts.length ? posts : demoPosts);
+          $("loading").style.display = "none";
+        }, err => {
+          console.warn("Feed snapshot failed:", err);
+          renderPosts(demoPosts);
+          $("loading").style.display = "none";
+        });
+      } catch (e) {
+        renderPosts(demoPosts);
+        $("loading").style.display = "none";
       }
-      q = q.orderBy('createdAt', 'desc');
-      unsubscribe = q.onSnapshot(snapshot => {
-        let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Sorting
-        if (sortPosts.value === 'bullish') {
-          posts = posts.sort((a, b) => (b.bullish || 0) - (a.bullish || 0));
-        } else if (sortPosts.value === 'bearish') {
-          posts = posts.sort((a, b) => (b.bearish || 0) - (a.bearish || 0));
-        } else {
-          posts = posts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    }
+
+    function setFilter(filter) {
+      selectedFilter = filter;
+      $("filter-category").value = filter;
+      document.querySelectorAll(".category-pill").forEach(btn => {
+        btn.classList.toggle("active-pill", btn.dataset.filter === filter);
+      });
+      $("feed-context").textContent = filter === "all" ? "All desks, newest first." : `${filter.replace("-", " ")} desk, newest first.`;
+      subscribeToPosts();
+    }
+
+    async function runSearch(query) {
+      const q = query.trim();
+      const results = $("search-results");
+      if (!q) {
+        results.classList.add("hidden");
+        results.innerHTML = "";
+        return;
+      }
+
+      const lower = q.toLowerCase();
+      let html = "";
+
+      const ticker = q.toUpperCase();
+      if (demoPrices[ticker]) {
+        const data = demoPrices[ticker];
+        html += `
+          <div class="p-3 rounded-2xl soft-card mb-2">
+            <div class="text-xs text-slate-400 font-black">TICKER</div>
+            <div class="flex justify-between items-center">
+              <div class="font-black text-lg">${ticker}</div>
+              <div class="font-black text-brogreen">${data[0]} ${data[1]}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      const richMatches = richPeople.filter(p => p.name.toLowerCase().includes(lower) || p.source.toLowerCase().includes(lower));
+      if (richMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">RICHEST PEOPLE</div>`;
+        html += richMatches.map(p => `
+          <div class="p-3 rounded-2xl hover:bg-white/10">
+            <div class="font-black">${escapeHTML(p.name)}</div>
+            <div class="text-xs text-slate-400">${escapeHTML(p.source)} • ${escapeHTML(p.tag)}</div>
+          </div>
+        `).join("");
+      }
+
+      const communityMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(lower));
+      if (communityMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
+        html += communityMatches.map(c => `
+          <div class="p-3 rounded-2xl hover:bg-white/10">
+            <div class="font-black">c/${escapeHTML(c.name)}</div>
+            <div class="text-xs text-slate-400">${escapeHTML(c.description || "")}</div>
+          </div>
+        `).join("");
+      }
+
+      try {
+        const users = await db.collection("profiles")
+          .where("displayName", ">=", q)
+          .where("displayName", "<=", q + "\uf8ff")
+          .limit(5)
+          .get();
+
+        if (!users.empty) {
+          html += `<div class="text-xs text-slate-500 font-black px-2 py-1">USERS</div>`;
+          users.forEach(doc => {
+            const u = doc.data();
+            html += `
+              <div class="p-3 rounded-2xl hover:bg-white/10">
+                <div class="font-black">u/${escapeHTML(u.displayName || u.username || doc.id)}</div>
+              </div>
+            `;
+          });
         }
-        renderPosts(posts);
-        loadingDiv.style.display = 'none';
+      } catch(e) {}
+
+      results.innerHTML = html || `<div class="p-3 text-slate-400 font-bold">No results found.</div>`;
+      results.classList.remove("hidden");
+    }
+
+    function loadProfile(user) {
+      const username = user.displayName || user.email || "User";
+      $("profile-username-display").textContent = username;
+      const fallback = "https://ui-avatars.com/api/?name=" + encodeURIComponent(username) + "&background=0B1024&color=B6FF22";
+
+      db.collection("profiles").doc(user.uid).get().then(doc => {
+        const data = doc.exists ? doc.data() : {};
+        $("profile-bio").value = data.bio || "";
+        const photo = data.photoURL || user.photoURL || fallback;
+        $("profile-photo").src = photo;
+        $("profile-btn").src = photo;
+      }).catch(() => {
+        $("profile-photo").src = fallback;
+        $("profile-btn").src = fallback;
       });
     }
-    filterCategory.onchange = subscribeToPosts;
-    sortPosts.onchange = subscribeToPosts;
-    subscribeToPosts();
+
+    function wireEvents() {
+      ["open-post-modal-top", "open-post-modal-hero", "open-post-modal-floating"].forEach(id => {
+        $(id).onclick = () => openModal("post-modal");
+      });
+      $("close-post-modal").onclick = () => closeModal("post-modal");
+      $("profile-btn").onclick = () => openModal("profile-modal");
+      $("close-profile").onclick = () => closeModal("profile-modal");
+      $("open-create-community").onclick = () => openModal("create-community-modal");
+      $("close-create-community").onclick = () => closeModal("create-community-modal");
+
+      $("create-community-btn").onclick = createCommunity;
+      $("post-subject").onchange = updatePostLabels;
+      $("post-form").onsubmit = submitPost;
+
+      $("post-destination").onchange = () => {
+        $("community-select").classList.toggle("hidden", $("post-destination").value !== "community");
+      };
+
+      $("post-content").oninput = () => {
+        $("char-count").textContent = $("post-content").value.length;
+      };
+
+      $("profile-theme-toggle").onclick = () => {
+        setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
+      };
+
+      $("save-profile").onclick = async () => {
+        if (!currentUser) return;
+        await db.collection("profiles").doc(currentUser.uid).set({ bio: $("profile-bio").value }, { merge: true });
+        closeModal("profile-modal");
+      };
+
+      $("photo-upload").onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentUser) return;
+        const ref = storage.ref("profile_photos/" + currentUser.uid);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        await db.collection("profiles").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
+        await currentUser.updateProfile({ photoURL: url });
+        $("profile-photo").src = url;
+        $("profile-btn").src = url;
+      };
+
+      $("logout-btn").onclick = async () => {
+        await auth.signOut();
+        window.location.href = "login.html";
+      };
+
+      $("sort-posts").onchange = subscribeToPosts;
+      $("filter-category").onchange = () => setFilter($("filter-category").value);
+
+      document.querySelectorAll(".category-pill").forEach(btn => {
+        btn.onclick = () => setFilter(btn.dataset.filter);
+      });
+
+      $("search-bar").addEventListener("input", (e) => runSearch(e.target.value));
+      $("search-bar").addEventListener("keydown", (e) => {
+        if (e.key === "Escape") $("search-results").classList.add("hidden");
+      });
+
+      $("add-watchlist-btn").onclick = () => $("watchlist-form").classList.toggle("hidden");
+      $("save-watchlist-btn").onclick = () => {
+        const ticker = $("watchlist-input").value.trim().toUpperCase();
+        if (!ticker) return;
+        const items = [...new Set([...getWatchlist(), ticker])];
+        setWatchlist(items);
+        $("watchlist-input").value = "";
+        $("watchlist-form").classList.add("hidden");
+      };
+
+      document.addEventListener("click", (e) => {
+        if (!$("search-results").contains(e.target) && e.target !== $("search-bar")) {
+          $("search-results").classList.add("hidden");
+        }
+      });
+    }
+
+    wireEvents();
+    renderWatchlist();
+    renderRichList();
+
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      currentUser = user;
+      loadProfile(user);
+      await loadCommunities();
+      subscribeToPosts();
+    });
   </script>
 </body>
 </html>
