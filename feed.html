@@ -226,9 +226,9 @@
     </div>
   </div>
 
-  <div class="min-h-screen xl:grid xl:grid-cols-[300px_minmax(520px,760px)_380px] xl:justify-center">
+  <div class="min-h-screen md:grid md:grid-cols-[240px_minmax(420px,1fr)_360px] xl:grid-cols-[300px_minmax(520px,760px)_380px] md:justify-center">
     <!-- Left X-style Rail -->
-    <aside class="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+    <aside class="hidden md:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col">
         <a href="feed.html" class="flex items-center gap-3 mb-6">
           <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10">
@@ -259,7 +259,7 @@
           </button>
         </nav>
 
-        <button id="left-post-btn" class="mt-5 w-full rounded-full bg-brogreen text-black py-4 font-black text-lg">Post</button>
+        <button id="left-post-btn" class="hidden">Post</button>
 
         <div class="mt-6 space-y-4">
           <section class="panel rounded-3xl p-4">
@@ -288,19 +288,19 @@
     </aside>
 
     <!-- Mobile Header -->
-    <header class="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
+    <header class="md:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
       <nav class="px-4 py-3 flex items-center justify-between gap-3">
         <button id="mobile-menu-btn" class="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu">☰</button>
         <a href="feed.html" class="flex items-center gap-2">
           <img src="mainlogo.png" class="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity">
           <span class="font-black">BroLiquidity</span>
         </a>
-        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black">Post</button>
+        <button id="mobile-post-btn" class="hidden">Post</button>
       </nav>
     </header>
 
     <!-- Center Feed -->
-    <main class="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+    <main class="min-h-screen border-x border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
         <div class="grid grid-cols-2 text-center font-black">
           <button id="tab-for-you" class="feed-tab active-tab py-4">For you</button>
@@ -320,7 +320,7 @@
                 <button title="Cashtag">$</button>
                 <button title="Community">💬</button>
               </div>
-              <button id="composer-post-btn" class="px-6 py-2 rounded-full bg-brogreen text-black font-black">Post</button>
+              <button id="composer-post-btn" class="hidden">Post</button>
             </div>
           </div>
         </div>
@@ -355,7 +355,7 @@
     </main>
 
     <!-- Right Market Rail -->
-    <aside class="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
+    <aside class="hidden md:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
         <div class="relative">
           <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
@@ -367,8 +367,8 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Markets</p>
-              <h2 class="font-black text-xl">Paper Trading Hub</h2>
-              <p class="text-xs text-slate-500 mt-1">Robinhood-style watchlists. No real trading.</p>
+              <h2 class="font-black text-xl">Market Watchlists</h2>
+              <p class="text-xs text-slate-500 mt-1">Stocks, options, crypto, search, and paper trading only.</p>
             </div>
             <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
           </div>
@@ -453,7 +453,7 @@
     <div id="mobile-drawer-content" class="space-y-4"></div>
   </aside>
 
-  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
+  <button id="mobile-floating-post" class="fixed bottom-6 right-6 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-3xl shadow-2xl hover:scale-105 transition">+</button>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -1239,7 +1239,7 @@
     }
 
     function wireEvents() {
-      ["left-post-btn", "mobile-post-btn", "mobile-floating-post", "composer-open", "composer-post-btn", "composer-image-open"].forEach(id => {
+      ["mobile-floating-post", "composer-open", "composer-image-open"].forEach(id => {
         $(id).onclick = () => openModal("post-modal");
       });
       $("close-post-modal").onclick = () => closeModal("post-modal");
