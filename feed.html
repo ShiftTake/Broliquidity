@@ -204,6 +204,17 @@
 
         <textarea id="post-content" maxlength="700" placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..." class="w-full px-4 py-4 rounded-3xl bg-white/8 border border-white/10 focus:border-brogreen outline-none min-h-[150px] font-semibold resize-y"></textarea>
 
+        <div id="post-image-preview" class="hidden rounded-3xl overflow-hidden border border-white/10 bg-black/20"></div>
+
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <label class="inline-flex items-center gap-2 px-4 py-3 rounded-2xl soft-card font-black hover:bg-white/10 cursor-pointer transition">
+            <span>🖼️ Add Image</span>
+            <input id="post-image" type="file" accept="image/*" class="hidden" />
+          </label>
+          <button type="button" id="remove-post-image" class="hidden px-4 py-3 rounded-2xl soft-card font-black text-red-300 hover:bg-red-500/10 transition">Remove Image</button>
+          <span class="text-xs text-slate-500">Charts, screenshots, memes, and trade setups.</span>
+        </div>
+
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div id="post-error" class="text-red-300 text-sm hidden"></div>
@@ -255,6 +266,16 @@
           <button id="open-create-community" class="text-xs font-black text-brogreen">+ New</button>
         </div>
         <div id="communities-list" class="space-y-2 text-sm"></div>
+      </section>
+
+      <section class="glass rounded-3xl p-4">
+        <h2 class="font-black mb-3">Subscribed Desks</h2>
+        <div id="subscribed-desks-list" class="space-y-2 text-sm"></div>
+      </section>
+
+      <section class="glass rounded-3xl p-4">
+        <h2 class="font-black mb-3">Following</h2>
+        <div id="following-list" class="space-y-2 text-sm"></div>
       </section>
 
       <section class="glass rounded-3xl p-4">
@@ -350,6 +371,17 @@
       </section>
 
       <section class="glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Saved</p>
+            <h2 class="font-black text-xl mt-1">Saved Posts</h2>
+          </div>
+          <span id="saved-count" class="text-xs font-black px-2 py-1 rounded-full soft-card">0</span>
+        </div>
+        <p class="text-xs text-slate-400">Saved locally for the prototype. Move this to Firestore for cross-device saves.</p>
+      </section>
+
+      <section class="glass rounded-3xl p-5">
         <p class="text-xs font-black tracking-[0.22em] uppercase text-brogreen">Free Bloomberg-ish</p>
         <h2 class="font-black text-xl mt-1 mb-4">Richest People</h2>
         <div id="rich-list" class="space-y-3"></div>
@@ -435,6 +467,31 @@
 
     setTheme(localStorage.getItem("theme") || "dark");
 
+    function getSavedPosts() {
+      return JSON.parse(localStorage.getItem("broliquidity_saved_posts") || "[]");
+    }
+
+    function setSavedPosts(ids) {
+      localStorage.setItem("broliquidity_saved_posts", JSON.stringify([...new Set(ids)]));
+      renderSavedCount();
+    }
+
+    function isPostSaved(id) {
+      return getSavedPosts().includes(String(id));
+    }
+
+    function toggleSavedPost(id) {
+      const sid = String(id);
+      const current = getSavedPosts();
+      setSavedPosts(current.includes(sid) ? current.filter(x => x !== sid) : [...current, sid]);
+      subscribeToPosts();
+    }
+
+    function renderSavedCount() {
+      const el = $("saved-count");
+      if (el) el.textContent = getSavedPosts().length;
+    }
+
     const labelOptions = {
       stocks: ["Thesis", "News", "Earnings", "Question"],
       options: ["Flow", "YOLO", "Strategy", "Education"],
@@ -451,6 +508,13 @@
       { id: "demo2", category: "licenses", label: "Series 7", author: "siegrinder", content: "Series 7 options section is humbling me. Covered calls make sense until the practice exam starts yelling.", createdAt: { seconds: Math.floor(Date.now()/1000) - 6400 }, bullish: 18, bearish: 1, comments: 9, destination: "timeline" },
       { id: "demo3", category: "jobs", label: "Interview", author: "exceladdict", content: "Got a superday for an analyst role. What technicals are they actually asking in 2026? Also is $JPM still the king of analyst training?", createdAt: { seconds: Math.floor(Date.now()/1000) - 9100 }, bullish: 25, bearish: 0, comments: 17, destination: "timeline" },
       { id: "demo4", category: "rich-list", label: "Billionaires", author: "cap_table_king", content: "The richest people list is basically a leaderboard for owning distribution, compute, luxury, or payments. Pick your fighter: $TSLA, $META, or $ORCL.", createdAt: { seconds: Math.floor(Date.now()/1000) - 12600 }, bullish: 31, bearish: 3, comments: 6, destination: "timeline" }
+    ];
+
+    const demoFollowing = [
+      { name: "wallstreetwolf", role: "Equity hot takes", avatar: "WW" },
+      { name: "siegrinder", role: "Licensing grind", avatar: "SG" },
+      { name: "cap_table_king", role: "Founder wealth watch", avatar: "CK" },
+      { name: "exceladdict", role: "Analyst recruiting", avatar: "EA" }
     ];
 
     const richPeople = [
@@ -633,6 +697,7 @@
           $("community-select").classList.remove("hidden");
         };
       });
+      renderSubscribedAndFollowing();
     }
 
     async function createCommunity() {
@@ -705,6 +770,7 @@
       const category = $("post-subject").value;
       const label = $("post-label").value;
       const content = $("post-content").value.trim();
+      const imageFile = $("post-image")?.files?.[0] || null;
 
       if (destination === "community" && !community) {
         error.textContent = "Select a community.";
@@ -721,16 +787,25 @@
         error.classList.remove("hidden");
         return;
       }
-      if (!content) {
-        error.textContent = "Post content cannot be empty.";
+      if (!content && !imageFile) {
+        error.textContent = "Add text or an image before posting.";
         error.classList.remove("hidden");
         return;
       }
 
+      let imageUrl = "";
       let username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
       try {
+        if (imageFile) {
+          if (!imageFile.type.startsWith("image/")) throw new Error("Invalid image type");
+          const imageRef = storage.ref("post_images/" + currentUser.uid + "_" + Date.now() + "_" + imageFile.name);
+          await imageRef.put(imageFile);
+          imageUrl = await imageRef.getDownloadURL();
+        }
+
         await db.collection("posts").add({
           content,
+          imageUrl,
           category,
           label,
           destination,
@@ -744,6 +819,10 @@
         });
 
         $("post-content").value = "";
+        $("post-image").value = "";
+        $("post-image-preview").innerHTML = "";
+        $("post-image-preview").classList.add("hidden");
+        $("remove-post-image").classList.add("hidden");
         $("char-count").textContent = "0";
         closeModal("post-modal");
       } catch (e) {
@@ -789,7 +868,8 @@
                   ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full active-pill font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
                 </div>
 
-                <p class="mt-3 text-sm sm:text-base font-medium leading-relaxed text-slate-100">${formatContent(post.content || "")}</p>
+                ${post.content ? `<p class="mt-3 text-sm sm:text-base font-medium leading-relaxed text-slate-100">${formatContent(post.content || "")}</p>` : ""}
+                ${post.imageUrl ? `<img src="${escapeHTML(post.imageUrl)}" alt="Post image" class="mt-4 w-full max-h-[460px] object-cover rounded-3xl border border-white/10 bg-black/20" loading="lazy">` : ""}
 
                 <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-3 pt-4 border-t border-white/5">
                   <div class="flex-1">
@@ -802,8 +882,9 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-brogreen text-black uppercase" data-id="${post.id}" data-field="bullish">Bullish ${bull}</button>
-                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-red-500 text-white uppercase" data-id="${post.id}" data-field="bearish">Bearish ${bear}</button>
+                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-brogreen text-black uppercase" data-id="${post.id}" data-field="bullish">↗ Uptrend ${bull}</button>
+                    <button class="vote-btn text-[10px] font-black px-3 py-2 rounded-xl bg-red-500 text-white uppercase" data-id="${post.id}" data-field="bearish">↘ Downtrend ${bear}</button>
+                    <button class="save-post-btn text-[10px] font-black px-3 py-2 rounded-xl soft-card uppercase ${isPostSaved(post.id) ? "text-brogreen" : "text-slate-300"}" data-id="${post.id}">${isPostSaved(post.id) ? "✓ Saved" : "🔖 Save"}</button>
                     <span class="text-xs font-bold text-slate-500">💬 ${post.comments || 0}</span>
                   </div>
                 </div>
@@ -826,6 +907,10 @@
             console.warn("Vote failed:", e);
           }
         };
+      });
+
+      document.querySelectorAll(".save-post-btn").forEach(btn => {
+        btn.onclick = () => toggleSavedPost(btn.dataset.id);
       });
 
       document.querySelectorAll(".cashtag").forEach(tag => {
@@ -957,6 +1042,34 @@
       });
     }
 
+    function renderSubscribedAndFollowing() {
+      const subscribed = $("subscribed-desks-list");
+      if (subscribed) {
+        const mine = communitiesCache.filter(c => Array.isArray(c.members) && currentUser && c.members.includes(currentUser.uid)).slice(0, 6);
+        subscribed.innerHTML = (mine.length ? mine : communitiesCache.slice(0, 4)).map(c => `
+          <button class="community-filter w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition" data-id="${c.id}">
+            <div class="font-black">c/${escapeHTML(c.name || "desk")}</div>
+            <div class="text-xs text-slate-400">${Array.isArray(c.members) ? c.members.length : 1} members • ${(c.description || "Finance desk").slice(0, 42)}</div>
+          </button>
+        `).join("") || `<div class="soft-card rounded-2xl p-3 text-sm text-slate-400">Join a desk to see it here.</div>`;
+      }
+
+      const following = $("following-list");
+      if (following) {
+        following.innerHTML = demoFollowing.map(u => `
+          <button class="w-full soft-card rounded-2xl p-3 text-left hover:bg-white/10 transition">
+            <div class="flex items-center gap-3">
+              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=0B1024&color=B6FF22" class="w-8 h-8 rounded-full border border-white/10" alt="">
+              <div class="min-w-0">
+                <div class="font-black truncate">@${escapeHTML(u.name)}</div>
+                <div class="text-xs text-slate-400 truncate">${escapeHTML(u.role)}</div>
+              </div>
+            </div>
+          </button>
+        `).join("");
+      }
+    }
+
     function wireEvents() {
       ["open-post-modal-top", "open-post-modal-hero", "open-post-modal-floating"].forEach(id => {
         $(id).onclick = () => openModal("post-modal");
@@ -978,6 +1091,23 @@
 
       $("post-content").oninput = () => {
         $("char-count").textContent = $("post-content").value.length;
+      };
+
+      $("post-image").onchange = (e) => {
+        const file = e.target.files[0];
+        const preview = $("post-image-preview");
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        preview.innerHTML = `<img src="${url}" class="w-full max-h-[360px] object-cover" alt="Image preview">`;
+        preview.classList.remove("hidden");
+        $("remove-post-image").classList.remove("hidden");
+      };
+
+      $("remove-post-image").onclick = () => {
+        $("post-image").value = "";
+        $("post-image-preview").innerHTML = "";
+        $("post-image-preview").classList.add("hidden");
+        $("remove-post-image").classList.add("hidden");
       };
 
       $("profile-theme-toggle").onclick = () => {
@@ -1040,6 +1170,8 @@
     renderWatchlist();
     renderRichList();
     renderMarketList();
+    renderSavedCount();
+    renderSubscribedAndFollowing();
 
     auth.onAuthStateChanged(async user => {
       if (!user) {
