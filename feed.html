@@ -21,7 +21,23 @@
         <a href="index.html#features" class="hover:text-[#b6ff22]">Features</a>
         <a href="feed.html" class="hover:text-[#b6ff22]">Feed</a>
         <a href="index.html" class="hover:text-[#b6ff22]">Home</a>
-        <button id="logout-btn" class="ml-6 px-6 py-2 rounded-2xl bg-[#b6ff22] text-black font-black hover:scale-105 transition">Logout</button>
+        <button id="theme-toggle" class="px-4 py-2 rounded-2xl bg-slate-700 text-white font-bold hover:scale-105 transition">🌙</button>
+        <button id="profile-btn" class="px-4 py-2 rounded-2xl bg-blue-600 text-white font-bold hover:scale-105 transition">Profile</button>
+  <!-- User Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-[#181a20] text-black dark:text-white rounded-2xl p-8 w-full max-w-md relative">
+      <button id="close-profile" class="absolute top-3 right-3 text-2xl">&times;</button>
+      <h2 class="text-2xl font-black mb-4">Your Profile</h2>
+      <div class="flex flex-col items-center gap-4">
+        <img id="profile-photo" src="" alt="Profile Photo" class="w-24 h-24 rounded-full object-cover border-4 border-[#b6ff22]" style="background:#eee;" />
+        <input type="file" id="photo-upload" accept="image/*" class="mb-2" />
+        <input id="profile-username" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" disabled />
+        <textarea id="profile-bio" class="px-4 py-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-black dark:text-white font-semibold w-full" rows="3" placeholder="Add a short bio..."></textarea>
+        <button id="save-profile" class="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Save</button>
+        <button id="logout-btn" class="w-full px-4 py-2 rounded-2xl bg-red-600 text-white font-bold hover:scale-105 transition mt-2">Logout</button>
+      </div>
+    </div>
+  </div>
       </div>
     </nav>
   </header>
@@ -81,7 +97,86 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // --- Auth check ---
+    // --- Theme toggle ---
+    const themeToggle = document.getElementById('theme-toggle');
+    function setTheme(theme) {
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+        themeToggle.textContent = '🌙';
+      }
+      localStorage.setItem('theme', theme);
+    }
+    themeToggle.onclick = () => {
+      const current = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
+      setTheme(current);
+    };
+    setTheme(localStorage.getItem('theme') || 'dark');
+
+    // --- Profile Modal Logic ---
+    const profileBtn = document.getElementById('profile-btn');
+    const profileModal = document.getElementById('profile-modal');
+    const closeProfile = document.getElementById('close-profile');
+    const profilePhoto = document.getElementById('profile-photo');
+    const photoUpload = document.getElementById('photo-upload');
+    const profileUsername = document.getElementById('profile-username');
+    const profileBio = document.getElementById('profile-bio');
+    const saveProfile = document.getElementById('save-profile');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    let currentUser = null;
+    let userProfile = {};
+
+    profileBtn.onclick = async () => {
+      profileModal.classList.remove('hidden');
+      currentUser = auth.currentUser;
+      if (!currentUser) return;
+      profileUsername.value = currentUser.displayName || currentUser.email;
+      // Load profile from Firestore
+      const profSnap = await db.collection('profiles').doc(currentUser.uid).get();
+      userProfile = profSnap.exists ? profSnap.data() : {};
+      profileBio.value = userProfile.bio || '';
+      if (userProfile.photoURL) {
+        profilePhoto.src = userProfile.photoURL;
+      } else if (currentUser.photoURL) {
+        profilePhoto.src = currentUser.photoURL;
+      } else {
+        profilePhoto.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profileUsername.value);
+      }
+    };
+    closeProfile.onclick = () => profileModal.classList.add('hidden');
+    window.onclick = e => { if (e.target === profileModal) profileModal.classList.add('hidden'); };
+
+    photoUpload.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        profilePhoto.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      // Upload to Firebase Storage
+      const storageRef = firebase.storage().ref('profile_photos/' + currentUser.uid);
+      await storageRef.put(file);
+      const url = await storageRef.getDownloadURL();
+      await db.collection('profiles').doc(currentUser.uid).set({ photoURL: url }, { merge: true });
+      await currentUser.updateProfile({ photoURL: url });
+    };
+
+    saveProfile.onclick = async () => {
+      await db.collection('profiles').doc(currentUser.uid).set({ bio: profileBio.value }, { merge: true });
+      userProfile.bio = profileBio.value;
+      profileModal.classList.add('hidden');
+    };
+
+    logoutBtn.onclick = async () => {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    };
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'login.html';
