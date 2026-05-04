@@ -73,7 +73,7 @@
           email: user.email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-        window.location.href = 'index.html';
+        window.location.href = 'index.html#community';
       } catch (err) {
         showEmailError('Google sign-in failed: ' + err.message);
       }
@@ -112,7 +112,7 @@
           email: user.email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        window.location.href = 'index.html';
+        window.location.href = 'index.html#community';
       } catch (err) {
         showEmailError(err.message);
       }
