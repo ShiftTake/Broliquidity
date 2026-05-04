@@ -127,7 +127,11 @@
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Bias</div><div id="ticker-bias" class="text-brogreen text-lg">--</div></div>
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Type</div><div id="ticker-type" class="text-lg">Stock</div></div>
       </div>
-      <button id="ticker-add-btn" class="mt-4 w-full px-4 py-3 rounded-2xl bg-brogreen text-black font-black">Add to Watchlist</button>
+      <div class="mt-4 grid grid-cols-3 gap-2">
+        <button id="ticker-add-btn" class="px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-xs">Add Watchlist</button>
+        <button id="ticker-paper-buy" class="px-4 py-3 rounded-2xl bg-green-600 text-white font-black text-xs">Paper Buy</button>
+        <button id="ticker-paper-sell" class="px-4 py-3 rounded-2xl bg-red-500 text-white font-black text-xs">Paper Sell</button>
+      </div>
       <p class="text-[11px] text-slate-500 mt-4">Prototype market data. Connect Polygon, Finnhub, IEX Cloud, Twelve Data, or CoinGecko for live pricing.</p>
     </div>
   </div>
@@ -350,70 +354,89 @@
       </section>
     </main>
 
-    <!-- Right Market Rail: always market-focused, no feed tabs -->
+    <!-- Right Market Rail -->
     <aside class="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
+        <div class="relative">
+          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
+          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
+        </div>
+
         <section class="panel rounded-3xl p-4">
-          <div class="flex items-start justify-between gap-4 mb-4">
+          <div class="flex items-center justify-between mb-4">
             <div>
               <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Markets</p>
-              <h2 class="font-black text-xl">Stocks & Crypto</h2>
-              <p class="text-xs text-slate-500 mt-1">Search assets, preview charts, and build your watchlists.</p>
+              <h2 class="font-black text-xl">Paper Trading Hub</h2>
+              <p class="text-xs text-slate-500 mt-1">Robinhood-style watchlists. No real trading.</p>
             </div>
             <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
           </div>
 
           <div class="relative mb-4">
-            <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search stocks or crypto..." />
-            <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-            <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
-          </div>
-
-          <div class="relative mb-5">
-            <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Add AAPL, BTC, NVDA..." />
+            <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." />
             <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
             <div id="asset-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+            <div class="soft-card rounded-2xl p-3"><div class="text-[10px] text-slate-500 font-black uppercase">Paper Cash</div><div id="paper-cash" class="font-black text-sm">$100,000</div></div>
+            <div class="soft-card rounded-2xl p-3"><div class="text-[10px] text-slate-500 font-black uppercase">P&L</div><div id="paper-pnl" class="font-black text-sm text-green-600">$0</div></div>
+            <div class="soft-card rounded-2xl p-3"><div class="text-[10px] text-slate-500 font-black uppercase">Positions</div><div id="paper-position-count" class="font-black text-sm">0</div></div>
           </div>
 
           <div class="space-y-5">
             <div>
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Popular Stocks</h3>
-                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-brogreen/15 text-green-600">TOP 10</span>
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Stocks Watchlist</h3>
+                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-brogreen/15 text-green-600">EQUITIES</span>
               </div>
               <div id="popular-stocks-list" class="space-y-2"></div>
             </div>
 
             <div>
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Popular Crypto</h3>
-                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-broblue/15 text-broblue">TOP 5</span>
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Options Watchlist</h3>
+                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-purple-500/15 text-purple-500">OPTIONS</span>
+              </div>
+              <div id="popular-options-list" class="space-y-2"></div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Crypto Watchlist</h3>
+                <span class="text-[10px] font-black px-2 py-1 rounded-full bg-broblue/15 text-broblue">CRYPTO</span>
               </div>
               <div id="popular-crypto-list" class="space-y-2"></div>
             </div>
-          </div>
-        </section>
 
-        <section class="panel rounded-3xl p-4">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Personal</p>
-              <h2 class="font-black text-xl">My Watchlists</h2>
-              <p class="text-xs text-slate-500 mt-1">Custom stocks and crypto you care about.</p>
+            <div class="pt-4 border-t border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">My Custom Watchlist</h3>
+                  <p class="text-[11px] text-slate-500">Add stocks, options, or crypto.</p>
+                </div>
+                <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
+              </div>
+              <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
+                <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL or BTC" maxlength="18" />
+                <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
+              </div>
+              <div id="watchlist-list" class="space-y-2"></div>
             </div>
-            <button id="add-watchlist-btn" class="text-xs font-black text-brogreen">+ Add</button>
-          </div>
 
-          <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
-            <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL" maxlength="8" />
-            <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
+            <div class="pt-4 border-t border-slate-200 dark:border-white/10">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-black uppercase tracking-wide text-slate-500">Paper Positions</h3>
+                <button id="clear-paper-positions" class="text-[10px] font-black text-red-500">Clear</button>
+              </div>
+              <div id="paper-positions-list" class="space-y-2"></div>
+            </div>
           </div>
-
-          <div id="watchlist-list" class="space-y-2"></div>
         </section>
 
         <section class="panel rounded-3xl p-4">
-          <h2 class="font-black text-xl mb-3">Market Trends</h2>
+          <h2 class="font-black text-xl mb-3">Trending Topics</h2>
           <div id="right-trending" class="space-y-3"></div>
         </section>
       </div>
@@ -509,6 +532,11 @@
       COIN: { type: "Stock", name: "Coinbase", price: "252.33", change: "+3.21%", spark: [21,33,29,41,55,49,61,72,68,77,82,91], mentions: 69, bias: "74% Bull" },
       JPM: { type: "Stock", name: "JPMorgan Chase", price: "198.45", change: "+0.44%", spark: [42,44,41,47,49,53,50,55,58,57,61,63], mentions: 43, bias: "59% Bull" },
       PLTR: { type: "Stock", name: "Palantir", price: "42.77", change: "+2.08%", spark: [22,24,31,28,36,42,49,53,58,62,70,78], mentions: 59, bias: "76% Bull" },
+      "NVDA250C": { type: "Option", name: "NVDA $250 Call • 30D", price: "14.85", change: "+8.42%", spark: [18,24,29,31,44,49,57,61,69,74,82,91], mentions: 77, bias: "79% Bull" },
+      "SPY530C": { type: "Option", name: "SPY $530 Call • 14D", price: "3.42", change: "+3.11%", spark: [30,32,35,38,41,44,46,49,53,57,60,66], mentions: 63, bias: "67% Bull" },
+      "TSLA200C": { type: "Option", name: "TSLA $200 Call • 21D", price: "6.18", change: "-4.23%", spark: [77,72,69,65,62,58,54,49,44,42,38,35], mentions: 58, bias: "56% Bear" },
+      "AAPL210C": { type: "Option", name: "AAPL $210 Call • 45D", price: "5.74", change: "+1.87%", spark: [28,30,32,35,39,41,44,48,51,53,55,59], mentions: 42, bias: "61% Bull" },
+      "QQQ450P": { type: "Option", name: "QQQ $450 Put • 30D", price: "7.22", change: "-2.15%", spark: [62,59,56,54,49,52,47,44,41,38,35,31], mentions: 39, bias: "54% Bear" },
       BTC: { type: "Crypto", name: "Bitcoin", price: "67,420", change: "+1.20%", spark: [38,42,39,47,52,58,55,61,67,64,71,75], mentions: 188, bias: "69% Bull" },
       ETH: { type: "Crypto", name: "Ethereum", price: "3,480", change: "+0.82%", spark: [42,41,45,47,52,50,55,59,62,60,67,70], mentions: 146, bias: "66% Bull" },
       SOL: { type: "Crypto", name: "Solana", price: "152.20", change: "+2.42%", spark: [21,25,29,37,35,43,49,57,61,69,74,83], mentions: 121, bias: "73% Bull" },
@@ -517,6 +545,7 @@
     };
 
     const topStocks = ["NVDA", "SPY", "TSLA", "AAPL", "QQQ", "MSFT", "AMZN", "META", "GOOGL", "AMD"];
+    const topOptions = ["NVDA250C", "SPY530C", "TSLA200C", "AAPL210C", "QQQ450P"];
     const topCrypto = ["BTC", "ETH", "SOL", "XRP", "DOGE"];
 
     const following = [
@@ -600,15 +629,88 @@
             </div>
             <div class="h-10 flex items-end gap-1 mt-2">${renderSparkline(d.spark, negative)}</div>
           </button>
+          <div class="px-3 pb-3 flex gap-2">
+            <button class="paper-trade-btn flex-1 rounded-xl bg-brogreen text-black text-[10px] font-black py-2" data-side="buy" data-ticker="${escapeHTML(t)}">PAPER BUY</button>
+            <button class="paper-trade-btn flex-1 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-black text-[10px] font-black py-2" data-side="sell" data-ticker="${escapeHTML(t)}">PAPER SELL</button>
+          </div>
           ${remove ? `<button class="remove-watchlist w-full px-3 pb-2 text-left text-[10px] font-black text-slate-500 hover:text-red-500" data-ticker="${escapeHTML(t)}">REMOVE</button>` : ""}
         </div>
       `;
     }
 
+    function getPaperPositions() {
+      return JSON.parse(localStorage.getItem("broliquidity_paper_positions") || "[]");
+    }
+
+    function setPaperPositions(positions) {
+      localStorage.setItem("broliquidity_paper_positions", JSON.stringify(positions));
+      renderPaperPositions();
+    }
+
+    function paperTrade(ticker, side) {
+      const t = String(ticker || "").toUpperCase();
+      const d = assetData(t);
+      const positions = getPaperPositions();
+      const qty = d.type === "Option" ? 1 : d.type === "Crypto" ? 0.1 : 1;
+      positions.unshift({
+        id: Date.now(),
+        ticker: t,
+        side,
+        qty,
+        type: d.type,
+        price: d.price,
+        openedAt: new Date().toISOString()
+      });
+      setPaperPositions(positions.slice(0, 20));
+    }
+
+    function renderPaperPositions() {
+      const positions = getPaperPositions();
+      const countEl = $("paper-position-count");
+      const listEl = $("paper-positions-list");
+      const cashEl = $("paper-cash");
+      const pnlEl = $("paper-pnl");
+      if (!listEl) return;
+
+      if (countEl) countEl.textContent = positions.length;
+      if (cashEl) cashEl.textContent = "$100,000";
+      if (pnlEl) {
+        const fakePnl = positions.reduce((sum, p, idx) => sum + (p.side === "buy" ? 42 - idx * 3 : -18 + idx * 2), 0);
+        pnlEl.textContent = (fakePnl >= 0 ? "+" : "-") + "$" + Math.abs(fakePnl).toLocaleString();
+        pnlEl.className = "font-black text-sm " + (fakePnl >= 0 ? "text-green-600" : "text-red-500");
+      }
+
+      listEl.innerHTML = positions.length ? positions.map(p => `
+        <div class="soft-card rounded-2xl p-3">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="font-black">$${escapeHTML(p.ticker)}</div>
+              <div class="text-xs text-slate-500">${escapeHTML(p.type)} • ${p.side.toUpperCase()} • Qty ${p.qty}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-black">${escapeHTML(p.price)}</div>
+              <div class="${p.side === "buy" ? "text-green-600" : "text-red-500"} text-[10px] font-black">PAPER</div>
+            </div>
+          </div>
+        </div>
+      `).join("") : `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No paper positions yet.</div>`;
+    }
+
+    function bindPaperTradeButtons() {
+      document.querySelectorAll(".paper-trade-btn").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          paperTrade(btn.dataset.ticker, btn.dataset.side);
+        };
+      });
+    }
+
     function renderMarketLists() {
       $("popular-stocks-list").innerHTML = topStocks.map(t => renderTickerRow(t)).join("");
+      $("popular-options-list").innerHTML = topOptions.map(t => renderTickerRow(t)).join("");
       $("popular-crypto-list").innerHTML = topCrypto.map(t => renderTickerRow(t)).join("");
       bindTickerButtons();
+      bindPaperTradeButtons();
     }
 
     function renderWatchlist() {
@@ -618,6 +720,7 @@
         : `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No custom tickers yet.</div>`;
 
       bindTickerButtons();
+      bindPaperTradeButtons();
 
       document.querySelectorAll(".remove-watchlist").forEach(btn => {
         btn.onclick = (e) => {
@@ -1146,6 +1249,14 @@
         if (activeTicker) setWatchlist([...getWatchlist(), activeTicker]);
         closeModal("ticker-modal");
       };
+      $("ticker-paper-buy").onclick = () => {
+        if (activeTicker) paperTrade(activeTicker, "buy");
+        closeModal("ticker-modal");
+      };
+      $("ticker-paper-sell").onclick = () => {
+        if (activeTicker) paperTrade(activeTicker, "sell");
+        closeModal("ticker-modal");
+      };
 
       $("profile-btn").onclick = () => openModal("profile-modal");
       $("left-profile-card").onclick = () => openModal("profile-modal");
@@ -1231,6 +1342,7 @@
         };
       });
 
+      $("clear-paper-positions").onclick = () => setPaperPositions([]);
       $("add-watchlist-btn").onclick = () => $("watchlist-form").classList.toggle("hidden");
       $("save-watchlist-btn").onclick = () => {
         const ticker = $("watchlist-input").value.trim().toUpperCase();
@@ -1256,6 +1368,7 @@
     wireEvents();
     renderMarketLists();
     renderWatchlist();
+    renderPaperPositions();
 
     auth.onAuthStateChanged(async user => {
       if (!user) {
