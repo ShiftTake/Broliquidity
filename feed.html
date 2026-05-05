@@ -262,22 +262,28 @@
 
         <nav class="space-y-2 text-xl font-bold">
           <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home">
-            <span>🏠</span><span>Home</span>
+            <span>Home</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore">
-            <span>🔎</span><span>Explore</span>
+            <span>Explore</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities">
-            <span>💬</span><span>Communities</span>
+            <span>Communities</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="following">
-            <span>👥</span><span>Following</span>
+            <span>Following</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bookmarks">
-            <span>🔖</span><span>Bookmarks</span>
+            <span>Bookmarks</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm">
+            <span>Bro LLM</span>
+          </button>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="dms">
+            <span>Direct Messages</span>
           </button>
           <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
-            <span>👤</span><span>Profile</span>
+            <span>Profile</span>
           </button>
         </nav>
 
@@ -482,7 +488,7 @@
   <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
 
   <!-- Bro LLM Floating Button -->
-  <button id="bro-llm-btn" class="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-full bg-broblue text-white font-black text-3xl shadow-2xl flex items-center justify-center" title="Chat with Bro">🤖</button>
+  <!-- Bro LLM floating button removed, now in sidebar nav -->
 
   <!-- Bro LLM Modal -->
   <div id="bro-llm-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">
@@ -1341,8 +1347,7 @@
     }
 
     function wireEvents() {
-            // Bro LLM modal events
-            $("bro-llm-btn").onclick = () => openModal("bro-llm-modal");
+            // Bro LLM modal events (now in sidebar)
             $("close-bro-llm").onclick = () => closeModal("bro-llm-modal");
             $("bro-llm-form").onsubmit = async (e) => {
               e.preventDefault();
@@ -1363,22 +1368,11 @@
               }, 1200);
             };
 
-            // DMs modal events
-            // Add DM button to right rail profile card
-            const rightProfileCard = $("right-profile-card");
-            if (rightProfileCard) {
-              const dmBtn = document.createElement("button");
-              dmBtn.id = "open-dm-modal";
-              dmBtn.className = "ml-2 px-3 py-2 rounded-2xl bg-broblue text-white font-black text-xs";
-              dmBtn.textContent = "DMs";
-              rightProfileCard.appendChild(dmBtn);
-              dmBtn.onclick = () => openModal("dm-modal");
-            }
+            // DMs modal events (now in sidebar)
             $("close-dm-modal").onclick = () => closeModal("dm-modal");
             // DM user list and chat stub
             const dmUserList = $("dm-user-list");
             if (dmUserList) {
-              // Demo: show following as DM-able users
               dmUserList.innerHTML = following.map(u => `<button class='dm-user-btn w-full flex items-center gap-2 p-2 rounded-xl hover:bg-brogreen/10' data-username='${u.name}'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-8 h-8 rounded-full'> <span>@${escapeHTML(u.name)}</span></button>`).join("");
               let selectedUser = null;
               document.querySelectorAll(".dm-user-btn").forEach(btn => {
@@ -1397,6 +1391,13 @@
                 chat.scrollTop = chat.scrollHeight;
               };
             }
+                  // Sidebar nav: open Bro LLM and DMs modals
+                  document.querySelectorAll('.left-nav').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                      if (btn.dataset.view === 'bro-llm') openModal('bro-llm-modal');
+                      if (btn.dataset.view === 'dms') openModal('dm-modal');
+                    });
+                  });
             // Explore: show search for communities/users
             document.querySelectorAll(".left-nav").forEach(btn => {
               btn.addEventListener("click", () => {
