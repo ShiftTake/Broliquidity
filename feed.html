@@ -481,6 +481,40 @@
 
   <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
 
+  <!-- Bro LLM Floating Button -->
+  <button id="bro-llm-btn" class="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-full bg-broblue text-white font-black text-3xl shadow-2xl flex items-center justify-center" title="Chat with Bro">🤖</button>
+
+  <!-- Bro LLM Modal -->
+  <div id="bro-llm-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">
+    <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl flex flex-col h-[70vh]">
+      <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+      <h2 class="text-2xl font-black mb-2 flex items-center gap-2">Bro <span class="text-xs font-bold text-broblue">(LLM)</span></h2>
+      <div id="bro-llm-chat" class="flex-1 overflow-y-auto mb-4 p-2 bg-slate-50 dark:bg-white/5 rounded-2xl"></div>
+      <form id="bro-llm-form" class="flex gap-2">
+        <input id="bro-llm-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro anything..." autocomplete="off" />
+        <button type="submit" class="px-4 py-3 rounded-2xl bg-broblue text-white font-black">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DMs Modal -->
+  <div id="dm-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">
+    <div class="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl flex flex-col h-[70vh]">
+      <button id="close-dm-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+      <h2 class="text-2xl font-black mb-2 flex items-center gap-2">Direct Messages <span class="text-xs font-bold text-broblue">(Beta)</span></h2>
+      <div class="flex flex-1 gap-4 overflow-hidden">
+        <div class="w-56 bg-slate-50 dark:bg-white/5 rounded-2xl p-2 overflow-y-auto" id="dm-user-list"></div>
+        <div class="flex-1 flex flex-col">
+          <div id="dm-chat" class="flex-1 overflow-y-auto mb-2 p-2 bg-slate-50 dark:bg-white/5 rounded-2xl"></div>
+          <form id="dm-form" class="flex gap-2">
+            <input id="dm-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Type a message..." autocomplete="off" />
+            <button type="submit" class="px-4 py-3 rounded-2xl bg-broblue text-white font-black">Send</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -1307,6 +1341,106 @@
     }
 
     function wireEvents() {
+            // Bro LLM modal events
+            $("bro-llm-btn").onclick = () => openModal("bro-llm-modal");
+            $("close-bro-llm").onclick = () => closeModal("bro-llm-modal");
+            $("bro-llm-form").onsubmit = async (e) => {
+              e.preventDefault();
+              const input = $("bro-llm-input");
+              const chat = $("bro-llm-chat");
+              const msg = input.value.trim();
+              if (!msg) return;
+              chat.innerHTML += `<div class='mb-2'><span class='font-bold text-broblue'>You:</span> ${escapeHTML(msg)}</div>`;
+              input.value = "";
+              chat.scrollTop = chat.scrollHeight;
+              // Gemini API integration placeholder
+              chat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500'>Thinking...</span></div>`;
+              chat.scrollTop = chat.scrollHeight;
+              // TODO: Replace with Gemini API call
+              setTimeout(() => {
+                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", "<span>Sorry, Bro is not connected yet.</span>");
+                chat.scrollTop = chat.scrollHeight;
+              }, 1200);
+            };
+
+            // DMs modal events
+            // Add DM button to right rail profile card
+            const rightProfileCard = $("right-profile-card");
+            if (rightProfileCard) {
+              const dmBtn = document.createElement("button");
+              dmBtn.id = "open-dm-modal";
+              dmBtn.className = "ml-2 px-3 py-2 rounded-2xl bg-broblue text-white font-black text-xs";
+              dmBtn.textContent = "DMs";
+              rightProfileCard.appendChild(dmBtn);
+              dmBtn.onclick = () => openModal("dm-modal");
+            }
+            $("close-dm-modal").onclick = () => closeModal("dm-modal");
+            // DM user list and chat stub
+            const dmUserList = $("dm-user-list");
+            if (dmUserList) {
+              // Demo: show following as DM-able users
+              dmUserList.innerHTML = following.map(u => `<button class='dm-user-btn w-full flex items-center gap-2 p-2 rounded-xl hover:bg-brogreen/10' data-username='${u.name}'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-8 h-8 rounded-full'> <span>@${escapeHTML(u.name)}</span></button>`).join("");
+              let selectedUser = null;
+              document.querySelectorAll(".dm-user-btn").forEach(btn => {
+                btn.onclick = () => {
+                  selectedUser = btn.dataset.username;
+                  $("dm-chat").innerHTML = `<div class='text-slate-500 text-sm mb-2'>Chat with @${escapeHTML(selectedUser)} (demo only)</div>`;
+                };
+              });
+              $("dm-form").onsubmit = (e) => {
+                e.preventDefault();
+                const input = $("dm-input");
+                const chat = $("dm-chat");
+                if (!selectedUser || !input.value.trim()) return;
+                chat.innerHTML += `<div class='mb-2'><span class='font-bold text-broblue'>You:</span> ${escapeHTML(input.value)}</div>`;
+                input.value = "";
+                chat.scrollTop = chat.scrollHeight;
+              };
+            }
+            // Explore: show search for communities/users
+            document.querySelectorAll(".left-nav").forEach(btn => {
+              btn.addEventListener("click", () => {
+                if (btn.dataset.view === "explore") {
+                  showExploreSearch();
+                }
+              });
+            });
+          // Show explore search bar and results for communities/users
+          function showExploreSearch() {
+            // Center feed main
+            const main = document.querySelector("main");
+            if (!main) return;
+            main.innerHTML = `
+              <div class='sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10'>
+                <div class='grid grid-cols-1 text-center font-black'>
+                  <span class='py-4 text-xl'>Explore</span>
+                </div>
+              </div>
+              <section class='p-6'>
+                <input id='explore-search' class='w-full px-5 py-3 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-lg font-semibold placeholder:text-slate-500 mb-6' placeholder='Search for communities or users...'>
+                <div id='explore-results'></div>
+              </section>
+            `;
+            const input = document.getElementById('explore-search');
+            const results = document.getElementById('explore-results');
+            input.oninput = function() {
+              const q = input.value.trim().toLowerCase();
+              if (!q) { results.innerHTML = ""; return; }
+              // Search communities
+              const comms = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(q));
+              // Search users (demo: following + followers)
+              const users = [...following, ...followers].filter(u => (u.name || "").toLowerCase().includes(q));
+              let html = "";
+              if (comms.length) {
+                html += `<div class='mb-2 text-xs text-slate-500 font-black'>COMMUNITIES</div>" + comms.map(c => `<div class='soft-card rounded-2xl p-4 mb-2'><div class='font-black'>c/${escapeHTML(c.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(c.description || "")}</div></div>`).join("");
+              }
+              if (users.length) {
+                html += `<div class='mb-2 mt-4 text-xs text-slate-500 font-black'>USERS</div>" + users.map(u => `<div class='soft-card rounded-2xl p-4 mb-2 flex items-center gap-3'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'><div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div></div>`).join("");
+              }
+              if (!html) html = `<div class='p-3 text-slate-500 font-bold'>No results found.</div>`;
+              results.innerHTML = html;
+            };
+          }
       ["left-post-btn", "mobile-post-btn", "mobile-floating-post", "composer-open", "composer-post-btn", "composer-image-open"].forEach(id => {
         $(id).onclick = () => openModal("post-modal");
       });
