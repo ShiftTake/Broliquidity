@@ -522,6 +522,38 @@
     function openModal(id) { $(id).classList.add("modal-open"); $(id).classList.remove("hidden"); }
     function closeModal(id) { $(id).classList.remove("modal-open"); $(id).classList.add("hidden"); }
 
+    // Render default avatars in a 3x5 grid
+    function renderDefaultAvatars() {
+      const grid = $("default-avatar-grid");
+      let html = "";
+      for (let i = 1; i <= 15; i++) {
+        html += `<button type="button" class="avatar-btn group w-full aspect-square rounded-2xl border-2 border-transparent hover:border-brogreen focus:border-brogreen transition overflow-hidden">
+          <img src="default${i}.png" alt="Default Avatar ${i}" class="w-full h-full object-cover" />
+        </button>`;
+      }
+      grid.innerHTML = html;
+      // Avatar selection logic
+      grid.querySelectorAll('.avatar-btn').forEach((btn, idx) => {
+        btn.onclick = async () => {
+          const url = `default${idx+1}.png`;
+          if (!currentUser) return;
+          await db.collection("profiles").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
+          $("profile-photo").src = url;
+          $("profile-btn").src = url;
+          closeModal("profile-image-picker");
+        };
+      });
+    }
+
+    // Call renderDefaultAvatars when opening the image picker
+    $("profile-photo-picker-btn").onclick = () => {
+      $("profile-image-picker").classList.remove("hidden");
+      renderDefaultAvatars();
+    };
+    $("close-profile-image-picker").onclick = () => {
+      $("profile-image-picker").classList.add("hidden");
+    };
+
     // User/Community search bar logic
     const userCommunitySearch = $("user-community-search");
     const userCommunityResults = $("user-community-search-results");
