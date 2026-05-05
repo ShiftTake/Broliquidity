@@ -317,11 +317,6 @@
     <!-- Center Feed -->
     <main class="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
-        <div class="px-4 py-3 border-b border-slate-200 dark:border-white/10">
-          <input id="user-community-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search users or communities..." autocomplete="off">
-          <svg class="absolute left-8 top-7 w-5 h-5 text-slate-500 pointer-events-none" style="margin-top:-38px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-          <div id="user-community-search-results" class="hidden absolute left-0 right-0 mt-2 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
-        </div>
         <div class="grid grid-cols-2 text-center font-black">
           <button id="tab-for-you" class="feed-tab active-tab py-4">For you</button>
           <button id="tab-following" class="feed-tab py-4 text-slate-500">Following</button>
@@ -389,7 +384,9 @@
         </button>
 
         <div class="relative">
-          <!-- Removed global search bar -->
+          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
+          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
         </div>
 
         <section class="panel rounded-3xl p-4">
@@ -521,79 +518,6 @@
 
     function openModal(id) { $(id).classList.add("modal-open"); $(id).classList.remove("hidden"); }
     function closeModal(id) { $(id).classList.remove("modal-open"); $(id).classList.add("hidden"); }
-
-    // Render default avatars in a 3x5 grid
-    function renderDefaultAvatars() {
-      const grid = $("default-avatar-grid");
-      let html = "";
-      for (let i = 1; i <= 15; i++) {
-        html += `<button type="button" class="avatar-btn group w-full aspect-square rounded-2xl border-2 border-transparent hover:border-brogreen focus:border-brogreen transition overflow-hidden">
-          <img src="default${i}.png" alt="Default Avatar ${i}" class="w-full h-full object-cover" />
-        </button>`;
-      }
-      grid.innerHTML = html;
-      // Avatar selection logic
-      grid.querySelectorAll('.avatar-btn').forEach((btn, idx) => {
-        btn.onclick = async () => {
-          const url = `default${idx+1}.png`;
-          if (!currentUser) return;
-          await db.collection("profiles").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
-          $("profile-photo").src = url;
-          $("profile-btn").src = url;
-          closeModal("profile-image-picker");
-        };
-      });
-    }
-
-    // Call renderDefaultAvatars when opening the image picker
-    $("profile-photo-picker-btn").onclick = () => {
-      $("profile-image-picker").classList.remove("hidden");
-      renderDefaultAvatars();
-    };
-    $("close-profile-image-picker").onclick = () => {
-      $("profile-image-picker").classList.add("hidden");
-    };
-
-    // User/Community search bar logic
-    const userCommunitySearch = $("user-community-search");
-    const userCommunityResults = $("user-community-search-results");
-    userCommunitySearch.addEventListener("input", async (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      if (!q) {
-        userCommunityResults.classList.add("hidden");
-        userCommunityResults.innerHTML = "";
-        return;
-      }
-      let html = "";
-      // Search users
-      try {
-        const users = await db.collection("profiles")
-          .where("displayName", ">=", q)
-          .where("displayName", "<=", q + "\uf8ff")
-          .limit(5)
-          .get();
-        if (!users.empty) {
-          html += `<div class="text-xs text-slate-500 font-black px-2 py-1">USERS</div>`;
-          users.forEach(doc => {
-            const u = doc.data();
-            html += `<div class="p-3 rounded-2xl hover:bg-white/10 cursor-pointer"><div class="font-black">u/${escapeHTML(u.displayName || u.username || doc.id)}</div></div>`;
-          });
-        }
-      } catch(e) {}
-      // Search communities
-      const communityMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(q));
-      if (communityMatches.length) {
-        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
-        html += communityMatches.map(c => `<div class="p-3 rounded-2xl hover:bg-white/10 cursor-pointer"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-400">${escapeHTML(c.description || "")}</div></div>`).join("");
-      }
-      userCommunityResults.innerHTML = html || `<div class="p-3 text-slate-400 font-bold">No results found.</div>`;
-      userCommunityResults.classList.remove("hidden");
-    });
-    document.addEventListener("click", (e) => {
-      if (!userCommunityResults.contains(e.target) && e.target !== userCommunitySearch) {
-        userCommunityResults.classList.add("hidden");
-      }
-    });
 
     function formatDate(ts) {
       if (!ts) return "Just now";
