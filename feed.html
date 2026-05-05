@@ -196,42 +196,6 @@
     </div>
   </div>
 
-
-  <!-- Chat / Direct Messages Modal -->
-  <div id="chat-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="panel rounded-3xl w-full max-w-4xl h-[80vh] relative shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-[280px_1fr]">
-      <button id="close-chat-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none z-10">&times;</button>
-      <aside class="border-r border-slate-200 dark:border-white/10 p-4 overflow-y-auto">
-        <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Direct Messages</p>
-        <h2 class="text-2xl font-black mb-4">Chat</h2>
-        <div id="chat-user-list" class="space-y-2"></div>
-      </aside>
-      <section class="flex flex-col min-h-0">
-        <div class="p-4 border-b border-slate-200 dark:border-white/10">
-          <div class="font-black" id="chat-active-name">Select someone to message</div>
-          <div class="text-xs text-slate-500">Prototype DM inbox. Backend-ready for Firestore conversations.</div>
-        </div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-          <div class="text-sm text-slate-500 font-bold">Choose a user from the left to start chatting.</div>
-        </div>
-        <div class="p-4 border-t border-slate-200 dark:border-white/10 flex gap-2">
-          <input id="chat-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Type a message..." />
-          <button id="chat-send-btn" class="px-5 py-3 rounded-2xl bg-brogreen text-black font-black">Send</button>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <!-- Notifications Modal -->
-  <div id="notifications-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl">
-      <button id="close-notifications-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Activity</p>
-      <h2 class="text-2xl font-black mb-5">Notifications</h2>
-      <div id="notifications-list" class="space-y-3"></div>
-    </div>
-  </div>
-
   <!-- Profile Modal -->
   <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
@@ -249,17 +213,16 @@
           <div class="flex items-center justify-between mb-3">
             <div>
               <h3 class="font-black">Choose Profile Image</h3>
-              <p class="text-xs text-slate-500">Upload your own or select one of the default BroLiquidity avatars.</p>
+              <p class="text-xs text-slate-500">Upload your own or pick a default avatar.</p>
             </div>
             <button id="close-profile-image-picker" type="button" class="w-8 h-8 rounded-full soft-card font-black">×</button>
           </div>
 
           <label class="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brogreen text-black font-black cursor-pointer">
-            Upload Profile Image
+            Upload Image
             <input type="file" id="profile-image-upload" accept="image/*" class="hidden" />
           </label>
 
-          <div class="text-xs font-black text-slate-500 uppercase tracking-wide mb-2">Default Avatars</div>
           <div id="default-avatar-grid" class="grid grid-cols-3 gap-3"></div>
         </div>
 
@@ -301,11 +264,8 @@
           <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home">
             <span>🏠</span><span>Home</span>
           </button>
-          <button id="notifications-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
-            <span>🔔</span><span>Notifications</span><span id="notification-count-pill" class="ml-auto text-[10px] px-2 py-1 rounded-full bg-brogreen text-black font-black">3</span>
-          </button>
-          <button id="chat-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
-            <span>💬</span><span>Chat</span>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore">
+            <span>🔎</span><span>Explore</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities">
             <span>💬</span><span>Communities</span>
@@ -357,13 +317,6 @@
     <!-- Center Feed -->
     <main class="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
-        <div class="p-3 border-b border-slate-200 dark:border-white/10">
-          <div class="relative">
-            <input id="center-social-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search users and communities..." />
-            <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-            <div id="center-social-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
-          </div>
-        </div>
         <div class="grid grid-cols-2 text-center font-black">
           <button id="tab-for-you" class="feed-tab active-tab py-4">For you</button>
           <button id="tab-following" class="feed-tab py-4 text-slate-500">Following</button>
@@ -429,7 +382,14 @@
           </div>
           <span class="text-slate-500 font-black">•••</span>
         </button>
-<section class="panel rounded-3xl p-4">
+
+        <div class="relative">
+          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
+          <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
+        </div>
+
+        <section class="panel rounded-3xl p-4">
           <div class="flex items-center justify-between mb-4">
             <div>
               <p class="text-xs font-black text-brogreen uppercase tracking-[0.2em]">Markets</p>
@@ -515,10 +475,6 @@
     <div class="flex items-center justify-between mb-5">
       <div class="font-black text-xl">Menu</div>
       <button id="close-mobile-drawer" class="w-10 h-10 rounded-2xl soft-card text-xl font-black">×</button>
-    </div>
-    <div class="grid grid-cols-2 gap-2 mb-4">
-      <button id="mobile-notifications-btn" class="soft-card rounded-2xl p-3 font-black">🔔 Notifications</button>
-      <button id="mobile-chat-btn" class="soft-card rounded-2xl p-3 font-black">💬 Chat</button>
     </div>
     <div id="mobile-drawer-content" class="space-y-4"></div>
   </aside>
@@ -1247,25 +1203,54 @@
         };
       });
     }
-    
+
+    function runGlobalSearch(q) {
+      const query = String(q || "").trim();
+      const box = $("global-search-results");
+      if (!query) {
+        box.classList.add("hidden");
+        box.innerHTML = "";
+        return;
+      }
+
+      const upper = query.toUpperCase();
+      let html = "";
+
+      const assetMatches = Object.keys(assets).filter(t => t.includes(upper) || assets[t].name.toUpperCase().includes(upper)).slice(0, 5);
+      if (assetMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">ASSETS</div>`;
+        html += assetMatches.map(t => {
+          const d = assetData(t);
+          return `<button class="ticker-btn w-full text-left soft-card rounded-2xl p-3 mb-2" data-ticker="${t}"><div class="font-black">$${t}</div><div class="text-xs text-slate-500">${escapeHTML(d.name)} • ${d.type}</div></button>`;
+        }).join("");
+      }
+
+      const commMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(query.toLowerCase()));
+      if (commMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
+        html += commMatches.map(c => `<button class="w-full text-left soft-card rounded-2xl p-3 mb-2"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></button>`).join("");
+      }
+
+      box.innerHTML = html || `<div class="p-3 text-slate-500 font-bold">No results found.</div>`;
+      box.classList.remove("hidden");
+      bindTickerButtons();
+    }
+
     function renderDefaultAvatarGrid() {
       const grid = $("default-avatar-grid");
       if (!grid) return;
-
-      grid.innerHTML = Array.from({ length: 15 }, (_, index) => {
-        const avatarNumber = index + 1;
-        const src = `default${avatarNumber}.png`;
-
+      grid.innerHTML = Array.from({ length: 15 }, (_, i) => {
+        const n = i + 1;
         return `
-          <button type="button" class="default-avatar-btn rounded-2xl p-2 soft-card hover:ring-2 hover:ring-brogreen transition" data-src="${src}">
-            <img src="${src}" alt="Default avatar ${avatarNumber}" class="w-full aspect-square rounded-2xl object-cover bg-slate-100 dark:bg-white/10">
+          <button type="button" class="default-avatar-btn rounded-2xl p-2 soft-card hover:ring-2 hover:ring-brogreen transition" data-src="default${n}.png">
+            <img src="default${n}.png" alt="Default avatar ${n}" class="w-full aspect-square rounded-2xl object-cover bg-slate-100 dark:bg-white/10">
           </button>
         `;
       }).join("");
 
-      document.querySelectorAll(".default-avatar-btn").forEach(button => {
-        button.onclick = async () => {
-          await setProfilePhoto(button.dataset.src, false);
+      document.querySelectorAll(".default-avatar-btn").forEach(btn => {
+        btn.onclick = async () => {
+          await setProfilePhoto(btn.dataset.src, false);
           $("profile-image-picker").classList.add("hidden");
         };
       });
@@ -1273,29 +1258,16 @@
 
     async function setProfilePhoto(url, updateAuth = true) {
       if (!currentUser || !url) return;
-
-      await db.collection("profiles").doc(currentUser.uid).set(
-        { photoURL: url },
-        { merge: true }
-      );
-
+      await db.collection("profiles").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
       if (updateAuth && currentUser.updateProfile) {
-        try {
-          await currentUser.updateProfile({ photoURL: url });
-        } catch (error) {
-          console.warn("Auth profile photo update failed:", error);
-        }
+        try { await currentUser.updateProfile({ photoURL: url }); } catch(e) {}
       }
-
-      const profilePhoto = $("profile-photo");
-      const profileBtn = $("profile-btn");
-      const rightProfilePhoto = $("right-profile-photo");
-
-      if (profilePhoto) profilePhoto.src = url;
-      if (profileBtn) profileBtn.src = url;
-      if (rightProfilePhoto) rightProfilePhoto.src = url;
+      $("profile-photo").src = url;
+      const main = $("profile-btn");
+      if (main) main.src = url;
+      const right = $("right-profile-photo");
+      if (right) right.src = url;
     }
-
 
     function loadProfile(user) {
       const username = user.displayName || user.email || "User";
@@ -1311,16 +1283,16 @@
         $("profile-bio").value = data.bio || "";
         const photo = data.photoURL || user.photoURL || fallback;
         $("profile-photo").src = photo;
-        const profileBtn = $("profile-btn");
-        const rightProfilePhoto = $("right-profile-photo");
-        if (profileBtn) profileBtn.src = photo;
-        if (rightProfilePhoto) rightProfilePhoto.src = photo;
+        const main = $("profile-btn");
+        if (main) main.src = photo;
+        const rightPhoto = $("right-profile-photo");
+        if (rightPhoto) rightPhoto.src = photo;
       }).catch(() => {
         $("profile-photo").src = fallback;
-        const profileBtn = $("profile-btn");
-        const rightProfilePhoto = $("right-profile-photo");
-        if (profileBtn) profileBtn.src = fallback;
-        if (rightProfilePhoto) rightProfilePhoto.src = fallback;
+        const main = $("profile-btn");
+        if (main) main.src = fallback;
+        const rightPhoto = $("right-profile-photo");
+        if (rightPhoto) rightPhoto.src = fallback;
       });
     }
 
@@ -1359,24 +1331,42 @@
       $("right-profile-card").onclick = () => openModal("profile-modal");
       $("profile-nav-btn").onclick = () => openModal("profile-modal");
       $("close-profile").onclick = () => closeModal("profile-modal");
-      $("profile-photo-picker-btn").onclick = () => {
-        $("profile-image-picker").classList.toggle("hidden");
-      };
+      $("profile-photo-picker-btn").onclick = () => $("profile-image-picker").classList.toggle("hidden");
+      $("close-profile-image-picker").onclick = () => $("profile-image-picker").classList.add("hidden");
 
-      $("close-profile-image-picker").onclick = () => {
-        $("profile-image-picker").classList.add("hidden");
-      };
-
-      $("profile-image-upload").onchange = async (event) => {
-        const file = event.target.files[0];
+      $("profile-image-upload").onchange = async (e) => {
+        const file = e.target.files[0];
         if (!file || !currentUser) return;
-
         const ref = storage.ref("profile_photos/" + currentUser.uid + "_" + Date.now() + "_" + file.name);
         await ref.put(file);
         const url = await ref.getDownloadURL();
-
         await setProfilePhoto(url, true);
         $("profile-image-picker").classList.add("hidden");
+      };
+
+      $("left-create-community").onclick = () => openModal("create-community-modal");
+      $("close-create-community").onclick = () => closeModal("create-community-modal");
+      $("create-community-btn").onclick = createCommunity;
+
+      $("post-subject").onchange = updatePostLabels;
+      $("post-form").onsubmit = submitPost;
+      $("post-destination").onchange = () => $("community-select").classList.toggle("hidden", $("post-destination").value !== "community");
+      $("post-content").oninput = () => $("char-count").textContent = $("post-content").value.length;
+
+      $("post-image").onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        $("post-image-preview").innerHTML = `<img src="${url}" class="w-full max-h-[360px] object-cover" alt="Image preview">`;
+        $("post-image-preview").classList.remove("hidden");
+        $("remove-post-image").classList.remove("hidden");
+      };
+
+      $("remove-post-image").onclick = () => {
+        $("post-image").value = "";
+        $("post-image-preview").innerHTML = "";
+        $("post-image-preview").classList.add("hidden");
+        $("remove-post-image").classList.add("hidden");
       };
 
       $("profile-theme-toggle").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
@@ -1444,24 +1434,15 @@
       };
 
       $("asset-search").oninput = e => searchAssets(e.target.value);
-      $("notifications-nav-btn").onclick = openNotifications;
-      $("close-notifications-modal").onclick = () => closeModal("notifications-modal");
-      $("chat-nav-btn").onclick = openChatModal;
-      $("close-chat-modal").onclick = () => closeModal("chat-modal");
-      $("chat-send-btn").onclick = sendChatMessage;
-      $("chat-input").addEventListener("keydown", e => { if (e.key === "Enter") sendChatMessage(); });
-      $("center-social-search").addEventListener("input", e => renderCenterSocialSearch(e.target.value));
+      $("global-search").oninput = e => runGlobalSearch(e.target.value);
 
-      $("mobile-notifications-btn").onclick = openNotifications;
-      $("mobile-chat-btn").onclick = openChatModal;
       $("mobile-menu-btn").onclick = openMobileDrawer;
       $("close-mobile-drawer").onclick = closeMobileDrawer;
       $("mobile-drawer-backdrop").onclick = closeMobileDrawer;
 
       document.addEventListener("click", e => {
         if (!$("asset-search-results").contains(e.target) && e.target !== $("asset-search")) $("asset-search-results").classList.add("hidden");
-        const centerBox = $("center-social-search-results");
-        if (centerBox && !centerBox.contains(e.target) && e.target !== $("center-social-search")) centerBox.classList.add("hidden");
+        if (!$("global-search-results").contains(e.target) && e.target !== $("global-search")) $("global-search-results").classList.add("hidden");
       });
     }
 
