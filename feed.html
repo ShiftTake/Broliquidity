@@ -196,30 +196,6 @@
     </div>
   </div>
 
-
-  <!-- FinanceBro AI Modal -->
-  <div id="financebro-ai-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl">
-      <button id="close-financebro-ai" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">FinanceBro AI</p>
-      <h2 class="text-2xl font-black mb-1">Ask the market assistant</h2>
-      <p class="text-sm text-slate-500 mb-5">Ask about tickers, options, paper-trade theses, or market concepts. Prototype mode only — not financial advice.</p>
-      <div id="financebro-ai-messages" class="soft-card rounded-3xl p-4 h-80 overflow-y-auto space-y-3 mb-4">
-        <div class="rounded-2xl bg-brogreen/20 p-3 text-sm font-semibold">Ask me: “Give me the bullish and bearish case for $NVDA” or “Explain this options contract.”</div>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-        <button class="ai-prompt px-3 py-2 rounded-2xl soft-card text-xs font-black" data-prompt="Give me a bullish and bearish case for NVDA.">NVDA bull/bear</button>
-        <button class="ai-prompt px-3 py-2 rounded-2xl soft-card text-xs font-black" data-prompt="Explain what I should look at before paper trading options.">Options checklist</button>
-        <button class="ai-prompt px-3 py-2 rounded-2xl soft-card text-xs font-black" data-prompt="Explain Bitcoin price action in simple terms.">BTC simple take</button>
-      </div>
-      <div class="flex gap-2">
-        <input id="financebro-ai-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Ask FinanceBro AI..." />
-        <button id="financebro-ai-send" class="px-5 py-3 rounded-2xl bg-brogreen text-black font-black">Ask</button>
-      </div>
-      <p class="text-[11px] text-slate-500 mt-3">Backend-ready: connect this to a Firebase Function that calls GPT/Gemini + your market data API.</p>
-    </div>
-  </div>
-
   <!-- Profile Modal -->
   <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
@@ -232,11 +208,6 @@
         </button>
 
         <div id="profile-username-display" class="font-black text-lg text-center"></div>
-        <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div><label class="block text-xs font-black text-slate-500 mb-1 uppercase">Username</label><input id="profile-username-input" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" placeholder="Username" /></div>
-          <div><label class="block text-xs font-black text-slate-500 mb-1 uppercase">Country</label><select id="profile-country" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold"><option value="">Select country</option><option value="United States">United States</option><option value="Canada">Canada</option><option value="United Kingdom">United Kingdom</option><option value="Australia">Australia</option><option value="India">India</option><option value="Singapore">Singapore</option><option value="Germany">Germany</option><option value="France">France</option><option value="Netherlands">Netherlands</option><option value="Brazil">Brazil</option><option value="Mexico">Mexico</option><option value="Other">Other</option></select></div>
-        </div>
-        <div id="profile-country-display" class="text-xs text-slate-500 font-bold"></div>
 
         <div id="profile-image-picker" class="hidden w-full soft-card rounded-3xl p-4">
           <div class="flex items-center justify-between mb-3">
@@ -293,8 +264,8 @@
           <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home">
             <span>🏠</span><span>Home</span>
           </button>
-          <button id="financebro-ai-nav" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
-            <span>🤖</span><span>FinanceBro AI</span>
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore">
+            <span>🔎</span><span>Explore</span>
           </button>
           <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities">
             <span>💬</span><span>Communities</span>
@@ -314,15 +285,6 @@
 
         <div class="mt-6 space-y-4">
           <section class="panel rounded-3xl p-4">
-            <h2 class="font-black mb-3">Search</h2>
-            <div class="relative">
-              <input id="left-social-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search communities or users..." />
-              <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-            </div>
-            <div id="left-social-search-results" class="mt-3 space-y-2"></div>
-          </section>
-
-          <section class="panel rounded-3xl p-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="font-black">Communities</h2>
               <button id="left-create-community" class="text-xs font-black text-brogreen">+ New</button>
@@ -333,11 +295,6 @@
           <section class="panel rounded-3xl p-4">
             <h2 class="font-black mb-3">Following</h2>
             <div id="left-following" class="space-y-2"></div>
-          </section>
-
-          <section class="panel rounded-3xl p-4">
-            <h2 class="font-black mb-3">Followers</h2>
-            <div id="left-followers" class="space-y-2"></div>
           </section>
         </div>
 
@@ -1049,7 +1006,6 @@
 
       const followingHTML = following.map(renderUserMini).join("");
       $("left-following").innerHTML = followingHTML;
-      if ($("left-followers")) $("left-followers").innerHTML = followers.map(renderUserMini).join("");
 
       document.querySelectorAll(".community-btn").forEach(btn => {
         btn.onclick = () => setFilter(btn.dataset.id);
@@ -1313,40 +1269,9 @@
       if (right) right.src = url;
     }
 
-
-    function renderSocialSearchResults(query) {
-      const box = $("left-social-search-results");
-      if (!box) return;
-      const q = String(query || "").trim().toLowerCase();
-      if (!q) { box.innerHTML = ""; return; }
-      const communityMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(q) || (c.description || "").toLowerCase().includes(q)).slice(0, 4);
-      const userMatches = [...following, ...followers].filter(u => (u.name || "").toLowerCase().includes(q) || (u.role || "").toLowerCase().includes(q)).slice(0, 4);
-      const communityHTML = communityMatches.map(c => `<button class="community-btn w-full soft-card rounded-2xl p-3 text-left" data-id="${escapeHTML(c.id)}"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(c.description || "Finance desk")}</div></button>`).join("");
-      const usersHTML = userMatches.map(u => `<button class="w-full soft-card rounded-2xl p-3 text-left"><div class="flex items-center gap-3"><img src="https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22" class="w-8 h-8 rounded-full" alt=""><div><div class="font-black">@${escapeHTML(u.name)}</div><div class="text-xs text-slate-500">${escapeHTML(u.role)}</div></div></div></button>`).join("");
-      box.innerHTML = (communityHTML || usersHTML) ? `${communityHTML}${usersHTML}` : `<div class="soft-card rounded-2xl p-3 text-sm text-slate-500">No communities or users found.</div>`;
-      document.querySelectorAll("#left-social-search-results .community-btn").forEach(btn => { btn.onclick = () => setFilter(btn.dataset.id); });
-    }
-
-    function openFinanceBroAI() { openModal("financebro-ai-modal"); setTimeout(() => $("financebro-ai-input")?.focus(), 50); }
-    function addAIMessage(role, text) {
-      const box = $("financebro-ai-messages"); if (!box) return;
-      const div = document.createElement("div");
-      div.className = role === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-broblue text-white p-3 text-sm font-semibold" : "mr-auto max-w-[85%] rounded-2xl bg-slate-100 dark:bg-white/8 p-3 text-sm font-semibold";
-      div.textContent = text; box.appendChild(div); box.scrollTop = box.scrollHeight;
-    }
-    function financeBroAIReply(question) {
-      const q = String(question || "").toUpperCase();
-      const tickers = Object.keys(assets).filter(t => q.includes(t)).slice(0, 3);
-      const tickerText = tickers.length ? tickers.map(t => { const d = assetData(t); return `$${t}: ${d.name}, ${d.price}, ${d.change}, sentiment ${d.bias}`; }).join(" | ") : "No specific ticker detected.";
-      return `Prototype answer: ${tickerText}. For production, route this through a Firebase Function that sends the prompt plus live market data to GPT/Gemini. It can explain bullish factors, bearish risks, options considerations, and paper-trade thesis structure — but should not provide guaranteed picks or personalized financial advice.`;
-    }
-    function sendFinanceBroAI() { const input = $("financebro-ai-input"); const text = input.value.trim(); if (!text) return; addAIMessage("user", text); input.value = ""; setTimeout(() => addAIMessage("assistant", financeBroAIReply(text)), 300); }
-
     function loadProfile(user) {
       const username = user.displayName || user.email || "User";
       $("profile-username-display").textContent = username;
-      const usernameInput = $("profile-username-input");
-      if (usernameInput) usernameInput.value = username;
       const rightName = $("right-profile-name");
       const rightHandle = $("right-profile-handle");
       if (rightName) rightName.textContent = username;
@@ -1356,9 +1281,6 @@
       db.collection("profiles").doc(user.uid).get().then(doc => {
         const data = doc.exists ? doc.data() : {};
         $("profile-bio").value = data.bio || "";
-        if ($("profile-username-input")) $("profile-username-input").value = data.username || data.displayName || username;
-        if ($("profile-country")) $("profile-country").value = data.country || "";
-        if ($("profile-country-display")) $("profile-country-display").textContent = data.country ? "Country of origin: " + data.country : "";
         const photo = data.photoURL || user.photoURL || fallback;
         $("profile-photo").src = photo;
         const main = $("profile-btn");
@@ -1450,23 +1372,9 @@
       $("profile-theme-toggle").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
       $("theme-toggle-rail").onclick = () => setTheme(localStorage.getItem("theme") === "light" ? "dark" : "light");
 
-      $("financebro-ai-nav").onclick = openFinanceBroAI;
-      $("close-financebro-ai").onclick = () => closeModal("financebro-ai-modal");
-      $("financebro-ai-send").onclick = sendFinanceBroAI;
-      $("financebro-ai-input").addEventListener("keydown", e => { if (e.key === "Enter") sendFinanceBroAI(); });
-      document.querySelectorAll(".ai-prompt").forEach(btn => { btn.onclick = () => { $("financebro-ai-input").value = btn.dataset.prompt; sendFinanceBroAI(); }; });
-      $("left-social-search").addEventListener("input", e => renderSocialSearchResults(e.target.value));
-
       $("save-profile").onclick = async () => {
         if (!currentUser) return;
-        const newUsername = $("profile-username-input") ? $("profile-username-input").value.trim() : "";
-        const country = $("profile-country") ? $("profile-country").value : "";
-        const displayName = newUsername || currentUser.displayName || "User";
-        await db.collection("profiles").doc(currentUser.uid).set({ bio: $("profile-bio").value, username: displayName, displayName, country }, { merge: true });
-        if (newUsername && currentUser.updateProfile) { try { await currentUser.updateProfile({ displayName }); } catch(e) {} }
-        $("profile-username-display").textContent = displayName;
-        if ($("right-profile-name")) $("right-profile-name").textContent = displayName;
-        if ($("profile-country-display")) $("profile-country-display").textContent = country ? "Country of origin: " + country : "";
+        await db.collection("profiles").doc(currentUser.uid).set({ bio: $("profile-bio").value }, { merge: true });
         closeModal("profile-modal");
       };
 
