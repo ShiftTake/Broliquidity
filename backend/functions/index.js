@@ -3,6 +3,26 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 
+const { askGemini } = require('./gemini');
+
+// Bro LLM Gemini API proxy
+exports.broLLM = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const prompt = req.body.prompt || req.query.prompt;
+    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+    const answer = await askGemini(prompt);
+    res.json({ answer });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Gemini error' });
+  }
+});
+
 // Finance notification for new comment on a post
 exports.notifyOnNewComment = functions.firestore
   .document('posts/{postId}/comments/{commentId}')
