@@ -5,6 +5,44 @@ const db = admin.firestore();
 
 const { askGemini } = require('./gemini');
 
+const { getQuote, searchSymbol } = require('./finnhub');
+
+// Finnhub: Get real-time quote
+exports.getQuote = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const symbol = req.body.symbol || req.query.symbol;
+    if (!symbol) return res.status(400).json({ error: 'Missing symbol' });
+    const data = await getQuote(symbol);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Finnhub error' });
+  }
+});
+
+// Finnhub: Search for symbols
+exports.searchSymbol = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const query = req.body.query || req.query.query;
+    if (!query) return res.status(400).json({ error: 'Missing query' });
+    const data = await searchSymbol(query);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Finnhub error' });
+  }
+});
+
 // Bro LLM Gemini API proxy
 exports.broLLM = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
