@@ -663,8 +663,26 @@
       setSavedPosts(current.includes(sid) ? current.filter(x => x !== sid) : [...current, sid]);
     }
 
-    function assetData(ticker) {
-      return assets[String(ticker || "").toUpperCase()] || {
+
+    // Finnhub-powered asset data fetcher (fallback to static if needed)
+    async function assetData(ticker) {
+      ticker = String(ticker || "").toUpperCase();
+      try {
+        const res = await fetch(`https://us-central1-broliquidity.cloudfunctions.net/getQuote?symbol=${ticker}`);
+        const data = await res.json();
+        if (data.c) {
+          return {
+            type: "Asset",
+            name: ticker,
+            price: data.c,
+            change: (data.dp > 0 ? "+" : "") + (data.dp || 0).toFixed(2) + "%",
+            spark: [data.c],
+            mentions: 0,
+            bias: data.dp > 0 ? "Bullish" : data.dp < 0 ? "Bearish" : "Neutral"
+          };
+        }
+      } catch (e) {}
+      return assets[ticker] || {
         type: "Asset", name: "Unknown Asset", price: "--", change: "+0.00%",
         spark: [20, 30, 25, 35, 40, 38, 50, 45, 55, 60, 58, 66],
         mentions: 0, bias: "Neutral"
@@ -678,30 +696,31 @@
 
     function renderTickerRow(ticker, remove = false) {
       const t = String(ticker).toUpperCase();
-      const d = assetData(t);
-      const negative = d.change.startsWith("-");
-      return `
-        <div class="rounded-2xl border ${negative ? "border-red-500/20 bg-red-500/5" : "border-lime-500/20 bg-lime-500/5"} overflow-hidden">
-          <button class="ticker-btn w-full p-3 text-left" data-ticker="${escapeHTML(t)}">
-            <div class="flex items-center justify-between gap-3">
-              <div class="min-w-0">
-                <div class="font-black">$${escapeHTML(t)}</div>
-                <div class="text-xs text-slate-500 truncate">${escapeHTML(d.name)}</div>
+      return assetData(t).then(d => {
+        const negative = d.change.startsWith("-");
+        return `
+          <div class="rounded-2xl border ${negative ? "border-red-500/20 bg-red-500/5" : "border-lime-500/20 bg-lime-500/5"} overflow-hidden">
+            <button class="ticker-btn w-full p-3 text-left" data-ticker="${escapeHTML(t)}">
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="font-black">$${escapeHTML(t)}</div>
+                  <div class="text-xs text-slate-500 truncate">${escapeHTML(d.name)}</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-black text-sm">${escapeHTML(d.price)}</div>
+                  <div class="${negative ? "text-red-500" : "text-green-600"} font-black text-xs">${escapeHTML(d.change)}</div>
+                </div>
               </div>
-              <div class="text-right">
-                <div class="font-black text-sm">${escapeHTML(d.price)}</div>
-                <div class="${negative ? "text-red-500" : "text-green-600"} font-black text-xs">${escapeHTML(d.change)}</div>
-              </div>
+              <div class="h-10 flex items-end gap-1 mt-2">${renderSparkline(d.spark, negative)}</div>
+            </button>
+            <div class="px-3 pb-3 flex gap-2">
+              <button class="paper-trade-btn flex-1 rounded-xl bg-brogreen text-black text-[10px] font-black py-2" data-side="buy" data-ticker="${escapeHTML(t)}">PAPER BUY</button>
+              <button class="paper-trade-btn flex-1 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-black text-[10px] font-black py-2" data-side="sell" data-ticker="${escapeHTML(t)}">PAPER SELL</button>
             </div>
-            <div class="h-10 flex items-end gap-1 mt-2">${renderSparkline(d.spark, negative)}</div>
-          </button>
-          <div class="px-3 pb-3 flex gap-2">
-            <button class="paper-trade-btn flex-1 rounded-xl bg-brogreen text-black text-[10px] font-black py-2" data-side="buy" data-ticker="${escapeHTML(t)}">PAPER BUY</button>
-            <button class="paper-trade-btn flex-1 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-black text-[10px] font-black py-2" data-side="sell" data-ticker="${escapeHTML(t)}">PAPER SELL</button>
+            ${remove ? `<button class="remove-watchlist w-full px-3 pb-2 text-left text-[10px] font-black text-slate-500 hover:text-red-500" data-ticker="${escapeHTML(t)}">REMOVE</button>` : ""}
           </div>
-          ${remove ? `<button class="remove-watchlist w-full px-3 pb-2 text-left text-[10px] font-black text-slate-500 hover:text-red-500" data-ticker="${escapeHTML(t)}">REMOVE</button>` : ""}
-        </div>
-      `;
+        `;
+      });
     }
 
     function getPaperPositions() {
@@ -772,11 +791,21 @@
     }
 
     function renderMarketLists() {
-      $("popular-stocks-list").innerHTML = topStocks.map(t => renderTickerRow(t)).join("");
-      $("popular-options-list").innerHTML = topOptions.map(t => renderTickerRow(t)).join("");
-      $("popular-crypto-list").innerHTML = topCrypto.map(t => renderTickerRow(t)).join("");
-      bindTickerButtons();
-      bindPaperTradeButtons();
+      Promise.all(topStocks.map(t => renderTickerRow(t))).then(rows => {
+        $("popular-stocks-list").innerHTML = rows.join("");
+        bindTickerButtons();
+        bindPaperTradeButtons();
+      });
+      Promise.all(topOptions.map(t => renderTickerRow(t))).then(rows => {
+        $("popular-options-list").innerHTML = rows.join("");
+        bindTickerButtons();
+        bindPaperTradeButtons();
+      });
+      Promise.all(topCrypto.map(t => renderTickerRow(t))).then(rows => {
+        $("popular-crypto-list").innerHTML = rows.join("");
+        bindTickerButtons();
+        bindPaperTradeButtons();
+      });
     }
 
     function renderWatchlist() {
@@ -1218,30 +1247,38 @@
         return;
       }
 
-      const matches = Object.keys(assets).filter(t => t.includes(query) || assets[t].name.toUpperCase().includes(query)).slice(0, 8);
-      box.innerHTML = matches.length ? matches.map(t => {
-        const d = assetData(t);
-        return `
-          <div class="flex items-center justify-between gap-2 soft-card rounded-2xl p-3 mb-2">
-            <button class="ticker-btn text-left flex-1" data-ticker="${t}">
-              <div class="font-black">$${t}</div>
-              <div class="text-xs text-slate-500">${escapeHTML(d.name)} • ${d.type}</div>
-            </button>
-            <button class="add-asset-btn px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-ticker="${t}">Add</button>
-          </div>
-        `;
-      }).join("") : `<div class="p-3 text-slate-500 font-bold">No asset found.</div>`;
-
-      box.classList.remove("hidden");
-      bindTickerButtons();
-
-      document.querySelectorAll(".add-asset-btn").forEach(btn => {
-        btn.onclick = () => {
-          setWatchlist([...getWatchlist(), btn.dataset.ticker]);
-          box.classList.add("hidden");
-          $("asset-search").value = "";
-        };
-      });
+      fetch(`https://us-central1-broliquidity.cloudfunctions.net/searchSymbol?query=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          const matches = (data.result || []).slice(0, 8);
+          if (matches.length) {
+            Promise.all(matches.map(t => assetData(t.symbol).then(d => {
+              return `
+                <div class="flex items-center justify-between gap-2 soft-card rounded-2xl p-3 mb-2">
+                  <button class="ticker-btn text-left flex-1" data-ticker="${t.symbol}">
+                    <div class="font-black">$${t.symbol}</div>
+                    <div class="text-xs text-slate-500">${escapeHTML(d.name)} • ${d.type}</div>
+                  </button>
+                  <button class="add-asset-btn px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-ticker="${t.symbol}">Add</button>
+                </div>
+              `;
+            }))).then(rows => {
+              box.innerHTML = rows.join("");
+              box.classList.remove("hidden");
+              bindTickerButtons();
+              document.querySelectorAll(".add-asset-btn").forEach(btn => {
+                btn.onclick = () => {
+                  setWatchlist([...getWatchlist(), btn.dataset.ticker]);
+                  box.classList.add("hidden");
+                  $("asset-search").value = "";
+                };
+              });
+            });
+          } else {
+            box.innerHTML = `<div class="p-3 text-slate-500 font-bold">No asset found.</div>`;
+            box.classList.remove("hidden");
+          }
+        });
     }
 
     function runGlobalSearch(q) {
@@ -1358,14 +1395,22 @@
               chat.innerHTML += `<div class='mb-2'><span class='font-bold text-broblue'>You:</span> ${escapeHTML(msg)}</div>`;
               input.value = "";
               chat.scrollTop = chat.scrollHeight;
-              // Gemini API integration placeholder
               chat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500'>Thinking...</span></div>`;
               chat.scrollTop = chat.scrollHeight;
-              // TODO: Replace with Gemini API call
-              setTimeout(() => {
-                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", "<span>Sorry, Bro is not connected yet.</span>");
+              try {
+                const res = await fetch('https://us-central1-broliquidity.cloudfunctions.net/broLLM', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ prompt: msg })
+                });
+                const data = await res.json();
+                const answer = data.answer || (data.error ? `Error: ${data.error}` : 'No response.');
+                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>${escapeHTML(answer)}</span>`);
                 chat.scrollTop = chat.scrollHeight;
-              }, 1200);
+              } catch (err) {
+                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>Error: ${escapeHTML(err.message || 'Unknown error')}</span>`);
+                chat.scrollTop = chat.scrollHeight;
+              }
             };
 
             // DMs modal events (now in sidebar)
@@ -1392,20 +1437,35 @@
               };
             }
                   // Sidebar nav: open Bro LLM and DMs modals
+                  // Unified sidebar navigation handler
                   document.querySelectorAll('.left-nav').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                      if (btn.dataset.view === 'bro-llm') openModal('bro-llm-modal');
-                      if (btn.dataset.view === 'dms') openModal('dm-modal');
-                    });
+                    btn.onclick = () => {
+                      document.querySelectorAll('.left-nav').forEach(b => b.classList.remove('active-nav'));
+                      btn.classList.add('active-nav');
+                      const view = btn.dataset.view;
+                      if (view === 'home') {
+                        setFilter('all');
+                        // Restore main feed UI if needed
+                        location.reload(); // quick fix for now, can be improved
+                      } else if (view === 'explore') {
+                        showExploreSearch();
+                      } else if (view === 'communities') {
+                        setFilter('stocks');
+                      } else if (view === 'following') {
+                        $("tab-following").click();
+                      } else if (view === 'bookmarks') {
+                        const saved = getSavedPosts();
+                        const posts = (currentPosts.length ? currentPosts : demoPosts).filter(p => saved.includes(String(p.id)));
+                        $("recommended-section").classList.add("hidden");
+                        $("posts-list").innerHTML = posts.length ? posts.map(p => renderPostCard(p)).join("") : `<li class="p-10 text-center text-slate-500">No saved posts yet.</li>`;
+                        bindPostActions();
+                      } else if (view === 'bro-llm') {
+                        openModal('bro-llm-modal');
+                      } else if (view === 'dms') {
+                        openModal('dm-modal');
+                      }
+                    };
                   });
-            // Explore: show search for communities/users
-            document.querySelectorAll(".left-nav").forEach(btn => {
-              btn.addEventListener("click", () => {
-                if (btn.dataset.view === "explore") {
-                  showExploreSearch();
-                }
-              });
-            });
           // Show explore search bar and results for communities/users
           function showExploreSearch() {
             // Center feed main
