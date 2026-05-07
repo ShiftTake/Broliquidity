@@ -1248,8 +1248,15 @@
       }
 
       fetch(`https://us-central1-broliquidity.cloudfunctions.net/searchSymbol?query=${encodeURIComponent(query)}`)
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            console.error('searchSymbol API error:', res.status, res.statusText);
+            throw new Error('API error: ' + res.status);
+          }
+          return res.json();
+        })
         .then(data => {
+          console.log('searchSymbol API response:', data);
           const matches = (data.result || []).slice(0, 8);
           if (matches.length) {
             Promise.all(matches.map(t => assetData(t.symbol).then(d => {
@@ -1278,6 +1285,11 @@
             box.innerHTML = `<div class="p-3 text-slate-500 font-bold">No asset found.</div>`;
             box.classList.remove("hidden");
           }
+        })
+        .catch(err => {
+          console.error('Ticker search error:', err);
+          box.innerHTML = `<div class="p-3 text-red-500 font-bold">Error searching assets: ${escapeHTML(err.message || err)}</div>`;
+          box.classList.remove("hidden");
         });
     }
 
@@ -1493,10 +1505,12 @@
               const users = [...following, ...followers].filter(u => (u.name || "").toLowerCase().includes(q));
               let html = "";
               if (comms.length) {
-                html += `<div class='mb-2 text-xs text-slate-500 font-black'>COMMUNITIES</div>" + comms.map(c => `<div class='soft-card rounded-2xl p-4 mb-2'><div class='font-black'>c/${escapeHTML(c.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(c.description || "")}</div></div>`).join("");
+                html += `<div class='mb-2 text-xs text-slate-500 font-black'>COMMUNITIES</div>` +
+                  comms.map(c => `<div class='soft-card rounded-2xl p-4 mb-2'><div class='font-black'>c/${escapeHTML(c.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(c.description || "")}</div></div>`).join("");
               }
               if (users.length) {
-                html += `<div class='mb-2 mt-4 text-xs text-slate-500 font-black'>USERS</div>" + users.map(u => `<div class='soft-card rounded-2xl p-4 mb-2 flex items-center gap-3'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'><div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div></div>`).join("");
+                html += `<div class='mb-2 mt-4 text-xs text-slate-500 font-black'>USERS</div>` +
+                  users.map(u => `<div class='soft-card rounded-2xl p-4 mb-2 flex items-center gap-3'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'><div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div></div>`).join("");
               }
               if (!html) html = `<div class='p-3 text-slate-500 font-bold'>No results found.</div>`;
               results.innerHTML = html;
