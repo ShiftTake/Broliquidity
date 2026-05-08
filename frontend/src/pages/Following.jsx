@@ -57,7 +57,13 @@ export default function Following() {
       <ul className="space-y-4">
         {users.filter(u => u.uid !== auth.currentUser.uid).map((u) => (
           <li key={u.uid} className="flex items-center gap-4 bg-white/10 p-4 rounded-xl">
-            <img src={u.photoURL || "/mainlogo.png"} alt={u.displayName || u.email} className="w-10 h-10 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800" />
+            <img
+              src={u.photoURL || "/mainlogo.png"}
+              alt={u.displayName ? `${u.displayName}'s profile` : u.email ? `${u.email}'s profile` : "Profile"}
+              className="w-10 h-10 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800"
+              aria-label={u.displayName ? `${u.displayName}'s profile image` : u.email ? `${u.email}'s profile image` : "Profile image"}
+              title={u.displayName ? `${u.displayName}'s profile` : u.email ? `${u.email}'s profile` : "Profile"}
+            />
             <div className="flex-1">
               <div className="font-bold">{u.displayName || u.email}</div>
               <div className="text-xs text-slate-500">{u.email}</div>

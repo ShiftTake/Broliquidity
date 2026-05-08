@@ -68,31 +68,46 @@ function AuthForm() {
         <>
           <form onSubmit={handleAuth}>
             <h2 className="text-2xl font-bold mb-6">{isSignUp ? "Sign Up" : "Sign In"}</h2>
+            <label htmlFor="auth-email" className="block text-xs text-slate-400 mb-1">Email address</label>
             <input
+              id="auth-email"
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full mb-4 px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
               required
+              aria-label="Email address"
+              autoComplete="email"
             />
+            <label htmlFor="auth-password" className="block text-xs text-slate-400 mb-1">Password</label>
             <input
+              id="auth-password"
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full mb-4 px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
               required
+              aria-label="Password"
+              autoComplete="current-password"
             />
             {error && <div className="text-red-400 mb-4">{error}</div>}
-            <button type="submit" className="w-full px-4 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition mb-3">
+            <button
+              type="submit"
+              className="w-full px-4 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition mb-3 focus:outline-none focus:ring-2 focus:ring-brogreen"
+              aria-label={isSignUp ? "Sign up for BroLiquidity" : "Sign in to BroLiquidity"}
+              title={isSignUp ? "Sign up for BroLiquidity" : "Sign in to BroLiquidity"}
+            >
               {isSignUp ? "Sign Up" : "Sign In"}
             </button>
             <div className="text-center mb-3">
               <button
                 type="button"
-                className="text-[#b6ff22] hover:underline text-sm"
+                className="text-[#b6ff22] hover:underline text-sm focus:outline-none focus:ring-2 focus:ring-brogreen"
                 onClick={() => setIsSignUp((v) => !v)}
+                aria-label={isSignUp ? "Switch to sign in" : "Switch to sign up"}
+                title={isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
               >
                 {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
               </button>
@@ -105,10 +120,12 @@ function AuthForm() {
           </div>
           <button
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-black font-bold hover:scale-105 transition border border-slate-200"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-white text-black font-bold hover:scale-105 transition border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brogreen"
             type="button"
+            aria-label="Sign in with Google"
+            title="Sign in with Google"
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" className="w-5 h-5" />
             Sign in with Google
           </button>
         </>

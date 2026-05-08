@@ -57,15 +57,23 @@ function Comments({ postId }) {
   return (
     <div className="mt-4 ml-2 border-l border-slate-700 pl-4">
       <form onSubmit={handleSubmit} className="mb-2">
+        <label htmlFor={`comment-input-${postId}`} className="sr-only">Add a comment</label>
         <input
+          id={`comment-input-${postId}`}
           type="text"
           value={comment}
           onChange={e => setComment(e.target.value)}
           placeholder="Add a comment..."
           className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none mb-1"
+          aria-label="Add a comment"
         />
         {error && <div className="text-red-400 mb-1 text-xs">{error}</div>}
-        <button type="submit" className="px-4 py-1 rounded-xl bg-[#b6ff22] text-black font-bold text-xs hover:scale-105 transition">
+        <button
+          type="submit"
+          className="px-4 py-1 rounded-xl bg-[#b6ff22] text-black font-bold text-xs hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-brogreen"
+          aria-label="Submit comment"
+          title="Submit comment"
+        >
           Comment
         </button>
       </form>

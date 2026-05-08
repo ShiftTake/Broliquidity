@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import SidebarSearch from "./SidebarSearch";
+import SidebarBroLLM from "./SidebarBroLLM";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -17,22 +18,33 @@ export default function Sidebar() {
   return (
     <aside className="w-full max-w-xs p-6 bg-white text-black rounded-2xl shadow-lg flex flex-col gap-2">
       <div className="flex items-center gap-3 mb-8">
-        <img src="/mainlogo.png" alt="BroLiquidity Logo" className="w-12 h-12 rounded-2xl object-cover" />
+        <img
+          src="/mainlogo.png"
+          alt="BroLiquidity Logo"
+          className="w-12 h-12 rounded-2xl object-cover focus:outline-none focus:ring-2 focus:ring-brogreen hover:scale-105 transition"
+          tabIndex={0}
+          aria-label="BroLiquidity Logo"
+          title="BroLiquidity Home"
+        />
         <div>
           <h2 className="font-black text-lg">BroLiquidity</h2>
           <p className="text-xs text-slate-500">Trades • Licenses • Jobs</p>
         </div>
       </div>
       <SidebarSearch />
+      <SidebarBroLLM />
       <nav className="flex flex-col gap-2 flex-1">
         {navItems.map(item => (
           <NavLink
             key={item.name}
             to={item.path}
             className={({ isActive }) =>
-              `px-4 py-3 rounded-xl font-bold text-lg transition ${isActive ? "bg-lime-100" : "hover:bg-lime-50"}`
+              `px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen ${isActive ? "bg-lime-100 text-black" : "hover:bg-lime-50 text-slate-700"}`
             }
             end={item.path === "/"}
+            aria-label={item.name}
+            title={item.name}
+            tabIndex={0}
           >
             {item.name}
           </NavLink>

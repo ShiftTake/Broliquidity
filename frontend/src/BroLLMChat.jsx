@@ -1,19 +1,34 @@
-import React, { useState, useRef } from 'react';
-import { askBroLLM, setGeminiApiKey } from './broai';
 
+import { db, auth } from "./firebase";
+import { collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "firebase/firestore";
 const DEFAULT_API_KEY = 'AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE';
 
+
 function BroLLMChat() {
-  const [messages, setMessages] = useState([
-    { sender: 'bro', text: 'Hey bro! Ask me anything about finance, markets, or life.' }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const chatRef = useRef(null);
+  const user = auth.currentUser;
 
   React.useEffect(() => {
     setGeminiApiKey(DEFAULT_API_KEY);
   }, []);
+
+  // Load chat history from Firestore
+  React.useEffect(() => {
+    if (!user) {
+      setMessages([{ sender: 'bro', text: 'Hey bro! Ask me anything about finance, markets, or life.' }]);
+      return;
+    }
+    const loadHistory = async () => {
+      const q = query(collection(db, "broai_chats", user.uid, "messages"), orderBy("createdAt"));
+      const snap = await getDocs(q);
+      const msgs = snap.docs.map(d => d.data());
+      setMessages(msgs.length ? msgs : [{ sender: 'bro', text: 'Hey bro! Ask me anything about finance, markets, or life.' }]);
+    };
+    loadHistory();
+  }, [user]);
 
   React.useEffect(() => {
     if (chatRef.current) {
@@ -21,17 +36,32 @@ function BroLLMChat() {
     }
   }, [messages]);
 
+  // Save message to Firestore
+  const saveMessage = async (msg) => {
+    if (!user) return;
+    await addDoc(collection(db, "broai_chats", user.uid, "messages"), {
+      ...msg,
+      createdAt: serverTimestamp()
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    setMessages((msgs) => [...msgs, { sender: 'user', text: input }]);
+    const userMsg = { sender: 'user', text: input };
+    setMessages((msgs) => [...msgs, userMsg]);
+    saveMessage(userMsg);
     setLoading(true);
     setInput('');
     try {
       const answer = await askBroLLM(input);
-      setMessages((msgs) => [...msgs, { sender: 'bro', text: answer }]);
+      const broMsg = { sender: 'bro', text: answer };
+      setMessages((msgs) => [...msgs, broMsg]);
+      saveMessage(broMsg);
     } catch (err) {
-      setMessages((msgs) => [...msgs, { sender: 'bro', text: 'Error: ' + (err.message || 'Unknown error') }]);
+      const errMsg = { sender: 'bro', text: 'Error: ' + (err.message || 'Unknown error') };
+      setMessages((msgs) => [...msgs, errMsg]);
+      saveMessage(errMsg);
     }
     setLoading(false);
   };

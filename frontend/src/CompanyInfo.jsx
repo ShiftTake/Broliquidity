@@ -32,7 +32,15 @@ export default function CompanyInfo({ symbol }) {
   return (
     <div className="mt-6 flex flex-col md:flex-row gap-8 items-start">
       <div className="flex items-center gap-4">
-        {info.logo && <img src={info.logo} alt="Logo" className="w-14 h-14 rounded-xl bg-white border" />}
+        {info.logo && (
+          <img
+            src={info.logo}
+            alt={info.name ? `${info.name} logo` : "Company logo"}
+            className="w-14 h-14 rounded-xl bg-white border"
+            aria-label={info.name ? `${info.name} logo` : "Company logo"}
+            title={info.name ? `${info.name} logo` : "Company logo"}
+          />
+        )}
         <div>
           <div className="text-lg font-black">{info.name || symbol}</div>
           <div className="text-xs text-slate-500">{info.exchange} • {info.finnhubIndustry}</div>

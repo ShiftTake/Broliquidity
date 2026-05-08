@@ -15,8 +15,9 @@ function BullBearButton({ postId, bullish, bearish }) {
   return (
     <div className="flex items-center gap-2 mt-2">
       <button
-        aria-label="Bullish"
-        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs"
+        aria-label="Vote Bullish"
+        title="Vote Bullish"
+        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-green-900/30 hover:bg-green-600/30 text-green-300 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-green-400"
         onClick={() => handleVote("bullish")}
       >
         {/* Upward green stock chart arrow */}
@@ -24,8 +25,9 @@ function BullBearButton({ postId, bullish, bearish }) {
         Bullish {bullish || 0}
       </button>
       <button
-        aria-label="Bearish"
-        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs"
+        aria-label="Vote Bearish"
+        title="Vote Bearish"
+        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-900/30 hover:bg-red-600/30 text-red-300 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-red-400"
         onClick={() => handleVote("bearish")}
       >
         {/* Downward red stock chart arrow */}
@@ -174,7 +176,13 @@ function PostThread() {
                 <li key={post.id} className="glass p-5 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
                     <Link to={`/profile/${post.authorId}`} className="flex items-center gap-2 group">
-                      <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition" />
+                      <img
+                        src={post.photoURL || "/mainlogo.png"}
+                        alt={post.author ? `${post.author}'s profile` : "Profile"}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition"
+                        aria-label={post.author ? `${post.author}'s profile image` : "Profile image"}
+                        title={post.author ? `${post.author}'s profile` : "Profile"}
+                      />
                       <span className="text-xs font-bold text-broblue group-hover:underline">@{post.author?.split('@')[0] || 'user'}</span>
                     </Link>
                     <div>

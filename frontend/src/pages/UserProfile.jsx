@@ -54,7 +54,13 @@ export default function UserProfile() {
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="flex items-center gap-6 mb-6">
-        <img src={profile.photoURL || `/default-avatar.png`} alt="Profile" className="w-24 h-24 rounded-full object-cover border-4 border-brogreen" />
+        <img
+          src={profile.photoURL || `/default-avatar.png`}
+          alt={profile.username ? `${profile.username}'s profile` : "Profile"}
+          className="w-24 h-24 rounded-full object-cover border-4 border-brogreen"
+          aria-label={profile.username ? `${profile.username}'s profile image` : "Profile image"}
+          title={profile.username ? `${profile.username}'s profile` : "Profile"}
+        />
         <div>
           <h2 className="text-2xl font-black">@{profile.username || userId}</h2>
           <p className="text-slate-500 mt-1">{profile.bio || "No bio yet."}</p>

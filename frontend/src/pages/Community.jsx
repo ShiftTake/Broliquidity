@@ -286,7 +286,13 @@ import { doc, setDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp
             <li key={post.id} className="glass p-5 rounded-xl">
               <div className="flex items-center gap-3 mb-2">
                 <Link to={`/profile/${post.authorId}`} className="flex items-center gap-2 group">
-                  <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition" />
+                  <img
+                    src={post.photoURL || "/mainlogo.png"}
+                    alt={post.author ? `${post.author}'s profile` : "Profile"}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition"
+                    aria-label={post.author ? `${post.author}'s profile image` : "Profile image"}
+                    title={post.author ? `${post.author}'s profile` : "Profile"}
+                  />
                   <span className="text-xs font-bold text-broblue group-hover:underline">@{post.author?.split('@')[0] || 'user'}</span>
                 </Link>
                 <div>
