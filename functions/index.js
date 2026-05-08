@@ -6,7 +6,42 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const { askGemini } = require('./gemini');
-const { getQuote, searchSymbol } = require('./finnhub');
+const { getQuote, searchSymbol, getCompanyProfile, getCompanyNews } = require('./finnhub');
+// Finnhub: Get company profile
+exports.companyProfile = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const symbol = req.body.symbol || req.query.symbol;
+    if (!symbol) return res.status(400).json({ error: 'Missing symbol' });
+    const data = await getCompanyProfile(symbol);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Finnhub error' });
+  }
+});
+
+// Finnhub: Get company news
+exports.companyNews = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const symbol = req.body.symbol || req.query.symbol;
+    if (!symbol) return res.status(400).json({ error: 'Missing symbol' });
+    const data = await getCompanyNews(symbol);
+    res.json({ articles: data });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Finnhub error' });
+  }
+});
 
 // Finnhub: Get real-time quote
 exports.getQuote = functions.https.onRequest(async (req, res) => {

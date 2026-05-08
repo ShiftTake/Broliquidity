@@ -106,21 +106,25 @@
 <body class="font-sans antialiased">
   <!-- Ticker Quick View Modal -->
   <div id="ticker-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-    <div class="panel rounded-3xl p-6 w-full max-w-md relative overflow-hidden shadow-2xl">
-      <button id="close-ticker-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Mini Terminal</p>
-      <div class="flex items-end justify-between gap-4 mb-4">
+    <div class="panel rounded-3xl p-6 w-full max-w-2xl relative overflow-hidden shadow-2xl">
+      <button id="close-ticker-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close ticker modal" title="Close" tabindex="0">&times;</button>
+      <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Stock Info</p>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-4">
         <div>
           <h2 id="ticker-symbol" class="text-3xl font-black">$---</h2>
           <p id="ticker-name" class="text-sm text-slate-500">Ticker quick view</p>
+          <div id="company-info" class="mt-2 text-xs text-slate-500"></div>
         </div>
         <div class="text-right">
           <div id="ticker-price" class="text-2xl font-black">--</div>
           <div id="ticker-change" class="text-sm font-black text-brogreen">--</div>
         </div>
       </div>
-      <div class="soft-card rounded-3xl p-4">
+      <div class="soft-card rounded-3xl p-4 mb-4">
         <div class="h-24 flex items-end gap-1" id="ticker-sparkline"></div>
+      </div>
+      <div class="mb-4">
+        <iframe id="tv-chart" title="TradingView Chart" aria-label="Stock chart" class="w-full rounded-2xl border h-72" style="min-height:280px;" src="" frameborder="0"></iframe>
       </div>
       <div class="grid grid-cols-3 gap-2 mt-4 text-center text-xs font-black">
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Mentions</div><div id="ticker-mentions" class="text-brogreen text-lg">--</div></div>
@@ -128,10 +132,12 @@
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Type</div><div id="ticker-type" class="text-lg">Stock</div></div>
       </div>
       <div class="mt-4 grid grid-cols-3 gap-2">
-        <button id="ticker-add-btn" class="px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-xs">Add Watchlist</button>
-        <button id="ticker-paper-buy" class="px-4 py-3 rounded-2xl bg-green-600 text-white font-black text-xs">Paper Buy</button>
-        <button id="ticker-paper-sell" class="px-4 py-3 rounded-2xl bg-red-500 text-white font-black text-xs">Paper Sell</button>
+        <button id="ticker-add-btn" class="px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-xs" aria-label="Add to watchlist">Add Watchlist</button>
+        <button id="ticker-paper-buy" class="px-4 py-3 rounded-2xl bg-green-600 text-white font-black text-xs" aria-label="Paper buy">Paper Buy</button>
+        <button id="ticker-paper-sell" class="px-4 py-3 rounded-2xl bg-red-500 text-white font-black text-xs" aria-label="Paper sell">Paper Sell</button>
       </div>
+      <div id="company-news" class="mt-6"></div>
+      <div id="ticker-loading" class="hidden absolute inset-0 bg-white/80 dark:bg-black/80 flex items-center justify-center z-10"><div class="animate-spin rounded-full h-12 w-12 border-t-4 border-brogreen border-4"></div></div>
       <p class="text-[11px] text-slate-500 mt-4">Prototype market data. Connect Polygon, Finnhub, IEX Cloud, Twelve Data, or CoinGecko for live pricing.</p>
     </div>
   </div>
@@ -140,6 +146,7 @@
   <div id="post-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl">
       <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+        <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close post modal" title="Close" tabindex="0">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
       <h2 class="text-2xl font-black mb-1">Drop it on the floor</h2>
       <p class="text-sm text-slate-500 mb-5">Post to your timeline or a community you belong to.</p>
@@ -200,6 +207,7 @@
   <div id="profile-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
       <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+        <button id="close-profile" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close profile modal" title="Close" tabindex="0">&times;</button>
       <h2 class="text-2xl font-black mb-5">Your Profile</h2>
       <div class="flex flex-col items-center gap-4">
         <button id="profile-photo-picker-btn" type="button" class="relative group">
@@ -238,6 +246,7 @@
   <div id="create-community-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl">
       <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+        <button id="close-create-community" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close create community modal" title="Close" tabindex="0">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Launch a desk</p>
       <h2 class="text-2xl font-black mb-1">Create a Community</h2>
       <p class="text-sm text-slate-500 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
@@ -252,7 +261,7 @@
     <!-- Left X-style Rail -->
     <aside class="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col">
-        <a href="feed.html" class="flex items-center gap-3 mb-6">
+        <a href="feed.html" class="flex items-center gap-3 mb-6" aria-label="Go to home feed" role="link">
           <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10">
           <div>
             <h1 class="font-black text-xl leading-tight">BroLiquidity</h1>
@@ -260,40 +269,40 @@
           </div>
         </a>
 
-        <nav class="space-y-2 text-xl font-bold">
-          <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home">
+        <nav class="space-y-2 text-xl font-bold" role="navigation" aria-label="Sidebar navigation">
+          <button class="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home" aria-label="Home" title="Home" tabindex="0">
             <span>Home</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="explore" aria-label="Explore" title="Explore" tabindex="0">
             <span>Explore</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="communities" aria-label="Communities" title="Communities" tabindex="0">
             <span>Communities</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="following">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="following" aria-label="Following" title="Following" tabindex="0">
             <span>Following</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bookmarks">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bookmarks" aria-label="Bookmarks" title="Bookmarks" tabindex="0">
             <span>Bookmarks</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabindex="0">
             <span>Bro LLM</span>
           </button>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="dms">
+          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="dms" aria-label="Direct Messages" title="Direct Messages" tabindex="0">
             <span>Direct Messages</span>
           </button>
-          <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10">
+          <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Profile" title="Profile" tabindex="0">
             <span>Profile</span>
           </button>
         </nav>
 
-        <button id="left-post-btn" class="mt-5 w-full rounded-full bg-brogreen text-black py-4 font-black text-lg">Post</button>
+        <button id="left-post-btn" class="mt-5 w-full rounded-full bg-brogreen text-black py-4 font-black text-lg" aria-label="Create a post" title="Create a post" tabindex="0">Post</button>
 
         <div class="mt-6 space-y-4">
           <section class="panel rounded-3xl p-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="font-black">Communities</h2>
-              <button id="left-create-community" class="text-xs font-black text-brogreen">+ New</button>
+              <button id="left-create-community" class="text-xs font-black text-brogreen" aria-label="Create new community" title="Create new community" tabindex="0">+ New</button>
             </div>
             <div id="left-communities" class="space-y-2"></div>
           </section>
@@ -311,12 +320,12 @@
     <!-- Mobile Header -->
     <header class="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
       <nav class="px-4 py-3 flex items-center justify-between gap-3">
-        <button id="mobile-menu-btn" class="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu">☰</button>
-        <a href="feed.html" class="flex items-center gap-2">
+        <button id="mobile-menu-btn" class="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu" title="Open mobile menu">☰</button>
+        <a href="feed.html" class="flex items-center gap-2" aria-label="Go to home feed" role="link">
           <img src="mainlogo.png" class="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity">
           <span class="font-black">BroLiquidity</span>
         </a>
-        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black">Post</button>
+        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black" aria-label="Create a post" title="Create a post">Post</button>
       </nav>
     </header>
 
@@ -378,7 +387,7 @@
     <!-- Right Market Rail -->
     <aside class="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
       <div class="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
-        <button id="right-profile-card" class="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left">
+        <button id="right-profile-card" class="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left" aria-label="Open profile" title="Open profile" tabindex="0">
           <div class="flex items-center gap-3 min-w-0">
             <img id="right-profile-photo" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" class="w-12 h-12 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
             <div class="min-w-0">
@@ -390,7 +399,7 @@
         </button>
 
         <div class="relative">
-          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search">
+          <input id="global-search" class="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search" aria-label="Global search" title="Search users, communities, or posts" tabindex="0">
           <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
           <div id="global-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
         </div>
@@ -403,10 +412,12 @@
               <p class="text-xs text-slate-500 mt-1">Robinhood-style watchlists. No real trading.</p>
             </div>
             <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
+                      <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabindex="0">Theme</button>
           </div>
 
           <div class="relative mb-4">
             <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." />
+                        <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabindex="0" />
             <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
             <div id="asset-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
           </div>
@@ -485,7 +496,7 @@
     <div id="mobile-drawer-content" class="space-y-4"></div>
   </aside>
 
-  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl">+</button>
+  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl" aria-label="Create a post" title="Create a post">+</button>
 
   <!-- Bro LLM Floating Button -->
   <!-- Bro LLM floating button removed, now in sidebar nav -->
@@ -494,6 +505,7 @@
   <div id="bro-llm-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl flex flex-col h-[70vh]">
       <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
+        <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close Bro LLM modal" title="Close" tabindex="0">&times;</button>
       <h2 class="text-2xl font-black mb-2 flex items-center gap-2">Bro <span class="text-xs font-bold text-broblue">(LLM)</span></h2>
       <div id="bro-llm-chat" class="flex-1 overflow-y-auto mb-4 p-2 bg-slate-50 dark:bg-white/5 rounded-2xl"></div>
       <form id="bro-llm-form" class="flex gap-2">
@@ -818,9 +830,11 @@
       bindPaperTradeButtons();
 
       document.querySelectorAll(".remove-watchlist").forEach(btn => {
+        btn.setAttribute('aria-label', `Remove ${btn.dataset.ticker} from watchlist`);
         btn.onclick = (e) => {
           e.stopPropagation();
-          setWatchlist(getWatchlist().filter(t => t !== btn.dataset.ticker));
+          const toRemove = String(btn.dataset.ticker).toUpperCase();
+          setWatchlist(getWatchlist().filter(t => String(t).toUpperCase() !== toRemove));
         };
       });
     }
@@ -833,20 +847,37 @@
 
     function showTickerPreview(ticker) {
       const t = String(ticker || "").toUpperCase();
-      const d = assetData(t);
-      const negative = d.change.startsWith("-");
       activeTicker = t;
-      $("ticker-symbol").textContent = "$" + t;
-      $("ticker-name").textContent = d.name;
-      $("ticker-price").textContent = d.price;
-      $("ticker-change").textContent = d.change;
-      $("ticker-change").className = "text-sm font-black " + (negative ? "text-red-500" : "text-green-600");
-      $("ticker-sparkline").innerHTML = renderSparkline(d.spark, negative, 88);
-      $("ticker-mentions").textContent = d.mentions;
-      $("ticker-bias").textContent = d.bias;
-      $("ticker-bias").className = "text-lg " + (String(d.bias).includes("Bear") ? "text-red-500" : "text-green-600");
-      $("ticker-type").textContent = d.type;
-      openModal("ticker-modal");
+      $("ticker-loading").classList.remove("hidden");
+      // Set TradingView chart
+      $("tv-chart").src = `https://s.tradingview.com/widgetembed/?symbol=${encodeURIComponent(t)}&interval=60&hidesidetoolbar=1&hidetoptoolbar=1&theme=dark&style=1&timezone=Etc/UTC&withdateranges=1&hideideas=1&studies=[]&saveimage=0&toolbarbg=050816&backgroundColor=050816`;
+      // Fetch asset data, company info, and news in parallel
+      Promise.all([
+        assetData(t),
+        fetch(`https://us-central1-broliquidity.cloudfunctions.net/companyProfile?symbol=${encodeURIComponent(t)}`).then(r => r.ok ? r.json() : {}),
+        fetch(`https://us-central1-broliquidity.cloudfunctions.net/companyNews?symbol=${encodeURIComponent(t)}`).then(r => r.ok ? r.json() : [])
+      ]).then(([d, info, news]) => {
+        const negative = d.change.startsWith("-");
+        $("ticker-symbol").textContent = "$" + t;
+        $("ticker-name").textContent = d.name;
+        $("ticker-price").textContent = d.price;
+        $("ticker-change").textContent = d.change;
+        $("ticker-change").className = "text-sm font-black " + (negative ? "text-red-500" : "text-green-600");
+        $("ticker-sparkline").innerHTML = renderSparkline(d.spark, negative, 88);
+        $("ticker-mentions").textContent = d.mentions;
+        $("ticker-bias").textContent = d.bias;
+        $("ticker-bias").className = "text-lg " + (String(d.bias).includes("Bear") ? "text-red-500" : "text-green-600");
+        $("ticker-type").textContent = d.type;
+        // Company info
+        $("company-info").innerHTML = info.name ? `<div class='font-bold mb-1'>${escapeHTML(info.name)}</div><div>${escapeHTML(info.finnhubIndustry || "")}${info.country ? ' • ' + escapeHTML(info.country) : ''}</div><div class='mt-1'>${escapeHTML(info.weburl || "") ? `<a href='${escapeHTML(info.weburl)}' target='_blank' class='underline text-broblue'>${escapeHTML(info.weburl)}</a>` : ''}</div><div class='mt-1 text-slate-500'>${escapeHTML(info.description || "")}</div>` : '';
+        // Company news
+        $("company-news").innerHTML = Array.isArray(news) && news.length ? `<div class='mb-2 font-black text-broblue'>Latest News</div>` + news.slice(0, 4).map(n => `<div class='mb-3'><a href='${escapeHTML(n.url)}' target='_blank' class='font-bold underline'>${escapeHTML(n.headline)}</a><div class='text-xs text-slate-500'>${escapeHTML(n.source)} • ${escapeHTML(n.datetime ? new Date(n.datetime).toLocaleDateString() : '')}</div><div class='text-sm mt-1'>${escapeHTML(n.summary || "")}</div></div>`).join("") : '';
+        $("ticker-loading").classList.add("hidden");
+        openModal("ticker-modal");
+      }).catch(() => {
+        $("ticker-loading").classList.add("hidden");
+        openModal("ticker-modal");
+      });
     }
 
     function formatContent(content) {
@@ -1305,6 +1336,7 @@
       const upper = query.toUpperCase();
       let html = "";
 
+      // Asset search
       const assetMatches = Object.keys(assets).filter(t => t.includes(upper) || assets[t].name.toUpperCase().includes(upper)).slice(0, 5);
       if (assetMatches.length) {
         html += `<div class="text-xs text-slate-500 font-black px-2 py-1">ASSETS</div>`;
@@ -1314,10 +1346,24 @@
         }).join("");
       }
 
+      // Community search
       const commMatches = communitiesCache.filter(c => (c.name || "").toLowerCase().includes(query.toLowerCase()));
       if (commMatches.length) {
         html += `<div class="text-xs text-slate-500 font-black px-2 py-1">COMMUNITIES</div>`;
         html += commMatches.map(c => `<button class="w-full text-left soft-card rounded-2xl p-3 mb-2"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></button>`).join("");
+      }
+
+      // User profile search (using following and followers arrays)
+      const userList = [...(window.following || []), ...(window.followers || [])];
+      const userMatches = userList.filter(u => (u.name || "").toLowerCase().includes(query.toLowerCase()));
+      if (userMatches.length) {
+        html += `<div class="text-xs text-slate-500 font-black px-2 py-1">USERS</div>`;
+        html += userMatches.map(u =>
+          `<div class='soft-card rounded-2xl p-3 mb-2 flex items-center gap-3'>
+            <img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'>
+            <div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div>
+          </div>`
+        ).join("");
       }
 
       box.innerHTML = html || `<div class="p-3 text-slate-500 font-bold">No results found.</div>`;
@@ -1407,7 +1453,9 @@
               chat.innerHTML += `<div class='mb-2'><span class='font-bold text-broblue'>You:</span> ${escapeHTML(msg)}</div>`;
               input.value = "";
               chat.scrollTop = chat.scrollHeight;
-              chat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500'>Thinking...</span></div>`;
+              // Add spinner for loading
+              const spinner = `<span class='inline-block align-middle w-4 h-4 mr-1 border-2 border-broblue border-t-transparent border-l-transparent border-r-transparent rounded-full animate-spin'></span>`;
+              chat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500' id='bro-llm-thinking'>${spinner}Thinking...</span></div>`;
               chat.scrollTop = chat.scrollHeight;
               try {
                 const res = await fetch('https://us-central1-broliquidity.cloudfunctions.net/broLLM', {
@@ -1417,10 +1465,12 @@
                 });
                 const data = await res.json();
                 const answer = data.answer || (data.error ? `Error: ${data.error}` : 'No response.');
-                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>${escapeHTML(answer)}</span>`);
+                const thinking = document.getElementById('bro-llm-thinking');
+                if (thinking) thinking.parentElement.innerHTML = `<span>${escapeHTML(answer)}</span>`;
                 chat.scrollTop = chat.scrollHeight;
               } catch (err) {
-                chat.innerHTML = chat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>Error: ${escapeHTML(err.message || 'Unknown error')}</span>`);
+                const thinking = document.getElementById('bro-llm-thinking');
+                if (thinking) thinking.parentElement.innerHTML = `<span class='text-red-500'>Error: ${escapeHTML(err.message || 'Unknown error')}</span>`;
                 chat.scrollTop = chat.scrollHeight;
               }
             };

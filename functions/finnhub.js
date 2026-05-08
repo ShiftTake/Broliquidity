@@ -17,4 +17,22 @@ async function searchSymbol(query) {
   return await res.json();
 }
 
-module.exports = { getQuote, searchSymbol };
+async function getCompanyProfile(symbol) {
+  const url = `${BASE_URL}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${FINNHUB_API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Finnhub company profile error');
+  return await res.json();
+}
+
+async function getCompanyNews(symbol) {
+  // News for the last 7 days
+  const to = new Date();
+  const from = new Date();
+  from.setDate(to.getDate() - 7);
+  const url = `${BASE_URL}/company-news?symbol=${encodeURIComponent(symbol)}&from=${from.toISOString().slice(0,10)}&to=${to.toISOString().slice(0,10)}&token=${FINNHUB_API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Finnhub company news error');
+  return await res.json();
+}
+
+module.exports = { getQuote, searchSymbol, getCompanyProfile, getCompanyNews };
