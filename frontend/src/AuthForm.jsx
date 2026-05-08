@@ -2,16 +2,18 @@ import React, { useState } from "react";
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-  const handleGoogleSignIn = async () => {
-    setError("");
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      setUser(userCredential.user);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+import { useNavigate } from "react-router-dom";
+
+const handleGoogleSignIn = async () => {
+  setError("");
+  try {
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+    setUser(userCredential.user);
+  } catch (err) {
+    setError(err.message);
+  }
+};
 
 function AuthForm() {
   const [email, setEmail] = useState("");
@@ -19,6 +21,7 @@ function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -38,9 +41,11 @@ function AuthForm() {
           bio: ""
         });
         setUser({ ...userCredential.user, photoURL: defaultPhotoURL });
+        navigate("/feed");
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         setUser(userCredential.user);
+        navigate("/feed");
       }
     } catch (err) {
       setError(err.message);
