@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
 <head>
+    <script type="module">
+      import { setGeminiApiKey, askBroLLM } from './frontend/src/broai.js';
+      window.setGeminiApiKey = setGeminiApiKey;
+      window.askBroLLM = askBroLLM;
+      // Set Gemini API key for Bro LLM
+      setGeminiApiKey('AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE');
+    </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BroLiquidity | Feed</title>
@@ -1484,13 +1491,7 @@
                       sidebarBroLLMChat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500'>Thinking...</span></div>`;
                       sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
                       try {
-                        const res = await fetch('https://us-central1-broliquidity.cloudfunctions.net/broLLM', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ prompt: msg })
-                        });
-                        const data = await res.json();
-                        const answer = data.answer || (data.error ? `Error: ${data.error}` : 'No response.');
+                        const answer = await window.askBroLLM(msg);
                         sidebarBroLLMChat.innerHTML = sidebarBroLLMChat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>${escapeHTML(answer)}</span>`);
                         sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
                       } catch (err) {
