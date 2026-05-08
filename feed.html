@@ -411,13 +411,20 @@
               <h2 class="font-black text-xl">Paper Trading Hub</h2>
               <p class="text-xs text-slate-500 mt-1">Robinhood-style watchlists. No real trading.</p>
             </div>
-            <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card">Theme</button>
-                      <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabindex="0">Theme</button>
+            <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabindex="0">Theme</button>
           </div>
 
           <div class="relative mb-4">
-            <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." />
-                        <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabindex="0" />
+            <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabindex="0" />
+                      <!-- Bro LLM Chat Section -->
+                      <section id="sidebar-bro-llm" class="panel rounded-3xl p-4 hidden">
+                        <h2 class="font-black mb-3">Bro LLM Chat</h2>
+                        <div id="sidebar-bro-llm-chat" class="mb-3 h-40 overflow-y-auto bg-slate-100 dark:bg-white/5 rounded-xl p-3 text-sm"></div>
+                        <form id="sidebar-bro-llm-form" class="flex gap-2">
+                          <input id="sidebar-bro-llm-input" class="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro..." autocomplete="off" />
+                          <button class="px-4 py-2 rounded-xl bg-brogreen text-black font-black">Send</button>
+                        </form>
+                      </section>
             <svg class="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
             <div id="asset-search-results" class="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
           </div>
@@ -1442,6 +1449,49 @@
     }
 
     function wireEvents() {
+                  // Sidebar Bro LLM chat section logic
+                  const sidebarBroLLM = $("sidebar-bro-llm");
+                  const sidebarBroLLMChat = $("sidebar-bro-llm-chat");
+                  const sidebarBroLLMForm = $("sidebar-bro-llm-form");
+                  const sidebarBroLLMInput = $("sidebar-bro-llm-input");
+                  document.querySelectorAll('.left-nav').forEach(btn => {
+                    btn.onclick = () => {
+                      // ...existing code...
+                      const view = btn.dataset.view;
+                      // ...existing code...
+                      if (view === 'bro-llm') {
+                        sidebarBroLLM.classList.remove('hidden');
+                      } else {
+                        sidebarBroLLM.classList.add('hidden');
+                      }
+                    };
+                  });
+                  if (sidebarBroLLMForm) {
+                    sidebarBroLLMForm.onsubmit = async (e) => {
+                      e.preventDefault();
+                      const msg = sidebarBroLLMInput.value.trim();
+                      if (!msg) return;
+                      sidebarBroLLMChat.innerHTML += `<div class='mb-2'><span class='font-bold text-broblue'>You:</span> ${escapeHTML(msg)}</div>`;
+                      sidebarBroLLMInput.value = "";
+                      sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
+                      sidebarBroLLMChat.innerHTML += `<div class='mb-2'><span class='font-bold text-green-600'>Bro:</span> <span class='italic text-slate-500'>Thinking...</span></div>`;
+                      sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
+                      try {
+                        const res = await fetch('https://us-central1-broliquidity.cloudfunctions.net/broLLM', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ prompt: msg })
+                        });
+                        const data = await res.json();
+                        const answer = data.answer || (data.error ? `Error: ${data.error}` : 'No response.');
+                        sidebarBroLLMChat.innerHTML = sidebarBroLLMChat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span>${escapeHTML(answer)}</span>`);
+                        sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
+                      } catch (err) {
+                        sidebarBroLLMChat.innerHTML = sidebarBroLLMChat.innerHTML.replace("<span class='italic text-slate-500'>Thinking...</span>", `<span class='text-red-500'>Error: ${escapeHTML(err.message || 'Unknown error')}</span>`);
+                        sidebarBroLLMChat.scrollTop = sidebarBroLLMChat.scrollHeight;
+                      }
+                    };
+                  }
             // Bro LLM modal events (now in sidebar)
             $("close-bro-llm").onclick = () => closeModal("bro-llm-modal");
             $("bro-llm-form").onsubmit = async (e) => {
