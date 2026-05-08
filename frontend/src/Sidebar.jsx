@@ -1,5 +1,6 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
+import SidebarSearch from "./SidebarSearch";
 
 const navItems = [
   { name: "Home", path: "/" },
@@ -22,6 +23,7 @@ export default function Sidebar() {
           <p className="text-xs text-slate-500">Trades • Licenses • Jobs</p>
         </div>
       </div>
+      <SidebarSearch />
       <nav className="flex flex-col gap-2 flex-1">
         {navItems.map(item => (
           <NavLink

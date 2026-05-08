@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import PaperTradeHistory from "./PaperTradeHistory";
+import PaperPortfolio from "./PaperPortfolio";
 
 function UserProfile() {
   const [user, setUser] = useState(null);
@@ -91,6 +93,18 @@ function UserProfile() {
             />
           </label>
         )}
+        {/* Share profile button */}
+        <button
+          className="mt-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs hover:bg-slate-700"
+          title="Copy profile link"
+          onClick={() => {
+            const url = `${window.location.origin}/profile/${user?.uid}`;
+            navigator.clipboard.writeText(url);
+            alert("Profile link copied!");
+          }}
+        >
+          Share Profile
+        </button>
       </div>
       <div className="mb-2 text-slate-300"><b>Email:</b> {user.email}</div>
       <div className="mb-2 text-slate-300"><b>Name:</b> {user.displayName || "-"}</div>
@@ -113,6 +127,12 @@ function UserProfile() {
       ) : (
         <button onClick={() => setEditing(true)} className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Edit Bio</button>
       )}
+
+      {/* Paper trading portfolio and history */}
+      <div className="mt-8">
+        <PaperPortfolio />
+        <PaperTradeHistory />
+      </div>
     </div>
   );
 }

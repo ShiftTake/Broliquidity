@@ -177,6 +177,17 @@ function PostThread() {
                       <div className="text-xs text-slate-400">{post.category.toUpperCase()} • {post.author}</div>
                       <div className="text-xs text-slate-500">{post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : ""}</div>
                     </div>
+                    <button
+                      className="ml-auto px-2 py-1 rounded-lg bg-slate-800 text-xs text-white hover:bg-slate-700"
+                      title="Copy post link"
+                      onClick={() => {
+                        const url = `${window.location.origin}/post/${post.id}`;
+                        navigator.clipboard.writeText(url);
+                        alert("Post link copied!");
+                      }}
+                    >
+                      Share
+                    </button>
                   </div>
                   <div className="text-white mb-2">{post.content}</div>
                   <BullBearButton postId={post.id} bullish={post.bullish} bearish={post.bearish} />
