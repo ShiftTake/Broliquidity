@@ -340,7 +340,7 @@
 
       <section class="border-b border-slate-200 dark:border-white/10 p-4">
         <div class="flex gap-3">
-          <img src="https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22" class="w-12 h-12 rounded-full" alt="">
+          <img id="composer-profile-photo" src="https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22" class="w-12 h-12 rounded-full object-cover" alt="Profile">
           <div class="flex-1">
             <button id="composer-open" class="w-full text-left text-xl text-slate-500 font-semibold py-2">What’s happening?</button>
             <div class="flex items-center justify-between mt-4">
@@ -922,10 +922,12 @@
       const commName = communitiesCache.find(c => c.id === post.community)?.name || "timeline";
       const saved = getSavedPosts().includes(String(post.id));
 
+      // Try to get profile photo from post, fallback to avatar service
+      let authorPhoto = post.authorPhoto || (post.authorId && profiles && profiles[post.authorId]?.photoURL) || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=050816&color=B6FF22`;
       return `
         <li class="border-b border-slate-200 dark:border-white/10 p-4 hover:bg-slate-50 dark:hover:bg-white/[.03] transition">
           <div class="flex items-start gap-3">
-            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author || "User")}&background=050816&color=B6FF22" class="w-11 h-11 rounded-full border border-slate-200 dark:border-white/10" alt="">
+            <img src="${escapeHTML(authorPhoto)}" class="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-white/10" alt="Profile">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-black">@${escapeHTML(post.author || "anonymousbro")}</span>
@@ -1429,12 +1431,17 @@
         if (main) main.src = photo;
         const rightPhoto = $("right-profile-photo");
         if (rightPhoto) rightPhoto.src = photo;
+        // Set composer profile photo
+        const composerPhoto = $("composer-profile-photo");
+        if (composerPhoto) composerPhoto.src = photo;
       }).catch(() => {
         $("profile-photo").src = fallback;
         const main = $("profile-btn");
         if (main) main.src = fallback;
         const rightPhoto = $("right-profile-photo");
         if (rightPhoto) rightPhoto.src = fallback;
+        const composerPhoto = $("composer-profile-photo");
+        if (composerPhoto) composerPhoto.src = fallback;
       });
     }
 
