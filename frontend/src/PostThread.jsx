@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { db } from "./firebase";
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment, getDoc } from "firebase/firestore";
 import { auth } from "./firebase";
@@ -172,9 +173,12 @@ function PostThread() {
               .map(post => (
                 <li key={post.id} className="glass p-5 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800" />
+                    <Link to={`/profile/${post.authorId}`} className="flex items-center gap-2 group">
+                      <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition" />
+                      <span className="text-xs font-bold text-broblue group-hover:underline">@{post.author?.split('@')[0] || 'user'}</span>
+                    </Link>
                     <div>
-                      <div className="text-xs text-slate-400">{post.category.toUpperCase()} • {post.author}</div>
+                      <div className="text-xs text-slate-400">{post.category.toUpperCase()}</div>
                       <div className="text-xs text-slate-500">{post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : ""}</div>
                     </div>
                     <button
