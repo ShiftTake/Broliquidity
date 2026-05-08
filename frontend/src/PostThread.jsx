@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment, getDoc } from "firebase/firestore";
 import { auth } from "./firebase";
 import Comments from "./Comments";
 
@@ -48,8 +48,22 @@ function PostThread() {
 
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      // Fetch user profile photos for each post
+      const postsWithPhotos = await Promise.all(snapshot.docs.map(async docSnap => {
+        const data = docSnap.data();
+        let photoURL = "/mainlogo.png";
+        if (data.authorId) {
+          try {
+            const userDoc = await getDoc(doc(db, "users", data.authorId));
+            if (userDoc.exists()) {
+              photoURL = userDoc.data().photoURL || photoURL;
+            }
+          } catch {}
+        }
+        return { id: docSnap.id, ...data, photoURL };
+      }));
+      setPosts(postsWithPhotos);
       setLoading(false);
     });
     return unsubscribe;
@@ -72,6 +86,7 @@ function PostThread() {
         category,
         createdAt: serverTimestamp(),
         author: user.email || user.displayName || "anon",
+        authorId: user.uid,
         bullish: 0,
         bearish: 0
       });
@@ -156,9 +171,14 @@ function PostThread() {
               })
               .map(post => (
                 <li key={post.id} className="glass p-5 rounded-xl">
-                  <div className="text-xs text-slate-400 mb-1">{post.category.toUpperCase()} • {post.author}</div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800" />
+                    <div>
+                      <div className="text-xs text-slate-400">{post.category.toUpperCase()} • {post.author}</div>
+                      <div className="text-xs text-slate-500">{post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : ""}</div>
+                    </div>
+                  </div>
                   <div className="text-white mb-2">{post.content}</div>
-                  <div className="text-xs text-slate-500 mb-1">{post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : ""}</div>
                   <BullBearButton postId={post.id} bullish={post.bullish} bearish={post.bearish} />
                   <Comments postId={post.id} />
                 </li>

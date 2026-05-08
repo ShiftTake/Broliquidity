@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { auth } from "./firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth, db } from "./firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
   const handleGoogleSignIn = async () => {
     setError("");
     try {
@@ -25,7 +26,18 @@ function AuthForm() {
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        setUser(userCredential.user);
+        // Assign random default profile image
+        const randomIdx = Math.floor(Math.random() * 15) + 1;
+        const defaultPhotoURL = `/default${randomIdx}.png`;
+        await updateProfile(userCredential.user, { photoURL: defaultPhotoURL });
+        // Also store in Firestore user profile
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          email,
+          displayName: userCredential.user.displayName || "",
+          photoURL: defaultPhotoURL,
+          bio: ""
+        });
+        setUser({ ...userCredential.user, photoURL: defaultPhotoURL });
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         setUser(userCredential.user);

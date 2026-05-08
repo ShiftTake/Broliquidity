@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDoc, doc as firestoreDoc } from "firebase/firestore";
 import { auth } from "./firebase";
 
 function Comments({ postId }) {
@@ -11,8 +11,21 @@ function Comments({ postId }) {
 
   useEffect(() => {
     const q = query(collection(db, `posts/${postId}/comments`), orderBy("createdAt", "asc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const commentsWithPhotos = await Promise.all(snapshot.docs.map(async docSnap => {
+        const data = docSnap.data();
+        let photoURL = "/mainlogo.png";
+        if (data.authorId) {
+          try {
+            const userDoc = await getDoc(firestoreDoc(db, "users", data.authorId));
+            if (userDoc.exists()) {
+              photoURL = userDoc.data().photoURL || photoURL;
+            }
+          } catch {}
+        }
+        return { id: docSnap.id, ...data, photoURL };
+      }));
+      setComments(commentsWithPhotos);
     });
     return unsubscribe;
   }, [postId]);
@@ -32,6 +45,7 @@ function Comments({ postId }) {
       await addDoc(collection(db, `posts/${postId}/comments`), {
         text: comment,
         author: user.email || user.displayName || "anon",
+        authorId: user.uid,
         createdAt: serverTimestamp()
       });
       setComment("");
@@ -57,9 +71,12 @@ function Comments({ postId }) {
       </form>
       <ul className="space-y-2">
         {comments.map(c => (
-          <li key={c.id} className="bg-slate-800/60 rounded-lg px-3 py-2">
-            <div className="text-xs text-slate-400 mb-1">{c.author} • {c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString() : ""}</div>
-            <div className="text-white text-sm">{c.text}</div>
+          <li key={c.id} className="bg-slate-800/60 rounded-lg px-3 py-2 flex items-start gap-2">
+            <img src={c.photoURL || "/mainlogo.png"} alt="Profile" className="w-7 h-7 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 mt-1" />
+            <div>
+              <div className="text-xs text-slate-400 mb-1">{c.author} • {c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString() : ""}</div>
+              <div className="text-white text-sm">{c.text}</div>
+            </div>
           </li>
         ))}
       </ul>
