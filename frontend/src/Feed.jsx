@@ -1,0 +1,161 @@
+import React, { useState, useEffect } from "react";
+import { db, auth } from "./firebase";
+import { Link } from "react-router-dom";
+import Comments from "./Comments";
+
+function Feed() {
+  const [posts, setPosts] = useState([]);
+  const [content, setContent] = useState("");
+  const [category, setCategory] = useState("stocks");
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    const unsubscribe = db.collection("posts").orderBy("createdAt", "desc").onSnapshot(async (snapshot) => {
+      const postsWithPhotos = await Promise.all(snapshot.docs.map(async docSnap => {
+        const data = docSnap.data();
+        let photoURL = "/mainlogo.png";
+        if (data.authorId) {
+          try {
+            const userDoc = await db.collection("users").doc(data.authorId).get();
+            if (userDoc.exists) {
+              photoURL = userDoc.data().photoURL || photoURL;
+            }
+          } catch {}
+        }
+        return { id: docSnap.id, ...data, photoURL };
+      }));
+      setPosts(postsWithPhotos);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (!user) {
+      setError("You must be signed in to post.");
+      return;
+    }
+    if (!content.trim()) {
+      setError("Post content cannot be empty.");
+      return;
+    }
+    try {
+      await db.collection("posts").add({
+        content,
+        category,
+        createdAt: new Date(),
+        author: user.email || user.displayName || "anon",
+        authorId: user.uid,
+        bullish: 0,
+        bearish: 0
+      });
+      setContent("");
+      setCategory("stocks");
+    } catch (err) {
+      setError("Failed to post. Try again.");
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto mt-12">
+      <form onSubmit={handleSubmit} className="glass p-6 rounded-2xl mb-8">
+        <h3 className="text-xl font-bold mb-4">Start a Conversation</h3>
+        <select
+          value={category}
+          onChange={e => setCategory(e.target.value)}
+          className="mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+        >
+          <option value="stocks">Stocks</option>
+          <option value="options">Options</option>
+          <option value="crypto">Crypto</option>
+          <option value="jobs">Jobs</option>
+          <option value="careers">Careers</option>
+          <option value="other">Other</option>
+        </select>
+        <textarea
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          placeholder="What's on your mind?"
+          className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+          rows={3}
+        />
+        {error && <div className="text-red-400 mb-2">{error}</div>}
+        <button type="submit" className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">
+          Post
+        </button>
+      </form>
+      <div>
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <h3 className="text-lg font-bold">Recent Posts</h3>
+          <select
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none"
+          >
+            <option value="all">All</option>
+            <option value="stocks">Stocks</option>
+            <option value="options">Options</option>
+            <option value="crypto">Crypto</option>
+            <option value="jobs">Jobs</option>
+            <option value="careers">Careers</option>
+            <option value="other">Other</option>
+          </select>
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none"
+          >
+            <option value="newest">Newest</option>
+            <option value="bullish">Most Bullish</option>
+            <option value="bearish">Most Bearish</option>
+          </select>
+        </div>
+        {loading ? (
+          <div className="text-slate-400">Loading...</div>
+        ) : posts.length === 0 ? (
+          <div className="text-slate-400">No posts yet.</div>
+        ) : (
+          <ul className="space-y-4">
+            {posts
+              .filter(post => filter === "all" || post.category === filter)
+              .sort((a, b) => {
+                if (sort === "newest") {
+                  return new Date(b.createdAt) - new Date(a.createdAt);
+                } else if (sort === "bullish") {
+                  return (b.bullish || 0) - (a.bullish || 0);
+                } else if (sort === "bearish") {
+                  return (b.bearish || 0) - (a.bearish || 0);
+                }
+                return 0;
+              })
+              .map(post => (
+                <li key={post.id} className="glass p-5 rounded-xl">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Link to={`/profile/${post.authorId}`} className="flex items-center gap-2 group">
+                      <img src={post.photoURL || "/mainlogo.png"} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800 group-hover:scale-110 transition" />
+                      <span className="text-xs font-bold text-broblue group-hover:underline">@{post.author?.split('@')[0] || 'user'}</span>
+                    </Link>
+                    <div>
+                      <div className="text-xs text-slate-400">{post.category.toUpperCase()}</div>
+                      <div className="text-xs text-slate-500">{post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}</div>
+                    </div>
+                  </div>
+                  <div className="text-white mb-2">{post.content}</div>
+                  {/* Add BullBearButton and Comments as needed */}
+                  <Comments postId={post.id} />
+                </li>
+              ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default Feed;

@@ -11,6 +11,7 @@ import BroLLM from "./pages/BroLLM";
 import DM from "./pages/DM";
 import Profile from "./pages/Profile";
 import UserProfile from "./pages/UserProfile";
+import Feed from "./Feed";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="/dm" element={<DM />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route path="/feed" element={<Feed />} />
           </Routes>
         </main>
       </div>
