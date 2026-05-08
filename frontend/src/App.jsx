@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import Communities from "./pages/Communities";
+import Community from "./pages/Community";
 import Following from "./pages/Following";
 import Bookmarks from "./pages/Bookmarks";
 import BroLLM from "./pages/BroLLM";
@@ -25,6 +26,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/communities" element={<Communities />} />
+            <Route path="/communities/:communityId" element={<Community />} />
             <Route path="/following" element={<Following />} />
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/bro-llm" element={<BroLLM />} />

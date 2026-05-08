@@ -28,9 +28,21 @@ export default function UserProfile() {
       // Fetch following
       const followingSnap = await db.collection("follows").where("followerId", "==", userId).get();
       setFollowing(followingSnap.docs.map(d => d.data()));
-      // Fetch communities
+      // Fetch communities (with names)
       const commSnap = await db.collection("memberships").where("userId", "==", userId).get();
-      setCommunities(commSnap.docs.map(d => d.data()));
+      const comms = commSnap.docs.map(d => d.data());
+      // Fetch community names for each membership
+      const commDetails = await Promise.all(
+        comms.map(async m => {
+          try {
+            const cDoc = await db.collection("communities").doc(m.communityId).get();
+            return { ...m, communityName: cDoc.exists ? cDoc.data().name : m.communityId };
+          } catch {
+            return { ...m, communityName: m.communityId };
+          }
+        })
+      );
+      setCommunities(commDetails);
       setLoading(false);
     }
     fetchProfile();

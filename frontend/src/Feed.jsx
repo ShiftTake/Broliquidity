@@ -3,6 +3,12 @@ import { db, auth } from "./firebase";
 import { Link } from "react-router-dom";
 import Comments from "./Comments";
 
+// Helper to fetch joined communities for the current user
+async function getJoinedCommunities(userId) {
+  const snap = await db.collection("memberships").where("userId", "==", userId).get();
+  return snap.docs.map(d => d.data().communityId);
+}
+
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState("");
@@ -11,6 +17,9 @@ function Feed() {
   const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [communityFilter, setCommunityFilter] = useState("all");
+  const [joinedCommunities, setJoinedCommunities] = useState([]);
+  const [postCommunity, setPostCommunity] = useState("");
   const user = auth.currentUser;
 
   useEffect(() => {
@@ -34,6 +43,12 @@ function Feed() {
     return unsubscribe;
   }, []);
 
+  // Fetch joined communities for filter dropdown
+  useEffect(() => {
+    if (!user) return;
+    getJoinedCommunities(user.uid).then(setJoinedCommunities);
+  }, [user]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -45,10 +60,16 @@ function Feed() {
       setError("Post content cannot be empty.");
       return;
     }
+    // If user selected a community, require that they are a member
+    if (postCommunity && !joinedCommunities.includes(postCommunity)) {
+      setError("You must join the community first.");
+      return;
+    }
     try {
       await db.collection("posts").add({
         content,
         category,
+        communityId: postCommunity || null,
         createdAt: new Date(),
         author: user.email || user.displayName || "anon",
         authorId: user.uid,
@@ -57,6 +78,7 @@ function Feed() {
       });
       setContent("");
       setCategory("stocks");
+      setPostCommunity("");
     } catch (err) {
       setError("Failed to post. Try again.");
     }
@@ -66,18 +88,31 @@ function Feed() {
     <div className="max-w-2xl mx-auto mt-12">
       <form onSubmit={handleSubmit} className="glass p-6 rounded-2xl mb-8">
         <h3 className="text-xl font-bold mb-4">Start a Conversation</h3>
-        <select
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
-        >
-          <option value="stocks">Stocks</option>
-          <option value="options">Options</option>
-          <option value="crypto">Crypto</option>
-          <option value="jobs">Jobs</option>
-          <option value="careers">Careers</option>
-          <option value="other">Other</option>
-        </select>
+        <div className="flex flex-col md:flex-row gap-3 mb-3">
+          <select
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+          >
+            <option value="stocks">Stocks</option>
+            <option value="options">Options</option>
+            <option value="crypto">Crypto</option>
+            <option value="jobs">Jobs</option>
+            <option value="careers">Careers</option>
+            <option value="other">Other</option>
+          </select>
+          {/* Community select for posting */}
+          <select
+            value={postCommunity}
+            onChange={e => setPostCommunity(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+          >
+            <option value="">No Community</option>
+            {joinedCommunities.map(cid => (
+              <option key={cid} value={cid}>c/{cid}</option>
+            ))}
+          </select>
+        </div>
         <textarea
           value={content}
           onChange={e => setContent(e.target.value)}
@@ -98,13 +133,24 @@ function Feed() {
             onChange={e => setFilter(e.target.value)}
             className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none"
           >
-            <option value="all">All</option>
+            <option value="all">All Categories</option>
             <option value="stocks">Stocks</option>
             <option value="options">Options</option>
             <option value="crypto">Crypto</option>
             <option value="jobs">Jobs</option>
             <option value="careers">Careers</option>
             <option value="other">Other</option>
+          </select>
+          {/* Community filter dropdown */}
+          <select
+            value={communityFilter}
+            onChange={e => setCommunityFilter(e.target.value)}
+            className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm focus:outline-none"
+          >
+            <option value="all">All Communities</option>
+            {joinedCommunities.map(cid => (
+              <option key={cid} value={cid}>c/{cid}</option>
+            ))}
           </select>
           <select
             value={sort}
@@ -123,7 +169,8 @@ function Feed() {
         ) : (
           <ul className="space-y-4">
             {posts
-              .filter(post => filter === "all" || post.category === filter)
+              .filter(post => (filter === "all" || post.category === filter))
+              .filter(post => (communityFilter === "all" || post.communityId === communityFilter))
               .sort((a, b) => {
                 if (sort === "newest") {
                   return new Date(b.createdAt) - new Date(a.createdAt);
@@ -144,6 +191,7 @@ function Feed() {
                     <div>
                       <div className="text-xs text-slate-400">{post.category.toUpperCase()}</div>
                       <div className="text-xs text-slate-500">{post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}</div>
+                      {post.communityId && <div className="text-xs text-brogreen">c/{post.communityId}</div>}
                     </div>
                   </div>
                   <div className="text-white mb-2">{post.content}</div>
