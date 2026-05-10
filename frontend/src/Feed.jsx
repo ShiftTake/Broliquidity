@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Modal from "./Modal";
 import { db, auth } from "./firebase";
 import { Link } from "react-router-dom";
 import Comments from "./Comments";
@@ -20,6 +21,7 @@ function Feed() {
   const [communityFilter, setCommunityFilter] = useState("all");
   const [joinedCommunities, setJoinedCommunities] = useState([]);
   const [postCommunity, setPostCommunity] = useState("");
+  const [showPostModal, setShowPostModal] = useState(false);
   const user = auth.currentUser;
 
   useEffect(() => {
@@ -86,45 +88,55 @@ function Feed() {
 
   return (
     <div className="max-w-2xl mx-auto mt-12">
-      <form onSubmit={handleSubmit} className="glass p-6 rounded-2xl mb-8">
-        <h3 className="text-xl font-bold mb-4">Start a Conversation</h3>
-        <div className="flex flex-col md:flex-row gap-3 mb-3">
-          <select
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
-          >
-            <option value="stocks">Stocks</option>
-            <option value="options">Options</option>
-            <option value="crypto">Crypto</option>
-            <option value="jobs">Jobs</option>
-            <option value="careers">Careers</option>
-            <option value="other">Other</option>
-          </select>
-          {/* Community select for posting */}
-          <select
-            value={postCommunity}
-            onChange={e => setPostCommunity(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
-          >
-            <option value="">No Community</option>
-            {joinedCommunities.map(cid => (
-              <option key={cid} value={cid}>c/{cid}</option>
-            ))}
-          </select>
-        </div>
-        <textarea
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder="What's on your mind?"
-          className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
-          rows={3}
-        />
-        {error && <div className="text-red-400 mb-2">{error}</div>}
-        <button type="submit" className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">
-          Post
-        </button>
-      </form>
+      <button
+        className="mb-6 px-6 py-3 rounded-2xl bg-[#b6ff22] text-black font-black text-lg hover:scale-105 transition"
+        onClick={() => setShowPostModal(true)}
+      >
+        Create Post
+      </button>
+
+      <Modal open={showPostModal} onClose={() => setShowPostModal(false)}>
+        <form onSubmit={e => { handleSubmit(e); if (!error) setShowPostModal(false); }} className="glass p-6 rounded-2xl mb-2">
+          <h3 className="text-xl font-bold mb-4">Start a Conversation</h3>
+          <div className="flex flex-col md:flex-row gap-3 mb-3">
+            <select
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+            >
+              <option value="stocks">Stocks</option>
+              <option value="options">Options</option>
+              <option value="crypto">Crypto</option>
+              <option value="jobs">Jobs</option>
+              <option value="careers">Careers</option>
+              <option value="other">Other</option>
+            </select>
+            {/* Community select for posting */}
+            <select
+              value={postCommunity}
+              onChange={e => setPostCommunity(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+            >
+              <option value="">No Community</option>
+              {joinedCommunities.map(cid => (
+                <option key={cid} value={cid}>c/{cid}</option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="What's on your mind?"
+            className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
+            rows={3}
+          />
+          {error && <div className="text-red-400 mb-2">{error}</div>}
+          <button type="submit" className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">
+            Post
+          </button>
+        </form>
+      </Modal>
+
       <div>
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <h3 className="text-lg font-bold">Recent Posts</h3>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Modal from "./Modal";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -13,6 +14,7 @@ function UserProfile() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     const u = auth.currentUser;
@@ -81,18 +83,6 @@ function UserProfile() {
             className="w-20 h-20 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800"
           />
         </div>
-        {editing && (
-          <label className="block text-xs text-slate-400 mb-2">
-            {uploading ? "Uploading..." : "Change profile picture:"}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="block mt-1 text-xs text-slate-200"
-              disabled={uploading}
-            />
-          </label>
-        )}
         {/* Share profile button */}
         <button
           className="mt-2 px-4 py-2 rounded-xl bg-slate-800 text-white text-xs hover:bg-slate-700"
@@ -110,23 +100,44 @@ function UserProfile() {
       <div className="mb-2 text-slate-300"><b>Name:</b> {user.displayName || "-"}</div>
       <div className="mb-4">
         <b>Bio:</b>
-        {editing ? (
+        <div className="mt-1 text-slate-200">{bio || <span className="text-slate-500">No bio yet.</span>}</div>
+      </div>
+      {error && <div className="text-red-400 mb-2">{error}</div>}
+      <button onClick={() => { setEditing(true); setShowEditModal(true); }} className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Edit Profile</button>
+
+      <Modal open={showEditModal} onClose={() => { setShowEditModal(false); setEditing(false); }}>
+        <h2 className="text-xl font-bold mb-4">Edit Profile</h2>
+        <div className="flex flex-col items-center mb-4">
+          <div className="mb-2">
+            <img
+              src={photoURL || "/mainlogo.png"}
+              alt="Profile"
+              className="w-20 h-20 rounded-full object-cover border-2 border-[#b6ff22] bg-slate-800"
+            />
+          </div>
+          <label className="block text-xs text-slate-400 mb-2">
+            {uploading ? "Uploading..." : "Change profile picture:"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="block mt-1 text-xs text-slate-200"
+              disabled={uploading}
+            />
+          </label>
+        </div>
+        <div className="mb-4">
+          <b>Bio:</b>
           <textarea
             className="w-full mt-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white focus:outline-none"
             value={bio}
             onChange={e => setBio(e.target.value)}
             rows={3}
           />
-        ) : (
-          <div className="mt-1 text-slate-200">{bio || <span className="text-slate-500">No bio yet.</span>}</div>
-        )}
-      </div>
-      {error && <div className="text-red-400 mb-2">{error}</div>}
-      {editing ? (
-        <button onClick={handleSave} className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition mr-2">Save</button>
-      ) : (
-        <button onClick={() => setEditing(true)} className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition">Edit Bio</button>
-      )}
+        </div>
+        {error && <div className="text-red-400 mb-2">{error}</div>}
+        <button onClick={async () => { await handleSave(); setShowEditModal(false); setEditing(false); }} className="px-6 py-2 rounded-xl bg-[#b6ff22] text-black font-bold hover:scale-105 transition mr-2">Save</button>
+      </Modal>
 
       {/* Paper trading portfolio and history */}
       <div className="mt-8">
