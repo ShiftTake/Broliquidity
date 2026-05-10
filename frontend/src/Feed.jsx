@@ -95,7 +95,7 @@ function Feed() {
         Create Post
       </button>
 
-      <Modal open={showPostModal} onClose={() => setShowPostModal(false)}>
+      <Modal open={showPostModal} onClose={() => { console.log('Modal close button clicked'); setShowPostModal(false); }}>
         <form onSubmit={e => { handleSubmit(e); if (!error) setShowPostModal(false); }} className="glass p-6 rounded-2xl mb-2">
           <h3 className="text-xl font-bold mb-4">Start a Conversation</h3>
           <div className="flex flex-col md:flex-row gap-3 mb-3">
