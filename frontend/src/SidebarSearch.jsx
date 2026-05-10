@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// useNavigate removed for Next.js migration
 import { db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 

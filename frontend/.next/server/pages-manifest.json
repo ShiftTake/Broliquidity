@@ -1,1 +1,16 @@
-{"/BroLLM":"pages/BroLLM.html","/_app":"pages/_app.js","/Bookmarks":"pages/Bookmarks.html","/_error":"pages/_error.js","/Following":"pages/Following.html","/Explore":"pages/Explore.html","/Profile":"pages/Profile.html","/Communities":"pages/Communities.html","/DM":"pages/DM.html","/Home":"pages/Home.html","/_document":"pages/_document.js","/404":"pages/404.html"}
+{
+  "/_error": "pages/_error.js",
+  "/_app": "pages/_app.js",
+  "/bookmarks": "pages/bookmarks.js",
+  "/communities/[communityId]": "pages/communities/[communityId].js",
+  "/bro-llm": "pages/bro-llm.js",
+  "/dm": "pages/dm.js",
+  "/": "pages/index.js",
+  "/explore": "pages/explore.js",
+  "/following": "pages/following.js",
+  "/feed": "pages/feed.js",
+  "/profile/[userId]": "pages/profile/[userId].js",
+  "/communities": "pages/communities.js",
+  "/profile": "pages/profile.js",
+  "/_document": "pages/_document.js"
+}

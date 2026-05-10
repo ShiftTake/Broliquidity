@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { db } from "./firebase";
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment, getDoc } from "firebase/firestore";
 import { auth } from "./firebase";
@@ -175,7 +175,8 @@ function PostThread() {
               .map(post => (
                 <li key={post.id} className="glass p-5 rounded-xl">
                   <div className="flex items-center gap-3 mb-2">
-                    <Link to={`/profile/${post.authorId}`} className="flex items-center gap-2 group">
+                    <Link href={`/profile/${post.authorId}`} legacyBehavior>
+                      <a className="flex items-center gap-2 group">
                       <img
                         src={post.photoURL || "/mainlogo.png"}
                         alt={post.author ? `${post.author}'s profile` : "Profile"}
@@ -184,6 +185,7 @@ function PostThread() {
                         title={post.author ? `${post.author}'s profile` : "Profile"}
                       />
                       <span className="text-xs font-bold text-broblue group-hover:underline">@{post.author?.split('@')[0] || 'user'}</span>
+                      </a>
                     </Link>
                     <div>
                       <div className="text-xs text-slate-400">{post.category.toUpperCase()}</div>

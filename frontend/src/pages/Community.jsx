@@ -1,3 +1,4 @@
+// useParams removed for Next.js migration
 
 export default function Community() {
   const { communityId } = useParams();

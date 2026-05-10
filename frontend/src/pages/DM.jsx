@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { db, auth } from "../firebase";
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+// useNavigate removed for Next.js migration
 
 export default function DM() {
   const [conversations, setConversations] = useState([]);

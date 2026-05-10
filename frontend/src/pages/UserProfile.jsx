@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+// useParams, useNavigate removed for Next.js migration
 import { db, auth } from "../firebase";
 
 export default function UserProfile() {

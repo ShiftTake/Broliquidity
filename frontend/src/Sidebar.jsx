@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import Link from "next/link";
 import SidebarSearch from "./SidebarSearch";
 import SidebarBroLLM from "./SidebarBroLLM";
 
@@ -16,7 +16,7 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const location = useLocation();
+  // const location = useLocation();
   const [showBroLLM, setShowBroLLM] = useState(false);
   return (
     <aside className="w-full max-w-xs p-6 bg-white text-black rounded-2xl shadow-lg flex flex-col gap-2">
@@ -36,44 +36,33 @@ export default function Sidebar() {
       </div>
       <SidebarSearch />
       <nav className="flex flex-col gap-2 flex-1">
-        {navItems.map(item => {
-          if (item.isBroLLM && location.pathname === "/feed") {
-            return (
-              <button
-                key={item.name}
-                className={`px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen ${showBroLLM ? "bg-lime-100 text-black" : "hover:bg-lime-50 text-slate-700"}`}
-                aria-label={item.name}
-                title={item.name}
-                tabIndex={0}
-                onClick={() => setShowBroLLM((v) => !v)}
-              >
-                {item.name}
-              </button>
-            );
-          }
-          return (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              className={({ isActive }) =>
-                `px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen ${isActive ? "bg-lime-100 text-black" : "hover:bg-lime-50 text-slate-700"}`
+        {navItems.map(item => (
+          <Link
+            key={item.name}
+            href={item.path}
+            passHref
+            legacyBehavior
+          >
+            <a
+              className={
+                `px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen hover:bg-lime-50 text-slate-700`
               }
-              end={item.path === "/"}
               aria-label={item.name}
               title={item.name}
               tabIndex={0}
             >
               {item.name}
-            </NavLink>
-          );
-        })}
+            </a>
+          </Link>
+        ))}
       </nav>
       {/* Bro LLM modal for /feed */}
-      {location.pathname === "/feed" && showBroLLM && (
+      {/* Bro LLM modal for /feed - update this logic for Next.js if needed */}
+      {/* {location.pathname === "/feed" && showBroLLM && (
         <div className="bg-white rounded-2xl shadow-xl p-2 mt-2 max-h-96 overflow-y-auto">
           <SidebarBroLLM />
         </div>
-      )}
+      )} */}
       <button className="mt-8 px-8 py-4 rounded-2xl bg-lime-400 text-black font-black text-center hover:scale-105 transition">
         Post
       </button>

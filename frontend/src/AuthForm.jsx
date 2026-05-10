@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+// useNavigate removed for Next.js migration
 
 const handleGoogleSignIn = async () => {
   setError("");
