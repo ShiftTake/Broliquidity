@@ -1593,7 +1593,7 @@
               let html = "";
               if (comms.length) {
                 html += `<div class='mb-2 text-xs text-slate-500 font-black'>COMMUNITIES</div>` +
-                  comms.map(c => `<div class='soft-card rounded-2xl p-4 mb-2'><div class='font-black'>c/${escapeHTML(c.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(c.description || "")}</div></div>`).join("");
+                  comms.map(c => `<div class='soft-card rounded-2xl p-4 mb-2 cursor-pointer community-card' data-community='${escapeHTML(c.name)}'><div class='font-black'>c/${escapeHTML(c.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(c.description || "")}</div></div>`).join("");
               }
               if (users.length) {
                 html += `<div class='mb-2 mt-4 text-xs text-slate-500 font-black'>USERS</div>` +
@@ -1601,7 +1601,38 @@
               }
               if (!html) html = `<div class='p-3 text-slate-500 font-bold'>No results found.</div>`;
               results.innerHTML = html;
+                // Add click handlers for community cards
+                document.querySelectorAll('.community-card').forEach(card => {
+                  card.onclick = function() {
+                    const commName = this.getAttribute('data-community');
+                    showCommunityPage(commName);
+                  };
+                });
             };
+          // Render a community page with its posts
+          function showCommunityPage(commName) {
+            const main = document.querySelector("main");
+            if (!main) return;
+            // Find community info
+            const comm = (typeof communitiesCache !== 'undefined' ? communitiesCache : []).find(c => c.name === commName);
+            // Filter posts for this community (assuming posts have a .community property matching commName)
+            const posts = (typeof currentPosts !== 'undefined' ? currentPosts : []).filter(p => p.community === commName);
+            let html = `<div class='sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10'>
+              <button class='text-brogreen font-black px-4 py-2 mt-4 ml-2 rounded-2xl soft-card' onclick='location.reload()'>&larr; Back</button>
+              <div class='grid grid-cols-1 text-center font-black'>
+                <span class='py-4 text-2xl'>c/${escapeHTML(commName)}</span>
+                <div class='text-slate-500 text-sm mb-2'>${comm ? escapeHTML(comm.description || "") : ""}</div>
+              </div>
+            </div>`;
+            html += `<section class='p-6'>`;
+            if (posts.length) {
+              html += posts.map(p => renderPost(p)).join("");
+            } else {
+              html += `<div class='p-3 text-slate-500 font-bold'>No posts in this community yet.</div>`;
+            }
+            html += `</section>`;
+            main.innerHTML = html;
+          }
           }
         ["mobile-post-btn", "mobile-floating-post", "composer-open", "composer-post-btn", "composer-image-open"].forEach(id => {
           $(id).onclick = () => openModal("post-modal");
