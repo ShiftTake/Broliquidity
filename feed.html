@@ -295,9 +295,7 @@
           <a href="dm.html" class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Direct Messages" title="Direct Messages" tabindex="0">
             <span>Direct Messages</span>
           </a>
-          <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Profile" title="Profile" tabindex="0">
-            <span>Profile</span>
-          </button>
+
         </nav>
 
 
@@ -1630,7 +1628,6 @@
       const profileBtn = $("profile-btn");
       if (profileBtn) profileBtn.onclick = () => openModal("profile-modal");
       $("right-profile-card").onclick = () => openModal("profile-modal");
-      $("profile-nav-btn").onclick = () => openModal("profile-modal");
       $("close-profile").onclick = () => closeModal("profile-modal");
       $("profile-photo-picker-btn").onclick = () => $("profile-image-picker").classList.toggle("hidden");
       $("close-profile-image-picker").onclick = () => $("profile-image-picker").classList.add("hidden");
