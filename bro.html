@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bro LLM Chat</title>
-    <link rel="stylesheet" href="assets/defaults/style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bro LLM Chat | BroLiquidity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        broblue: "#125CFF",
+                        brogreen: "#B6FF22",
+                        ink: "#050816",
+                        panel: "#0B1024"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { font-family: "Inter", sans-serif; }
+    </style>
 </head>
-<body>
-    <header>
-        <h1>Bro LLM Chat</h1>
-        <a href="feed.html">Back to Feed</a>
-    </header>
-    <main>
-        <div id="chat-container">
-            <div id="messages"></div>
-            <form id="chat-form">
-                <input type="text" id="user-input" placeholder="Ask Bro LLM anything..." autocomplete="off" required />
-                <button type="submit">Send</button>
+<body class="font-sans antialiased min-h-screen bg-[#f8fafc] text-[#0f172a] flex items-center justify-center">
+    <div class="w-full max-w-md p-6 panel rounded-3xl shadow-2xl mt-12">
+        <div class="flex items-center justify-between mb-6">
+            <a href="feed.html" class="text-broblue font-black text-sm hover:underline">← Back to Feed</a>
+            <h1 class="font-black text-xl text-broblue">Bro LLM Chat</h1>
+            <span></span>
+        </div>
+        <div id="chat-container" class="flex flex-col h-[60vh]">
+            <div id="messages" class="flex-1 overflow-y-auto mb-4 space-y-3"></div>
+            <form id="chat-form" class="flex gap-2">
+                <input type="text" id="user-input" placeholder="Ask Bro LLM anything..." autocomplete="off" required class="flex-1 px-4 py-3 rounded-2xl bg-white border border-slate-200 outline-none text-sm font-semibold shadow-sm" />
+                <button type="submit" class="px-5 py-3 rounded-2xl bg-brogreen text-black font-black shadow">Send</button>
             </form>
         </div>
-    </main>
+    </div>
     <script src="assets/defaults/bro-llm.js"></script>
 </body>
 </html>
