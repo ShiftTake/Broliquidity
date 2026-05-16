@@ -139,7 +139,7 @@
         <div class="soft-card rounded-2xl p-3"><div class="text-slate-500">Type</div><div id="ticker-type" class="text-lg">Stock</div></div>
       </div>
       <div class="mt-4 grid grid-cols-3 gap-2">
-        <button id="ticker-add-btn" class="px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-xs" aria-label="Add to watchlist">Add Watchlist</button>
+        <button id="ticker-add-btn" class="px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-xs" aria-label="Add to watchlist">Add Watchlist</button>
         <button id="ticker-paper-buy" class="px-4 py-3 rounded-2xl bg-green-600 text-white font-black text-xs" aria-label="Paper buy">Paper Buy</button>
         <button id="ticker-paper-sell" class="px-4 py-3 rounded-2xl bg-red-500 text-white font-black text-xs" aria-label="Paper sell">Paper Sell</button>
       </div>
@@ -203,7 +203,7 @@
             <div id="post-error" class="text-red-500 text-sm hidden"></div>
             <div class="text-xs text-slate-500"><span id="char-count">0</span>/700 characters</div>
           </div>
-          <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Post</button>
+          <button type="submit" class="px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black">Post</button>
         </div>
       </form>
     </div>
@@ -232,7 +232,7 @@
             <button id="close-profile-image-picker" type="button" class="w-8 h-8 rounded-full soft-card font-black">×</button>
           </div>
 
-          <label class="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brogreen text-black font-black cursor-pointer">
+          <label class="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black cursor-pointer">
             Upload Image
             <input type="file" id="profile-image-upload" accept="image/*" class="hidden" />
           </label>
@@ -242,7 +242,7 @@
 
         <textarea id="profile-bio" class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows="3" placeholder="Add a short finance-bro bio..."></textarea>
         <button id="profile-theme-toggle" class="w-full px-4 py-3 rounded-2xl soft-card font-bold">Toggle Theme</button>
-        <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Save Profile</button>
+        <button id="save-profile" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black">Save Profile</button>
         <button id="logout-btn" class="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black">Logout</button>
       </div>
     </div>
@@ -258,7 +258,7 @@
       <p class="text-sm text-slate-500 mb-5">Build a room for traders, analysts, career climbers, or licensing grinders.</p>
       <input id="community-name" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" placeholder="Community name">
       <textarea id="community-desc" class="mb-3 w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows="3" placeholder="Description"></textarea>
-      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black font-black">Create Community</button>
+      <button id="create-community-btn" class="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black">Create Community</button>
       <div id="community-create-error" class="text-red-500 text-sm mt-3 hidden"></div>
     </div>
   </div>
@@ -297,7 +297,7 @@
           <section class="panel rounded-3xl p-4">
             <div class="flex items-center justify-between mb-3">
               <h2 class="font-black">Communities</h2>
-              <button id="left-create-community" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black text-base shadow hover:bg-lime-300 transition-all" aria-label="Create new community" title="Create new community" tabindex="0">+ New</button>
+              <button id="left-create-community" class="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow hover:bg-lime-300 transition-all" aria-label="Create new community" title="Create new community" tabindex="0">+ New</button>
             </div>
             <div id="left-communities" class="space-y-2"></div>
           </section>
@@ -317,7 +317,7 @@
           <img src="mainlogo.png" class="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity">
           <span class="font-black">BroLiquidity</span>
         </a>
-        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black" aria-label="Create a post" title="Create a post">Post</button>
+        <button id="mobile-post-btn" class="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" aria-label="Create a post" title="Create a post">Post</button>
       </nav>
     </header>
 
@@ -342,7 +342,7 @@
                 <button title="Cashtag">$</button>
                 <button title="Community">💬</button>
               </div>
-              <button id="composer-post-btn" class="px-6 py-2 rounded-full bg-brogreen text-black font-black">Post</button>
+              <button id="composer-post-btn" class="px-6 py-2 rounded-full bg-brogreen text-black dark:text-brogreen font-black">Post</button>
             </div>
           </div>
         </div>
@@ -403,7 +403,7 @@
         <section class="panel rounded-3xl p-4">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <p class="px-4 py-2 rounded-2xl bg-brogreen text-black font-black text-base shadow inline-block mb-2">Markets</p>
+              <p class="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow inline-block mb-2">Markets</p>
               <h2 class="font-black text-xl">Paper Trading Hub</h2>
             </div>
             <button id="theme-toggle-rail" class="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabindex="0">Theme</button>
@@ -457,7 +457,7 @@
               </div>
               <div class="flex gap-2 mb-3 hidden" id="watchlist-form">
                 <input id="watchlist-input" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL or BTC" maxlength="18" />
-                <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black font-black">Save</button>
+                <button id="save-watchlist-btn" class="px-3 py-2 rounded-xl bg-brogreen text-black dark:text-brogreen font-black">Save</button>
               </div>
               <div id="watchlist-list" class="space-y-2"></div>
             </div>
@@ -490,7 +490,7 @@
     <div id="mobile-drawer-content" class="space-y-4"></div>
   </aside>
 
-  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl" aria-label="Create a post" title="Create a post">+</button>
+  <button id="mobile-floating-post" class="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black dark:text-brogreen font-black text-2xl shadow-2xl" aria-label="Create a post" title="Create a post">+</button>
 
   <!-- Bro LLM Floating Button -->
   <!-- Bro LLM floating button removed, now in sidebar nav -->
@@ -721,7 +721,7 @@
               <div class="h-10 flex items-end gap-1 mt-2">${renderSparkline(d.spark, negative)}</div>
             </button>
             <div class="px-3 pb-3 flex gap-2">
-              <button class="paper-trade-btn flex-1 rounded-xl bg-brogreen text-black text-[10px] font-black py-2" data-side="buy" data-ticker="${escapeHTML(t)}">PAPER BUY</button>
+              <button class="paper-trade-btn flex-1 rounded-xl bg-brogreen text-black dark:text-brogreen text-[10px] font-black py-2" data-side="buy" data-ticker="${escapeHTML(t)}">PAPER BUY</button>
               <button class="paper-trade-btn flex-1 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-black text-[10px] font-black py-2" data-side="sell" data-ticker="${escapeHTML(t)}">PAPER SELL</button>
             </div>
             ${remove ? `<button class="remove-watchlist w-full px-3 pb-2 text-left text-[10px] font-black text-slate-500 hover:text-red-500" data-ticker="${escapeHTML(t)}">REMOVE</button>` : ""}
@@ -922,7 +922,7 @@
                 <span class="text-sm text-slate-500">• ${formatDate(post.createdAt)}</span>
                 <span class="text-xs text-slate-500">c/${escapeHTML(commName)}</span>
                 ${post.label ? `<span class="text-[10px] px-2 py-1 rounded-full bg-blue-50 dark:bg-white/8 text-broblue font-black uppercase">${escapeHTML(post.label)}</span>` : ""}
-                ${recommended ? `<span class="text-[10px] px-2 py-1 rounded-full bg-brogreen text-black font-black uppercase">Recommended</span>` : ""}
+                ${recommended ? `<span class="text-[10px] px-2 py-1 rounded-full bg-brogreen text-black dark:text-brogreen font-black uppercase">Recommended</span>` : ""}
               </div>
 
               ${post.content ? `<p class="mt-2 text-[15px] leading-relaxed text-black dark:text-white font-medium">${formatContent(post.content || "")}</p>` : ""}
@@ -950,7 +950,7 @@
                 ${post.allowComments === false ? `<div class="text-sm text-slate-500 font-bold">Comments are turned off.</div>` : `
                   <div class="flex gap-2">
                     <input id="comment-input-${post.id}" class="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Add a comment..." />
-                    <button class="add-comment-btn px-4 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-id="${post.id}">Reply</button>
+                    <button class="add-comment-btn px-4 py-2 rounded-xl bg-brogreen text-black dark:text-brogreen text-xs font-black" data-id="${post.id}">Reply</button>
                   </div>
                   <div id="comment-list-${post.id}" class="mt-3 space-y-2 text-sm"></div>
                 `}
@@ -1148,7 +1148,7 @@
           <h2 class="font-black mb-3">Communities</h2>
           <div class="space-y-2">${communitiesCache.map(c => `<button class="mobile-community w-full soft-card rounded-2xl p-3 text-left flex gap-3 items-center" data-id="${c.id}"><img src="${escapeHTML(c.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name || 'C') + '&background=050816&color=B6FF22')}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 bg-slate-100 flex-shrink-0" alt="Community" /><div class="min-w-0"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></div></button>`).join("")}</div>
         </section>
-        <a href="dm.html" class="block w-full mt-4 mb-2 px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-center">Direct Messages</a>
+        <a href="dm.html" class="block w-full mt-4 mb-2 px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-center">Direct Messages</a>
         <section class="panel rounded-3xl p-4">
           <h2 class="font-black mb-3">Following</h2>
           <div class="space-y-2">${following.map(renderUserMini).join("")}</div>
@@ -1303,7 +1303,7 @@
                     <div class="font-black">$${t.symbol}</div>
                     <div class="text-xs text-slate-500">${escapeHTML(d.name)} • ${d.type}</div>
                   </button>
-                  <button class="add-asset-btn px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black" data-ticker="${t.symbol}">Add</button>
+                  <button class="add-asset-btn px-3 py-2 rounded-xl bg-brogreen text-black dark:text-brogreen text-xs font-black" data-ticker="${t.symbol}">Add</button>
                 </div>
               `;
             }))).then(rows => {
