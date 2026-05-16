@@ -2,11 +2,9 @@
 <html lang="en" class="light">
 <head>
     <script type="module">
-      import { setGeminiApiKey, askBroLLM } from './frontend/src/broai.js';
-      window.setGeminiApiKey = setGeminiApiKey;
+      import { askBroLLM } from './frontend/src/broai.js';
       window.askBroLLM = askBroLLM;
-      // Set Gemini API key for Bro LLM
-      setGeminiApiKey('AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE');
+      // BroLLM now uses backend proxy for all Gemini requests. No API key is set or exposed in the frontend.
     </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
