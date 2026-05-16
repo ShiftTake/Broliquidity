@@ -152,8 +152,7 @@
   <!-- Post Modal -->
   <div id="post-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl">
-      <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-        <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close post modal" title="Close" tabindex="0">&times;</button>
+      <button id="close-post-modal" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close post modal" title="Close" tabindex="0">&times;</button>
       <p class="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
       <h2 class="text-2xl font-black mb-1">Drop it on the floor</h2>
       <p class="text-sm text-slate-500 mb-5">Post to your timeline or a community you belong to.</p>
@@ -1112,12 +1111,14 @@
 
     function renderLeftRail() {
       const communitiesHTML = communitiesCache.map(c => `
-        <button class="community-btn w-full soft-card rounded-2xl p-3 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-id="${c.id}">
-          <div class="font-black">c/${escapeHTML(c.name)}</div>
-          <div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(c.description || "Finance desk")}</div>
+        <button class="community-btn w-full soft-card rounded-2xl p-3 text-left hover:bg-slate-100 dark:hover:bg-white/10 flex gap-3 items-center" data-id="${c.id}">
+          <img src="${escapeHTML(c.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name || 'C') + '&background=050816&color=B6FF22')}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 bg-slate-100 flex-shrink-0" alt="Community" />
+          <div class="min-w-0">
+            <div class="font-black">c/${escapeHTML(c.name)}</div>
+            <div class="text-xs text-slate-500 line-clamp-2">${escapeHTML(c.description || "Finance desk")}</div>
+          </div>
         </button>
       `).join("");
-
       $("left-communities").innerHTML = communitiesHTML;
 
       const followingHTML = following.map(renderUserMini).join("");
@@ -1157,7 +1158,7 @@
       $("mobile-drawer-content").innerHTML = `
         <section class="panel rounded-3xl p-4">
           <h2 class="font-black mb-3">Communities</h2>
-          <div class="space-y-2">${communitiesCache.map(c => `<button class="mobile-community w-full soft-card rounded-2xl p-3 text-left" data-id="${c.id}"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></button>`).join("")}</div>
+          <div class="space-y-2">${communitiesCache.map(c => `<button class="mobile-community w-full soft-card rounded-2xl p-3 text-left flex gap-3 items-center" data-id="${c.id}"><img src="${escapeHTML(c.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name || 'C') + '&background=050816&color=B6FF22')}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 bg-slate-100 flex-shrink-0" alt="Community" /><div class="min-w-0"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></div></button>`).join("")}</div>
         </section>
         <section class="panel rounded-3xl p-4">
           <h2 class="font-black mb-3">Following</h2>
@@ -1306,7 +1307,7 @@
           console.log('searchSymbol API response:', data);
           const matches = (data.result || []).slice(0, 8);
           if (matches.length) {
-            Promise.all(matches.map(t => assetData(t.symbol).then(d => {
+            Promise.all(matches.map(t => assetData(t).then(d => {
               return `
                 <div class="flex items-center justify-between gap-2 soft-card rounded-2xl p-3 mb-2">
                   <button class="ticker-btn text-left flex-1" data-ticker="${t.symbol}">
