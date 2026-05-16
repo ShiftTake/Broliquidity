@@ -973,10 +973,38 @@
         : `<li class="p-10 text-center text-slate-500 border-b border-slate-200 dark:border-white/10"><div class="font-black">No liquidity here yet.</div></li>`;
 
       bindPostActions();
+      // Fetch comments for each post after rendering
+      posts.forEach(post => {
+        if (post.allowComments !== false && window.fetchCommentsForPost) {
+          fetchCommentsForPost(post.id);
+        }
+      });
       renderRecommendedPosts();
     }
 
     function bindPostActions() {
+            // Fetch and render comments for each post
+            window.fetchCommentsForPost = async function(postId) {
+              const list = document.getElementById(`comment-list-${postId}`);
+              if (!list) return;
+              if (String(postId).startsWith("demo")) {
+                list.innerHTML = '<div class="text-slate-500">Demo comments are not supported.</div>';
+                return;
+              }
+              try {
+                const snap = await db.collection("posts").doc(postId).collection("comments").orderBy("createdAt","asc").limit(20).get();
+                if (snap.empty) {
+                  list.innerHTML = '<div class="text-slate-500">No comments yet.</div>';
+                  return;
+                }
+                list.innerHTML = Array.from(snap.docs).map(doc => {
+                  const c = doc.data();
+                  return `<div class='flex items-start gap-2'><span class='font-black'>@${escapeHTML(c.author||'bro')}</span><span class='text-xs text-slate-500 ml-2'>${c.createdAt && c.createdAt.toDate ? new Date(c.createdAt.toDate()).toLocaleString() : ''}</span><div class='ml-2'>${escapeHTML(c.content)}</div></div>`;
+                }).join("");
+              } catch (e) {
+                list.innerHTML = '<div class="text-red-500">Failed to load comments.</div>';
+              }
+            };
       document.querySelectorAll(".vote-btn").forEach(btn => {
         btn.onclick = async () => {
           const id = btn.dataset.id;
@@ -1028,6 +1056,8 @@
       });
       await db.collection("posts").doc(postId).update({ comments: firebase.firestore.FieldValue.increment(1) });
       input.value = "";
+      // Refresh comments after adding
+      if(window.fetchCommentsForPost) fetchCommentsForPost(postId);
     }
 
     function subscribeToPosts() {
