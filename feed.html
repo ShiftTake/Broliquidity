@@ -999,6 +999,12 @@
         btn.onclick = async () => {
           const id = btn.dataset.id;
           const field = btn.dataset.field;
+          // Prevent multiple votes per user per post (localStorage for demo)
+          const voteKey = `broliquidity_vote_${id}`;
+          let voted = JSON.parse(localStorage.getItem(voteKey) || '{}');
+          if (voted[field]) return; // already voted this way
+          voted[field] = true;
+          localStorage.setItem(voteKey, JSON.stringify(voted));
           if (String(id).startsWith("demo")) {
             const post = demoPosts.find(p => p.id === id);
             if (post) post[field] = (post[field] || 0) + 1;
@@ -1031,13 +1037,23 @@
 
     async function addComment(postId) {
       const input = $("comment-input-" + postId);
-      if (!input || !input.value.trim() || !currentUser) return;
+      if (!input || !input.value.trim()) return;
       if (String(postId).startsWith("demo")) {
+        // Store demo comments in localStorage
+        const commentKey = `broliquidity_comments_${postId}`;
+        const comments = JSON.parse(localStorage.getItem(commentKey) || '[]');
+        comments.push({
+          content: input.value.trim(),
+          author: "DemoUser",
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(commentKey, JSON.stringify(comments));
         input.value = "";
-        alert("Demo comments require a real Firestore post.");
+        renderDemoComments(postId);
         return;
       }
-      const username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "bro");
+      if (!currentUser) return;
+      const username = currentUser.displayName || (currentUser.email ? currentUser.email.split("@") [0] : "bro");
       await db.collection("posts").doc(postId).collection("comments").add({
         content: input.value.trim(),
         author: username,
@@ -1046,6 +1062,16 @@
       });
       await db.collection("posts").doc(postId).update({ comments: firebase.firestore.FieldValue.increment(1) });
       input.value = "";
+    }
+
+    // Render demo comments for demo posts
+    function renderDemoComments(postId) {
+      const commentKey = `broliquidity_comments_${postId}`;
+      const comments = JSON.parse(localStorage.getItem(commentKey) || '[]');
+      const list = document.getElementById(`comment-list-${postId}`);
+      if (!list) return;
+      list.innerHTML = comments.length ? comments.map(c => `<div class='rounded-xl bg-slate-100 dark:bg-white/10 p-2 mb-1'><span class='font-bold'>@${c.author}:</span> ${c.content}</div>`).join('') : '';
+    }
     }
 
     function subscribeToPosts() {
