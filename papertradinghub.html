@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BroLiquidity | Paper Trading Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Inter", "sans-serif"] },
+          colors: {
+            broblue: "#125CFF",
+            brogreen: "#B6FF22",
+            ink: "#050816",
+            panel: "#0B1024"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: "Inter", sans-serif; background: #f8fafc; color: #0f172a; }
+    body.dark { background: #050816; color: #fff; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 dark:bg-[#050816]">
+  <div class="max-w-4xl mx-auto p-6">
+    <h1 class="text-3xl font-black mb-6 flex items-center gap-3">Paper Trading Hub <span class="text-xs px-2 py-1 rounded bg-broblue text-white font-bold">Expanded</span></h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="panel rounded-3xl p-6 shadow-lg">
+        <h2 class="font-black text-lg mb-4">Paper Cash</h2>
+        <div class="mb-2 text-2xl font-black" id="pth-cash">$100,000</div>
+        <form id="pth-cash-form" class="flex gap-2 mb-4">
+          <input id="pth-cash-input" type="number" min="0" step="100" class="w-32 px-3 py-2 rounded border text-sm" placeholder="Set cash" />
+          <button type="submit" class="px-4 py-2 rounded bg-brogreen text-black dark:text-brogreen font-black">Set</button>
+        </form>
+        <div class="text-sm text-slate-500">Adjust your paper trading cash balance.</div>
+      </section>
+      <section class="panel rounded-3xl p-6 shadow-lg">
+        <h2 class="font-black text-lg mb-4">Open Positions</h2>
+        <div id="pth-positions">No positions yet.</div>
+      </section>
+      <section class="panel rounded-3xl p-6 shadow-lg md:col-span-2">
+        <h2 class="font-black text-lg mb-4">Trade History</h2>
+        <div id="pth-history">No trades yet.</div>
+      </section>
+    </div>
+    <div class="mt-10 text-xs text-slate-400">More advanced features coming soon: order editing, advanced analytics, export, and more.</div>
+  </div>
+  <script>
+    // Placeholder logic for demo
+    function getPaperCash() {
+      return Number(localStorage.getItem('broliquidity_paper_cash') || 100000);
+    }
+    function setPaperCash(val) {
+      localStorage.setItem('broliquidity_paper_cash', val);
+      document.getElementById('pth-cash').textContent = "$" + Number(val).toLocaleString();
+    }
+    document.getElementById('pth-cash-form').onsubmit = function(e) {
+      e.preventDefault();
+      const val = Number(document.getElementById('pth-cash-input').value);
+      if (!isNaN(val) && val >= 0) setPaperCash(val);
+    };
+    document.getElementById('pth-cash').textContent = "$" + getPaperCash().toLocaleString();
+    // Positions and history placeholders
+    function getPaperPositions() {
+      return JSON.parse(localStorage.getItem("broliquidity_paper_positions") || "[]");
+    }
+    function renderPositions() {
+      const positions = getPaperPositions();
+      const el = document.getElementById('pth-positions');
+      if (!positions.length) { el.textContent = 'No positions yet.'; return; }
+      el.innerHTML = `<table class='w-full text-xs'><thead><tr class='text-slate-500'><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Date</th><th></th></tr></thead><tbody>${positions.map((p,i)=>`<tr class='border-t border-slate-200 dark:border-white/10'><td class='font-bold'>${p.ticker}</td><td class='${p.side==='buy'?'text-green-600':'text-red-500'}'>${p.side}</td><td>${p.qty}</td><td>$${p.price}</td><td>${p.openedAt?new Date(p.openedAt).toLocaleString():''}</td><td><button class='remove-pos px-2 py-1 rounded bg-red-500 text-white text-[10px] font-black' data-idx='${i}'>Remove</button></td></tr>`).join('')}</tbody></table>`;
+      document.querySelectorAll('.remove-pos').forEach(btn=>{btn.onclick=function(){const idx=Number(btn.dataset.idx);const pos=getPaperPositions();pos.splice(idx,1);localStorage.setItem('broliquidity_paper_positions',JSON.stringify(pos));renderPositions();renderHistory();};});
+    }
+    function renderHistory() {
+      const positions = getPaperPositions();
+      const el = document.getElementById('pth-history');
+      if (!positions.length) { el.textContent = 'No trades yet.'; return; }
+      el.innerHTML = `<table class='w-full text-xs'><thead><tr class='text-slate-500'><th>Date</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th></tr></thead><tbody>${positions.map(p=>`<tr class='border-t border-slate-200 dark:border-white/10'><td>${p.openedAt?new Date(p.openedAt).toLocaleString():''}</td><td class='font-bold'>${p.ticker}</td><td class='${p.side==='buy'?'text-green-600':'text-red-500'}'>${p.side}</td><td>${p.qty}</td><td>$${p.price}</td></tr>`).join('')}</tbody></table>`;
+    }
+    renderPositions();
+    renderHistory();
+  </script>
+</body>
+</html>
