@@ -29,7 +29,7 @@
       color: #0f172a;
       background: #f8fafc;
     }
-    body.dark {
+    html.dark body {
       color-scheme: dark;
       color: #fff;
       background: #050816;
@@ -38,7 +38,7 @@
       background: #ffffff;
       border: 1px solid rgba(15,23,42,.09);
     }
-    body.dark .panel {
+    html.dark .panel {
       background: #050816;
       border-color: rgba(255,255,255,.12);
     }
@@ -46,7 +46,7 @@
       background: rgba(15,23,42,.035);
       border: 1px solid rgba(15,23,42,.08);
     }
-    body.dark .soft-card {
+    html.dark .soft-card {
       background: rgba(255,255,255,.055);
       border-color: rgba(255,255,255,.10);
     }
@@ -54,7 +54,7 @@
       color: #050816;
       border-bottom: 4px solid #B6FF22;
     }
-    body.dark .active-tab {
+    html.dark .active-tab {
       color: #ffffff;
     }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -258,11 +258,27 @@
   </main>
 
   <script>
-    // Theme Engine Hook
+    // Theme Engine Hook (Tailwind best practice: toggle 'dark' on <html>, persist in localStorage)
     const themeBtn = document.getElementById('theme-toggle');
+    function setThemeClass(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    // On load, set theme from localStorage or system preference
+    (function() {
+      let theme = localStorage.getItem('theme');
+      if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      setThemeClass(theme === 'dark');
+    })();
     themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      document.documentElement.classList.toggle('dark');
+      const isDark = !document.documentElement.classList.contains('dark');
+      setThemeClass(isDark);
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
     // Tab Interface Switch Frame
