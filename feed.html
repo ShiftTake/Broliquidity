@@ -1597,7 +1597,7 @@
               }
               if (users.length) {
                 html += `<div class='mb-2 mt-4 text-xs text-slate-500 font-black'>USERS</div>` +
-                  users.map(u => `<div class='soft-card rounded-2xl p-4 mb-2 flex items-center gap-3'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'><div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div></div>`).join("");
+                  users.map(u => `<div class='soft-card rounded-2xl p-4 mb-2 flex items-center gap-3 cursor-pointer user-card' data-username='${escapeHTML(u.name)}'><img src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.avatar)}&background=050816&color=B6FF22' class='w-10 h-10 rounded-full'><div><div class='font-black'>@${escapeHTML(u.name)}</div><div class='text-xs text-slate-500'>${escapeHTML(u.role)}</div></div></div>`).join("");
               }
               if (!html) html = `<div class='p-3 text-slate-500 font-bold'>No results found.</div>`;
               results.innerHTML = html;
@@ -1608,6 +1608,60 @@
                     showCommunityPage(commName);
                   };
                 });
+                // Add click handlers for user cards
+                document.querySelectorAll('.user-card').forEach(card => {
+                  card.onclick = function() {
+                    const username = this.getAttribute('data-username');
+                    showUserProfilePage(username);
+                  };
+                });
+            // Render a user profile page with avatar, name, role, communities, posts, and reposts
+            function showUserProfilePage(username) {
+              const main = document.querySelector("main");
+              if (!main) return;
+              // Find user info (search following and followers)
+              const user = [...(typeof following !== 'undefined' ? following : []), ...(typeof followers !== 'undefined' ? followers : [])].find(u => u.name === username);
+              // Find user's communities (if available)
+              const userCommunities = (typeof communitiesCache !== 'undefined' ? communitiesCache : []).filter(c => (c.members || []).includes(username));
+              // Find user's posts and reposts (assuming posts have .author and .repost fields)
+              const posts = (typeof currentPosts !== 'undefined' ? currentPosts : []).filter(p => p.author === username);
+              const reposts = (typeof currentPosts !== 'undefined' ? currentPosts : []).filter(p => p.repost === username);
+              let html = `<div class='sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10'>
+                <button class='text-brogreen font-black px-4 py-2 mt-4 ml-2 rounded-2xl soft-card' onclick='location.reload()'>&larr; Back</button>
+                <div class='grid grid-cols-1 text-center font-black'>
+                  <img src='https://ui-avatars.com/api/?name=${encodeURIComponent(user ? user.avatar : username)}&background=050816&color=B6FF22' class='mx-auto w-20 h-20 rounded-full mt-4 mb-2'>
+                  <span class='py-2 text-2xl'>@${escapeHTML(username)}</span>
+                  <div class='text-slate-500 text-sm mb-2'>${user ? escapeHTML(user.role || "") : ""}</div>
+                </div>
+              </div>`;
+              html += `<section class='p-6'>`;
+              html += `<div class='mb-6'>
+                <div class='font-black mb-2'>Communities</div>`;
+              if (userCommunities.length) {
+                html += userCommunities.map(c => `<div class='soft-card rounded-2xl p-3 mb-2'>c/${escapeHTML(c.name)}</div>`).join("");
+              } else {
+                html += `<div class='text-slate-500'>No communities found.</div>`;
+              }
+              html += `</div>`;
+              html += `<div class='mb-6'>
+                <div class='font-black mb-2'>Posts</div>`;
+              if (posts.length) {
+                html += posts.map(p => renderPost(p)).join("");
+              } else {
+                html += `<div class='text-slate-500'>No posts found.</div>`;
+              }
+              html += `</div>`;
+              html += `<div class='mb-6'>
+                <div class='font-black mb-2'>Reposts</div>`;
+              if (reposts.length) {
+                html += reposts.map(p => renderPost(p)).join("");
+              } else {
+                html += `<div class='text-slate-500'>No reposts found.</div>`;
+              }
+              html += `</div>`;
+              html += `</section>`;
+              main.innerHTML = html;
+            }
             };
           // Render a community page with its posts
           function showCommunityPage(commName) {
