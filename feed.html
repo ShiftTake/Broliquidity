@@ -290,7 +290,7 @@
             <span>Bookmarks</span>
           </button>
           <a href="bro.html" class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabindex="0">
-            <span>Bro LLM</span>
+            <span>Bro AI</span>
           </a>
           <a href="dm.html" class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Direct Messages" title="Direct Messages" tabindex="0">
             <span>Direct Messages</span>
@@ -423,10 +423,10 @@
             <input id="asset-search" class="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabindex="0" />
                       <!-- Bro LLM Chat Section -->
                       <section id="sidebar-bro-llm" class="panel rounded-3xl p-4 hidden">
-                        <h2 class="font-black mb-3">Bro LLM Chat</h2>
+                        <h2 class="font-black mb-3">Bro AI Chat</h2>
                         <div id="sidebar-bro-llm-chat" class="mb-3 h-40 overflow-y-auto bg-slate-100 dark:bg-white/5 rounded-xl p-3 text-sm"></div>
                         <form id="sidebar-bro-llm-form" class="flex gap-2">
-                          <input id="sidebar-bro-llm-input" class="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro..." autocomplete="off" />
+                          <input id="sidebar-bro-llm-input" class="flex-1 px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro AI..." autocomplete="off" />
                           <button class="px-4 py-2 rounded-xl bg-brogreen text-black font-black">Send</button>
                         </form>
                       </section>
@@ -517,11 +517,11 @@
   <div id="bro-llm-modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">
     <div class="panel rounded-3xl p-6 w-full max-w-lg relative shadow-2xl flex flex-col h-[70vh]">
       <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none">&times;</button>
-        <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close Bro LLM modal" title="Close" tabindex="0">&times;</button>
-      <h2 class="text-2xl font-black mb-2 flex items-center gap-2">Bro <span class="text-xs font-bold text-broblue">(LLM)</span></h2>
+        <button id="close-bro-llm" class="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close Bro AI modal" title="Close" tabindex="0">&times;</button>
+      <h2 class="text-2xl font-black mb-2 flex items-center gap-2">Bro <span class="text-xs font-bold text-broblue">(AI)</span></h2>
       <div id="bro-llm-chat" class="flex-1 overflow-y-auto mb-4 p-2 bg-slate-50 dark:bg-white/5 rounded-2xl"></div>
       <form id="bro-llm-form" class="flex gap-2">
-        <input id="bro-llm-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro anything..." autocomplete="off" />
+        <input id="bro-llm-input" class="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold" placeholder="Ask Bro AI anything..." autocomplete="off" />
         <button type="submit" class="px-4 py-3 rounded-2xl bg-broblue text-white font-black">Send</button>
       </form>
     </div>
