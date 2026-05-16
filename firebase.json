@@ -14,7 +14,7 @@
     }
   ],
   "hosting": {
-    "public": "frontend",
+    "public": "frontend/.next/static",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -22,7 +22,7 @@
     ],
     "rewrites": [
       { "source": "/api/**", "function": "app" },
-      { "source": "**", "destination": "/index.html" }
+      { "source": "**", "destination": "/../server/pages/index.html" }
     ]
   }
 }

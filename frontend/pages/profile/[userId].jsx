@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { db, auth } from "../../firebase";
+import { db, auth } from "../../src/firebase";
 
 export default function UserProfile() {
   const router = useRouter();

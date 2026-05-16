@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { db } from "../../firebase";
+import { db } from "../../src/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
 
 export default function Community() {

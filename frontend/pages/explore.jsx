@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import StockInfo from "../StockInfo";
+import StockInfo from "../src/StockInfo";
 
 export default function Explore() {
   const [query, setQuery] = useState("");

@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React from "react";
+import { useBroLLM } from "./BroLLMContext";
 import Link from "next/link";
 import SidebarSearch from "./SidebarSearch";
 import SidebarBroLLM from "./SidebarBroLLM";
@@ -16,8 +17,7 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  // const location = useLocation();
-  const [showBroLLM, setShowBroLLM] = useState(false);
+  const { setShowBroLLM } = useBroLLM();
   return (
     <aside className="w-full max-w-xs p-6 bg-white text-black rounded-2xl shadow-lg flex flex-col gap-2">
       <div className="flex items-center gap-3 mb-8">
@@ -36,25 +36,39 @@ export default function Sidebar() {
       </div>
       <SidebarSearch />
       <nav className="flex flex-col gap-2 flex-1">
-        {navItems.map(item => (
-          <Link
-            key={item.name}
-            href={item.path}
-            passHref
-            legacyBehavior
-          >
-            <a
-              className={
-                `px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen hover:bg-lime-50 text-slate-700`
-              }
-              aria-label={item.name}
-              title={item.name}
-              tabIndex={0}
+        {navItems.map(item => {
+          if (item.isBroLLM) {
+            return (
+              <button
+                key={item.name}
+                className="px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen hover:bg-lime-50 text-slate-700"
+                aria-label={item.name}
+                title={item.name}
+                tabIndex={0}
+                onClick={() => setShowBroLLM(true)}
+              >
+                {item.name}
+              </button>
+            );
+          }
+          return (
+            <Link
+              key={item.name}
+              href={item.path}
+              passHref
+              legacyBehavior
             >
-              {item.name}
-            </a>
-          </Link>
-        ))}
+              <a
+                className="px-4 py-3 rounded-xl font-bold text-lg transition focus:outline-none focus:ring-2 focus:ring-brogreen hover:bg-lime-50 text-slate-700"
+                aria-label={item.name}
+                title={item.name}
+                tabIndex={0}
+              >
+                {item.name}
+              </a>
+            </Link>
+          );
+        })}
       </nav>
       {/* Bro LLM modal for /feed */}
       {/* Bro LLM modal for /feed - update this logic for Next.js if needed */}

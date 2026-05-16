@@ -1,3 +1,5 @@
-export default function Profile() {
-  return <div className="p-8">Your profile page.</div>;
+import Profile from "../src/pages/Profile";
+
+export default function ProfilePage() {
+  return <Profile />;
 }

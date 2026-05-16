@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { db, auth } from "../firebase";
+import { db, auth } from "../src/firebase";
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function DM() {

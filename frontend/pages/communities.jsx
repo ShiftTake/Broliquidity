@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import CreateCommunity from "../CreateCommunity";
-import { db, auth } from "../firebase";
+import CreateCommunity from "../src/CreateCommunity";
+import { db, auth } from "../src/firebase";
 import { collection, onSnapshot, query, orderBy, doc, setDoc, deleteDoc } from "firebase/firestore";
 
 export default function Communities() {

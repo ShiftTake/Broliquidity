@@ -1,6 +1,6 @@
 import React from "react";
-import BroLLMChat from "../BroLLMChat";
+import BroLLMChat from "../src/BroLLMChat";
 
-export default function BroLLM() {
+export default function BroLLMPage() {
   return <BroLLMChat />;
 }

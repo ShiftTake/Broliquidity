@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
+import { db, auth } from "../src/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { followUser, unfollowUser, getFollowing } from "../following";
+import { followUser, unfollowUser, getFollowing } from "../src/following";
 
 export default function Following() {
   const [users, setUsers] = useState([]);

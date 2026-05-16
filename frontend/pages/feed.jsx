@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Modal from "../Modal";
-import { db, auth } from "../firebase";
-import Comments from "../Comments";
+import Modal from "../src/Modal";
+import { db, auth } from "../src/firebase";
+
+import BroLLMChat from "../src/BroLLMChat";
+import { useBroLLM } from "../src/BroLLMContext";
+
 
 // Helper to fetch joined communities for the current user
 async function getJoinedCommunities(userId) {
@@ -10,6 +13,7 @@ async function getJoinedCommunities(userId) {
 }
 
 export default function Feed() {
+  const { showBroLLM, setShowBroLLM } = useBroLLM();
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("stocks");
@@ -85,6 +89,10 @@ export default function Feed() {
 
   return (
     <div className="max-w-2xl mx-auto mt-12">
+      {/* Bro LLM Modal */}
+      <Modal open={showBroLLM} onClose={() => setShowBroLLM(false)}>
+        <BroLLMChat />
+      </Modal>
       <button
         className="mb-6 px-6 py-3 rounded-2xl bg-[#b6ff22] text-black font-black text-lg hover:scale-105 transition"
         onClick={() => setShowPostModal(true)}
