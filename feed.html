@@ -1112,10 +1112,10 @@
 
       document.querySelectorAll(".community-btn").forEach(btn => {
         btn.onclick = () => {
-          // Find the community by id and use its name for showCommunityPage
+          // Find the community by id and use its name for community.html
           const comm = (typeof communitiesCache !== 'undefined' ? communitiesCache : []).find(c => c.id === btn.dataset.id);
           if (comm && comm.name) {
-            showCommunityPage(comm.name);
+            window.open(`community.html?name=${encodeURIComponent(comm.name)}`, '_blank');
           }
         };
       });
@@ -1611,14 +1611,14 @@
                 document.querySelectorAll('.community-card').forEach(card => {
                   card.onclick = function() {
                     const commName = this.getAttribute('data-community');
-                    showCommunityPage(commName);
+                    window.open(`community.html?name=${encodeURIComponent(commName)}`, '_blank');
                   };
                 });
                 // Add click handlers for user cards
                 document.querySelectorAll('.user-card').forEach(card => {
                   card.onclick = function() {
                     const username = this.getAttribute('data-username');
-                    showUserProfilePage(username);
+                    window.open(`profile.html?user=${encodeURIComponent(username)}`, '_blank');
                   };
                 });
             // Render a user profile page with avatar, name, role, communities, posts, and reposts
