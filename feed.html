@@ -292,9 +292,9 @@
           <a href="bro.html" class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabindex="0">
             <span>Bro LLM</span>
           </a>
-          <button class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="dms" aria-label="Direct Messages" title="Direct Messages" tabindex="0">
+          <a href="dm.html" class="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Direct Messages" title="Direct Messages" tabindex="0">
             <span>Direct Messages</span>
-          </button>
+          </a>
           <button id="profile-nav-btn" class="w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Profile" title="Profile" tabindex="0">
             <span>Profile</span>
           </button>
@@ -1160,6 +1160,7 @@
           <h2 class="font-black mb-3">Communities</h2>
           <div class="space-y-2">${communitiesCache.map(c => `<button class="mobile-community w-full soft-card rounded-2xl p-3 text-left flex gap-3 items-center" data-id="${c.id}"><img src="${escapeHTML(c.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name || 'C') + '&background=050816&color=B6FF22')}" class="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 bg-slate-100 flex-shrink-0" alt="Community" /><div class="min-w-0"><div class="font-black">c/${escapeHTML(c.name)}</div><div class="text-xs text-slate-500">${escapeHTML(c.description || "")}</div></div></button>`).join("")}</div>
         </section>
+        <a href="dm.html" class="block w-full mt-4 mb-2 px-4 py-3 rounded-2xl bg-brogreen text-black font-black text-center">Direct Messages</a>
         <section class="panel rounded-3xl p-4">
           <h2 class="font-black mb-3">Following</h2>
           <div class="space-y-2">${following.map(renderUserMini).join("")}</div>
