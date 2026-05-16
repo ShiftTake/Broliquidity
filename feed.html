@@ -1111,7 +1111,13 @@
       $("left-following").innerHTML = followingHTML;
 
       document.querySelectorAll(".community-btn").forEach(btn => {
-        btn.onclick = () => setFilter(btn.dataset.id);
+        btn.onclick = () => {
+          // Find the community by id and use its name for showCommunityPage
+          const comm = (typeof communitiesCache !== 'undefined' ? communitiesCache : []).find(c => c.id === btn.dataset.id);
+          if (comm && comm.name) {
+            showCommunityPage(comm.name);
+          }
+        };
       });
 
       const trendingHTML = trendingTopics.map((t, i) => `
