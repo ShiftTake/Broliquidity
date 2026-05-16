@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Page</title>
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    // Utility to get query param
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    // Dummy data for demo
+    const communitiesCache = window.opener?.communitiesCache || [];
+    const currentPosts = window.opener?.currentPosts || [];
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[c]));
+    }
+    function renderCommunity(commName) {
+      const comm = communitiesCache.find(c => c.name === commName);
+      const posts = currentPosts.filter(p => p.community === commName);
+      let html = `<div class='max-w-2xl mx-auto p-6'>`;
+      html += `<div class='text-center'>`;
+      html += `<img src='${escapeHTML(comm ? comm.photoURL || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(commName) + '&background=050816&color=B6FF22') : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(commName) + '&background=050816&color=B6FF22')}' class='mx-auto w-20 h-20 rounded-xl mt-4 mb-2'>`;
+      html += `<h1 class='text-2xl font-black'>c/${escapeHTML(commName)}</h1>`;
+      html += `<div class='text-slate-500 text-sm mb-2'>${comm ? escapeHTML(comm.description || "") : ""}</div>`;
+      html += `</div>`;
+      html += `<div class='mb-6'><div class='font-black mb-2'>Posts</div>`;
+      if (posts.length) {
+        html += posts.map(p => `<div class='soft-card rounded-2xl p-3 mb-2'>${escapeHTML(p.content)}</div>`).join("");
+      } else {
+        html += `<div class='text-slate-500'>No posts in this community yet.</div>`;
+      }
+      html += `</div></div>`;
+      document.getElementById('community-root').innerHTML = html;
+    }
+    window.onload = function() {
+      const commName = getQueryParam('name');
+      if (commName) renderCommunity(commName);
+      else document.getElementById('community-root').innerHTML = '<div class="text-center p-10 text-slate-500">No community specified.</div>';
+    };
+  </script>
+</head>
+<body class="font-sans antialiased bg-slate-50 min-h-screen">
+  <div id="community-root"></div>
+</body>
+</html>

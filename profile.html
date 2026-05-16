@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Profile</title>
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    // Utility to get query param
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    // Dummy data for demo
+    const following = window.opener?.following || [];
+    const followers = window.opener?.followers || [];
+    const communitiesCache = window.opener?.communitiesCache || [];
+    const currentPosts = window.opener?.currentPosts || [];
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[c]));
+    }
+    function renderProfile(username) {
+      const user = [...following, ...followers].find(u => u.name === username);
+      const userCommunities = communitiesCache.filter(c => (c.members || []).includes(username));
+      const posts = currentPosts.filter(p => p.author === username);
+      const reposts = currentPosts.filter(p => p.repost === username);
+      let html = `<div class='max-w-2xl mx-auto p-6'>`;
+      html += `<div class='text-center'>`;
+      html += `<img src='https://ui-avatars.com/api/?name=${encodeURIComponent(user ? user.avatar : username)}&background=050816&color=B6FF22' class='mx-auto w-20 h-20 rounded-full mt-4 mb-2'>`;
+      html += `<h1 class='text-2xl font-black'>@${escapeHTML(username)}</h1>`;
+      html += `<div class='text-slate-500 text-sm mb-2'>${user ? escapeHTML(user.role || "") : ""}</div>`;
+      html += `</div>`;
+      html += `<div class='mb-6'><div class='font-black mb-2'>Communities</div>`;
+      if (userCommunities.length) {
+        html += userCommunities.map(c => `<div class='soft-card rounded-2xl p-3 mb-2'>c/${escapeHTML(c.name)}</div>`).join("");
+      } else {
+        html += `<div class='text-slate-500'>No communities found.</div>`;
+      }
+      html += `</div>`;
+      html += `<div class='mb-6'><div class='font-black mb-2'>Posts</div>`;
+      if (posts.length) {
+        html += posts.map(p => `<div class='soft-card rounded-2xl p-3 mb-2'>${escapeHTML(p.content)}</div>`).join("");
+      } else {
+        html += `<div class='text-slate-500'>No posts found.</div>`;
+      }
+      html += `</div>`;
+      html += `<div class='mb-6'><div class='font-black mb-2'>Reposts</div>`;
+      if (reposts.length) {
+        html += reposts.map(p => `<div class='soft-card rounded-2xl p-3 mb-2'>${escapeHTML(p.content)}</div>`).join("");
+      } else {
+        html += `<div class='text-slate-500'>No reposts found.</div>`;
+      }
+      html += `</div></div>`;
+      document.getElementById('profile-root').innerHTML = html;
+    }
+    window.onload = function() {
+      const username = getQueryParam('user');
+      if (username) renderProfile(username);
+      else document.getElementById('profile-root').innerHTML = '<div class="text-center p-10 text-slate-500">No user specified.</div>';
+    };
+  </script>
+</head>
+<body class="font-sans antialiased bg-slate-50 min-h-screen">
+  <div id="profile-root"></div>
+</body>
+</html>
