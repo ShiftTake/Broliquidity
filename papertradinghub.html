@@ -77,7 +77,6 @@
           <input id="pth-cash-input" type="number" min="1" step="1000" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-bold w-28 outline-none focus:border-broblue" placeholder="Reset Capital" />
           <button type="submit" class="px-3 py-2 rounded-xl bg-broblue text-white text-xs font-black uppercase tracking-wider">Reset</button>
         </form>
-        <button id="theme-toggle" class="w-10 h-10 rounded-xl soft-card flex items-center justify-center text-sm">🌓</button>
       </div>
     </div>
   </header>
@@ -258,28 +257,7 @@
   </main>
 
   <script>
-    // Theme Engine Hook (Tailwind best practice: toggle 'dark' on <html>, persist in localStorage)
-    const themeBtn = document.getElementById('theme-toggle');
-    function setThemeClass(isDark) {
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-    // On load, set theme from localStorage or system preference
-    (function() {
-      let theme = localStorage.getItem('theme');
-      if (!theme) {
-        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      setThemeClass(theme === 'dark');
-    })();
-    themeBtn.addEventListener('click', () => {
-      const isDark = !document.documentElement.classList.contains('dark');
-      setThemeClass(isDark);
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
+    // ...theme toggling functionality removed...
 
     // Tab Interface Switch Frame
     const tabPos = document.getElementById('tab-positions');
