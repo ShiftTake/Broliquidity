@@ -68,11 +68,14 @@
             <a href="feed.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
                 ← BACK TO FEED
             </a>
-            <div class="text-right">
-                <span class="text-[10px] font-black tracking-[0.2em] uppercase text-brogreen block">AI ASSISTANT</span>
+            <div class="text-right flex flex-col items-end">
+                <span class="text-[10px] font-black tracking-[0.2em] uppercase block" style="color: #B6FF22; text-shadow: 0 0 2px #000, 0 0 1px #000; -webkit-text-stroke: 0.5px #000;">AI ASSISTANT</span>
                 <h1 class="font-black text-lg leading-none">Bro LLM Chat</h1>
             </div>
-            <button id="chat-theme-toggle" class="w-9 h-9 rounded-xl soft-card font-bold flex items-center justify-center text-sm">🌓</button>
+            <div class="flex items-center gap-2">
+                <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-10 h-10 rounded-2xl object-cover border border-slate-200 dark:border-white/10" />
+                <button id="chat-theme-toggle" class="w-9 h-9 rounded-xl soft-card font-bold flex items-center justify-center text-sm">🌓</button>
+            </div>
         </div>
 
         <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50 dark:bg-[#050816]/30 scrollbar-hide">
@@ -89,7 +92,7 @@
                 <input 
                     type="text" 
                     id="user-input" 
-                    placeholder="Ask Bro LLM anything..." 
+                    placeholder="Ask Bro Anything" 
                     autocomplete="off" 
                     required 
                     class="w-full px-5 py-4 pr-24 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-400 focus:border-broblue transition-all" 
@@ -127,6 +130,10 @@
                 behavior: 'smooth'
             });
         }
+    </script>
+    <script>
+        // Set Gemini API key globally for bro-llm.js
+        window.GEMINI_API_KEY = 'AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE';
     </script>
     <script src="assets/defaults/bro-llm.js"></script>
 </body>
