@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,68 +22,485 @@
     };
   </script>
   <style>
-    body { font-family: "Inter", sans-serif; background: #f8fafc; color: #0f172a; }
-    body.dark { background: #050816; color: #fff; }
+    :root { color-scheme: light; }
+    body {
+      font-family: "Inter", sans-serif;
+      min-height: 100vh;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    body.dark {
+      color-scheme: dark;
+      color: #fff;
+      background: #050816;
+    }
+    .panel {
+      background: #ffffff;
+      border: 1px solid rgba(15,23,42,.09);
+    }
+    body.dark .panel {
+      background: #050816;
+      border-color: rgba(255,255,255,.12);
+    }
+    .soft-card {
+      background: rgba(15,23,42,.035);
+      border: 1px solid rgba(15,23,42,.08);
+    }
+    body.dark .soft-card {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.10);
+    }
+    .active-tab {
+      color: #050816;
+      border-bottom: 4px solid #B6FF22;
+    }
+    body.dark .active-tab {
+      color: #ffffff;
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 dark:bg-[#050816]">
-  <div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-black mb-6 flex items-center gap-3">Paper Trading Hub <span class="text-xs px-2 py-1 rounded bg-broblue text-white font-bold">Expanded</span></h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <section class="panel rounded-3xl p-6 shadow-lg">
-        <h2 class="font-black text-lg mb-4">Paper Cash</h2>
-        <div class="mb-2 text-2xl font-black" id="pth-cash">$100,000</div>
-        <form id="pth-cash-form" class="flex gap-2 mb-4">
-          <input id="pth-cash-input" type="number" min="0" step="100" class="w-32 px-3 py-2 rounded border text-sm" placeholder="Set cash" />
-          <button type="submit" class="px-4 py-2 rounded bg-brogreen text-black dark:text-brogreen font-black">Set</button>
+<body class="font-sans antialiased min-h-screen bg-[#f8fafc] text-[#0f172a] dark:bg-[#050816] dark:text-white pb-12">
+
+  <header class="sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="feed.html" class="px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wider text-slate-500 hover:text-broblue transition-colors">← BACK TO FEED</a>
+        <div>
+          <span class="text-[10px] font-black tracking-[0.28em] uppercase text-brogreen block">BROLIQUIDITY DESK</span>
+          <h1 class="text-xl font-black">Paper Trading Hub</h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <form id="pth-cash-form" class="flex items-center gap-2">
+          <input id="pth-cash-input" type="number" min="1" step="1000" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-bold w-28 outline-none focus:border-broblue" placeholder="Reset Capital" />
+          <button type="submit" class="px-3 py-2 rounded-xl bg-broblue text-white text-xs font-black uppercase tracking-wider">Reset</button>
         </form>
-        <div class="text-sm text-slate-500">Adjust your paper trading cash balance.</div>
+        <button id="theme-toggle" class="w-10 h-10 rounded-xl soft-card flex items-center justify-center text-sm">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <div class="lg:col-span-2 space-y-6">
+      
+      <section class="panel rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <p class="text-xs font-black tracking-[0.2em] uppercase text-slate-400">Total Portfolio Value</p>
+        <div class="flex flex-col sm:flex-row sm:items-baseline gap-2 mt-1 mb-4">
+          <h2 id="pth-net-liquidity" class="text-4xl font-black tracking-tight">$100,000.00</h2>
+          <div id="pth-total-pnl" class="text-sm font-black text-emerald-500 flex items-center gap-1">
+            +$0.00 (0.00%) <span class="text-xs font-normal text-slate-400">Today</span>
+          </div>
+        </div>
+
+        <div class="h-32 w-full flex items-end gap-[3px] pt-4 border-b border-dashed border-slate-200 dark:border-white/10 mb-4">
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/40 w-full h-1/2 rounded-t-sm animate-pulse"></div>
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/50 w-full h-2/3 rounded-t-sm"></div>
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/45 w-full h-3/5 rounded-t-sm"></div>
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/60 w-full h-3/4 rounded-t-sm"></div>
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/75 w-full h-[85%] rounded-t-sm"></div>
+          <div class="bg-gradient-to-t from-emerald-500/10 to-emerald-500/90 w-full h-[95%] rounded-t-sm bg-brogreen"></div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="soft-card rounded-2xl p-3">
+            <div class="text-[10px] text-slate-500 font-black uppercase tracking-wider">Free Capital</div>
+            <div id="pth-cash" class="font-black text-sm text-slate-800 dark:text-white">$100,000.00</div>
+          </div>
+          <div class="soft-card rounded-2xl p-3">
+            <div class="text-[10px] text-slate-500 font-black uppercase tracking-wider">Held Margin</div>
+            <div id="pth-held-margin" class="font-black text-sm text-slate-800 dark:text-white">$0.00</div>
+          </div>
+          <div class="soft-card rounded-2xl p-3">
+            <div class="text-[10px] text-slate-500 font-black uppercase tracking-wider">Open Positions</div>
+            <div id="pth-open-count" class="font-black text-sm text-broblue">0 Active</div>
+          </div>
+          <div class="soft-card rounded-2xl p-3">
+            <div class="text-[10px] text-slate-500 font-black uppercase tracking-wider">Execution Win-Rate</div>
+            <div class="font-black text-sm text-emerald-500">100%</div>
+          </div>
+        </div>
       </section>
-      <section class="panel rounded-3xl p-6 shadow-lg">
-        <h2 class="font-black text-lg mb-4">Open Positions</h2>
-        <div id="pth-positions">No positions yet.</div>
-      </section>
-      <section class="panel rounded-3xl p-6 shadow-lg md:col-span-2">
-        <h2 class="font-black text-lg mb-4">Trade History</h2>
-        <div id="pth-history">No trades yet.</div>
+
+      <section class="panel rounded-3xl overflow-hidden shadow-xl">
+        <div class="border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#050816]/50">
+          <div class="grid grid-cols-2 text-center font-black text-xs uppercase tracking-wider">
+            <button id="tab-positions" class="py-4 border-r border-slate-200 dark:border-white/10 active-tab">Active Positions Matrix</button>
+            <button id="tab-history" class="py-4 text-slate-500">Order Audit History</button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div id="positions-pane" class="overflow-x-auto scrollbar-hide">
+            <div id="pth-positions-empty" class="text-center py-8 text-slate-400 font-medium text-sm">
+              No active security positions held. Execute an order ticket on the right side panel to gain exposure.
+            </div>
+            <table id="pth-positions-table" class="w-full text-left border-collapse text-xs hidden">
+              <thead>
+                <tr class="text-slate-500 font-black uppercase border-b border-slate-100 dark:border-white/5 pb-2">
+                  <th class="pb-3">Ticker symbol</th>
+                  <th class="pb-3">Side</th>
+                  <th class="pb-3">Quantity</th>
+                  <th class="pb-3">Avg Cost</th>
+                  <th class="pb-3">Market Price</th>
+                  <th class="pb-3">Total Cost</th>
+                  <th class="pb-3 text-right">Liquidation</th>
+                </tr>
+              </thead>
+              <tbody id="pth-positions-rows" class="divide-y divide-slate-100 dark:divide-white/5">
+                </tbody>
+            </table>
+          </div>
+
+          <div id="history-pane" class="overflow-x-auto scrollbar-hide hidden">
+            <div id="pth-history-empty" class="text-center py-8 text-slate-400 font-medium text-sm">
+              Terminal log empty. No historical trade executions logged yet.
+            </div>
+            <table id="pth-history-table" class="w-full text-left border-collapse text-xs hidden">
+              <thead>
+                <tr class="text-slate-500 font-black uppercase border-b border-slate-100 dark:border-white/5 pb-2">
+                  <th class="pb-3">Timestamp</th>
+                  <th class="pb-3">Ticker</th>
+                  <th class="pb-3">Strategy</th>
+                  <th class="pb-3">Units</th>
+                  <th class="pb-3">Ex Price</th>
+                  <th class="pb-3 text-right">Value Total</th>
+                </tr>
+              </thead>
+              <tbody id="pth-history-rows" class="divide-y divide-slate-100 dark:divide-white/5">
+                </tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </div>
-    <div class="mt-10 text-xs text-slate-400">More advanced features coming soon: order editing, advanced analytics, export, and more.</div>
-  </div>
+
+    <div class="space-y-6">
+      <section class="panel rounded-3xl p-6 shadow-xl relative border-t-4 border-broblue">
+        <span class="text-[10px] font-black tracking-[0.25em] uppercase text-broblue block mb-1">EXECUTION ROUTER</span>
+        <h2 class="text-xl font-black mb-4">Instant Order Ticket</h2>
+
+        <form id="pth-order-form" class="space-y-4">
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Asset Identification</label>
+            <div class="relative">
+              <span class="absolute left-4 top-3 text-sm font-black text-slate-400">$</span>
+              <input id="order-ticker" type="text" uppercase required placeholder="AAPL, TSLA, BTC..." class="w-full px-4 py-3 pl-8 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 outline-none text-sm font-black placeholder:font-semibold tracking-wide focus:border-broblue transition-all" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Order Action Strategy</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="border-2 border-slate-200 dark:border-white/10 rounded-2xl p-3 flex items-center justify-center gap-2 cursor-pointer font-black text-xs tracking-wider uppercase select-none transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/10">
+                <input type="radio" name="order-side" value="buy" checked class="accent-emerald-500 hidden" />
+                🟢 Buy / Long
+              </label>
+              <label class="border-2 border-slate-200 dark:border-white/10 rounded-2xl p-3 flex items-center justify-center gap-2 cursor-pointer font-black text-xs tracking-wider uppercase select-none transition-all has-[:checked]:border-red-500 has-[:checked]:bg-red-500/10">
+                <input type="radio" name="order-side" value="sell" class="accent-red-500 hidden" />
+                🔴 Sell / Short
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Shares / Units</label>
+              <input id="order-qty" type="number" min="1" required value="10" class="w-full px-4 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold focus:border-broblue" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Execution Price ($)</label>
+              <input id="order-price" type="number" min="0.01" step="0.01" required value="150.00" class="w-full px-4 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold focus:border-broblue" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Order Class</label>
+              <select class="w-full px-3 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 outline-none text-xs font-bold">
+                <option>Market (Simulated)</option>
+                <option>Limit Trigger</option>
+                <option>Stop Loss Guard</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-black uppercase text-slate-500 mb-1.5">Time In Force</label>
+              <select class="w-full px-3 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 outline-none text-xs font-bold">
+                <option>GTC (Good Till Cancel)</option>
+                <option>DAY Session Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="soft-card rounded-2xl p-4 space-y-2 text-xs font-bold">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Estimated Principal Cost:</span>
+              <span id="pth-calc-cost" class="font-black">$1,500.00</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-slate-200 dark:border-white/5 pt-2 text-[11px]">
+              <span class="text-slate-400">Clearing & Route Fees:</span>
+              <span class="text-brogreen font-black uppercase tracking-wider">FREE ($0.00)</span>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-4 rounded-2xl bg-brogreen text-black font-black uppercase tracking-wider text-sm shadow-lg hover:opacity-95 transition-transform active:scale-[0.99]">
+            Transmit Paper Execution Route
+          </button>
+        </form>
+      </section>
+
+      <div class="soft-card rounded-3xl p-4 text-[11px] text-slate-400 leading-relaxed font-semibold">
+        ⚠️ <span class="font-black text-slate-500 uppercase tracking-wider">Simulation Space Notice:</span> BroLiquidity Paper Terminal features deterministic simulated positions framework. No real currency reserves, asset margins, or exchange orders are finalized. Clear browser local caches anytime to reset your master configuration.
+      </div>
+    </div>
+  </main>
+
   <script>
-    // Placeholder logic for demo
-    function getPaperCash() {
+    // Theme Engine Hook
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // Tab Interface Switch Frame
+    const tabPos = document.getElementById('tab-positions');
+    const tabHist = document.getElementById('tab-history');
+    const panePos = document.getElementById('positions-pane');
+    const paneHist = document.getElementById('history-pane');
+
+    tabPos.addEventListener('click', () => {
+      tabPos.classList.add('active-tab'); tabPos.classList.remove('text-slate-500');
+      tabHist.classList.remove('active-tab'); tabHist.classList.add('text-slate-500');
+      panePos.classList.remove('hidden'); paneHist.classList.add('hidden');
+    });
+
+    tabHist.addEventListener('click', () => {
+      tabHist.classList.add('active-tab'); tabHist.classList.remove('text-slate-500');
+      tabPos.classList.remove('active-tab'); tabPos.classList.add('text-slate-500');
+      paneHist.classList.remove('hidden'); panePos.classList.add('hidden');
+    });
+
+    // Ticket Principal Interactive Live Sync Updater
+    const inputQty = document.getElementById('order-qty');
+    const inputPrice = document.getElementById('order-price');
+    const calcDisplay = document.getElementById('pth-calc-cost');
+
+    function syncEstimatedCost() {
+      const total = Number(inputQty.value || 0) * Number(inputPrice.value || 0);
+      calcDisplay.textContent = "$" + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    inputQty.addEventListener('input', syncEstimatedCost);
+    inputPrice.addEventListener('input', syncEstimatedCost);
+
+    // Engine Core Storage Mechanics
+    function getCashBalance() {
       return Number(localStorage.getItem('broliquidity_paper_cash') || 100000);
     }
-    function setPaperCash(val) {
+    function setCashBalance(val) {
       localStorage.setItem('broliquidity_paper_cash', val);
-      document.getElementById('pth-cash').textContent = "$" + Number(val).toLocaleString();
+      updateDomMetrics();
     }
+
+    function getPositionsArray() {
+      return JSON.parse(localStorage.getItem('broliquidity_paper_positions') || '[]');
+    }
+    function savePositionsArray(arr) {
+      localStorage.setItem('broliquidity_paper_positions', JSON.stringify(arr));
+      updateDomMetrics();
+    }
+
+    function getHistoryLog() {
+      return JSON.parse(localStorage.getItem('broliquidity_history_log') || '[]');
+    }
+    function logToHistory(item) {
+      const history = getHistoryLog();
+      history.unshift(item); // Newest logged first
+      localStorage.setItem('broliquidity_history_log', JSON.stringify(history));
+    }
+
+    // Capital Adjust Form Action Wire
     document.getElementById('pth-cash-form').onsubmit = function(e) {
       e.preventDefault();
-      const val = Number(document.getElementById('pth-cash-input').value);
-      if (!isNaN(val) && val >= 0) setPaperCash(val);
+      const inputVal = Number(document.getElementById('pth-cash-input').value);
+      if (!isNaN(inputVal) && inputVal > 0) {
+        setCashBalance(inputVal);
+        document.getElementById('pth-cash-input').value = '';
+      }
     };
-    document.getElementById('pth-cash').textContent = "$" + getPaperCash().toLocaleString();
-    // Positions and history placeholders
-    function getPaperPositions() {
-      return JSON.parse(localStorage.getItem("broliquidity_paper_positions") || "[]");
+
+    // Primary Core Order Routing Submitter Execution
+    document.getElementById('pth-order-form').onsubmit = function(e) {
+      e.preventDefault();
+      
+      const ticker = document.getElementById('order-ticker').value.trim().toUpperCase();
+      const side = document.querySelector('input[name="order-side"]:checked').value;
+      const qty = Number(inputQty.value);
+      const price = Number(inputPrice.value);
+      const transactionTotal = qty * price;
+      
+      let currentCash = getCashBalance();
+      let positions = getPositionsArray();
+
+      if (side === 'buy') {
+        if (transactionTotal > currentCash) {
+          alert('Execution Blocked: Insufficient paper capital available to clear transaction.');
+          return;
+        }
+        currentCash -= transactionTotal;
+        
+        // Accumulate position rules similar to ThinkOrSwim matching
+        const existingIdx = positions.findIndex(p => p.ticker === ticker && p.side === 'buy');
+        if (existingIdx > -index - 1 && existingIdx !== -1) {
+          const original = positions[existingIdx];
+          const newQty = original.qty + qty;
+          const newPrice = ((original.qty * original.price) + (qty * price)) / newQty;
+          positions[existingIdx].qty = newQty;
+          positions[existingIdx].price = newPrice;
+        } else {
+          positions.push({ ticker, side, qty, price, openedAt: Date.now() });
+        }
+      } else {
+        // Sell Short/Long Management Rules
+        const holdingIdx = positions.findIndex(p => p.ticker === ticker && p.side === 'buy');
+        if (holdingIdx !== -1) {
+          const holding = positions[holdingIdx];
+          if (qty > holding.qty) {
+            alert('Execution Denied: Order size exceeds current liquid security holdings inventory.');
+            return;
+          }
+          currentCash += transactionTotal;
+          positions[holdingIdx].qty -= qty;
+          if (positions[holdingIdx].qty === 0) {
+            positions.splice(holdingIdx, 1);
+          }
+        } else {
+          // Standard standalone margin short rule configuration
+          currentCash += transactionTotal;
+          positions.push({ ticker, side: 'short', qty, price, openedAt: Date.now() });
+        }
+      }
+
+      // Log transaction out into persistence architecture arrays
+      logToHistory({ timestamp: Date.now(), ticker, side, qty, price, total: transactionTotal });
+      setCashBalance(currentCash);
+      savePositionsArray(positions);
+      
+      // Clean target ticket defaults
+      document.getElementById('order-ticker').value = '';
+      syncEstimatedCost();
+    };
+
+    // Position Liquidation Close Handler Action Engine
+    function closePositionByIndex(index) {
+      let positions = getPositionsArray();
+      let currentCash = getCashBalance();
+      const pos = positions[index];
+      
+      const marketLiquidValue = pos.qty * pos.price; // Simulated at cost basis parity execution
+      
+      if (pos.side === 'buy') {
+        currentCash += marketLiquidValue;
+      } else {
+        currentCash -= marketLiquidValue; // Cover short mechanics ledger impact
+      }
+      
+      logToHistory({ timestamp: Date.now(), ticker: pos.ticker, side: pos.side === 'buy' ? 'sell_close' : 'buy_cover', qty: pos.qty, price: pos.price, total: marketLiquidValue });
+      positions.splice(index, 1);
+      
+      setCashBalance(currentCash);
+      savePositionsArray(positions);
     }
-    function renderPositions() {
-      const positions = getPaperPositions();
-      const el = document.getElementById('pth-positions');
-      if (!positions.length) { el.textContent = 'No positions yet.'; return; }
-      el.innerHTML = `<table class='w-full text-xs'><thead><tr class='text-slate-500'><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th><th>Date</th><th></th></tr></thead><tbody>${positions.map((p,i)=>`<tr class='border-t border-slate-200 dark:border-white/10'><td class='font-bold'>${p.ticker}</td><td class='${p.side==='buy'?'text-green-600':'text-red-500'}'>${p.side}</td><td>${p.qty}</td><td>$${p.price}</td><td>${p.openedAt?new Date(p.openedAt).toLocaleString():''}</td><td><button class='remove-pos px-2 py-1 rounded bg-red-500 text-white text-[10px] font-black' data-idx='${i}'>Remove</button></td></tr>`).join('')}</tbody></table>`;
-      document.querySelectorAll('.remove-pos').forEach(btn=>{btn.onclick=function(){const idx=Number(btn.dataset.idx);const pos=getPaperPositions();pos.splice(idx,1);localStorage.setItem('broliquidity_paper_positions',JSON.stringify(pos));renderPositions();renderHistory();};});
+
+    // Dynamic View Grid Core DOM Renderer Matrix
+    function updateDomMetrics() {
+      const cash = getCashBalance();
+      const positions = getPositionsArray();
+      const history = getHistoryLog();
+
+      // Calculation of aggregated market value footprint metrics
+      let aggregateCostPositions = 0;
+      positions.forEach(p => {
+        aggregateCostPositions += (p.qty * p.price);
+      });
+
+      const netLiquidityValue = cash + aggregateCostPositions;
+      const structuralProfitDelta = netLiquidityValue - 100000; // Track baseline valuation tier adjustments
+
+      // Render Dashboard Numeric Strings Output
+      document.getElementById('pth-cash').textContent = "$" + cash.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('pth-held-margin').textContent = "$" + aggregateCostPositions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('pth-net-liquidity').textContent = "$" + netLiquidityValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('pth-open-count').textContent = `${positions.length} Active Asset` + (positions.length === 1 ? '' : 's');
+
+      const pnlDisplay = document.getElementById('pth-total-pnl');
+      const percentageChange = (structuralProfitDelta / 100000) * 100;
+      if (structuralProfitDelta >= 0) {
+        pnlDisplay.className = "text-sm font-black text-emerald-500 flex items-center gap-1";
+        pnlDisplay.textContent = `+$${structuralProfitDelta.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (+${percentageChange.toFixed(2)}%)`;
+      } else {
+        pnlDisplay.className = "text-sm font-black text-red-500 flex items-center gap-1";
+        pnlDisplay.textContent = `-$${Math.abs(structuralProfitDelta).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${percentageChange.toFixed(2)}%)`;
+      }
+
+      // Render Open Matrix Positions Table Data Structure
+      const posEmpty = document.getElementById('pth-positions-empty');
+      const posTable = document.getElementById('pth-positions-table');
+      const posRows = document.getElementById('pth-positions-rows');
+
+      if (positions.length === 0) {
+        posEmpty.classList.remove('hidden');
+        posTable.classList.add('hidden');
+      } else {
+        posEmpty.classList.add('hidden');
+        posTable.classList.remove('hidden');
+        posRows.innerHTML = positions.map((p, i) => {
+          const totalVal = p.qty * p.price;
+          return `
+            <tr class="hover:bg-slate-50/50 dark:hover:bg-white-[0.02] transition-colors">
+              <td class="py-3.5 font-black text-sm tracking-wide text-slate-900 dark:text-white">$${p.ticker}</td>
+              <td class="py-3.5 font-bold uppercase tracking-wider text-[11px] ${p.side === 'buy' ? 'text-emerald-500' : 'text-purple-400'}">${p.side}</td>
+              <td class="py-3.5 font-semibold text-slate-700 dark:text-slate-300">${p.qty}</td>
+              <td class="py-3.5 font-mono text-slate-600 dark:text-slate-400">$${p.price.toFixed(2)}</td>
+              <td class="py-3.5 font-mono text-slate-600 dark:text-slate-400">$${p.price.toFixed(2)}</td>
+              <td class="py-3.5 font-black text-slate-900 dark:text-white">$${totalVal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+              <td class="py-3.5 text-right">
+                <button onclick="closePositionByIndex(${i})" class="px-3 py-1.5 rounded-xl bg-red-500/10 dark:bg-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-wider hover:bg-red-500 hover:text-white transition-all">Liquidate</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Render Order Audit Ledger Timeline Log
+      const histEmpty = document.getElementById('pth-history-empty');
+      const histTable = document.getElementById('pth-history-table');
+      const histRows = document.getElementById('pth-history-rows');
+
+      if (history.length === 0) {
+        histEmpty.classList.remove('hidden');
+        histTable.classList.add('hidden');
+      } else {
+        histEmpty.classList.add('hidden');
+        histTable.classList.remove('hidden');
+        histRows.innerHTML = history.map(h => `
+          <tr class="text-slate-600 dark:text-slate-400 hover:bg-slate-50/30">
+            <td class="py-3 font-medium text-slate-400">${new Date(h.timestamp).toLocaleTimeString()}</td>
+            <td class="py-3 font-black text-slate-800 dark:text-slate-200">$${h.ticker}</td>
+            <td class="py-3 font-bold uppercase tracking-widest text-[10px] ${h.side.includes('buy') ? 'text-emerald-500' : 'text-red-400'}">${h.side}</td>
+            <td class="py-3 font-semibold">${h.qty}</td>
+            <td class="py-3 font-mono">$${h.price.toFixed(2)}</td>
+            <td class="py-3 text-right font-black text-slate-900 dark:text-white">$${h.total.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+          </tr>
+        `).join('');
+      }
     }
-    function renderHistory() {
-      const positions = getPaperPositions();
-      const el = document.getElementById('pth-history');
-      if (!positions.length) { el.textContent = 'No trades yet.'; return; }
-      el.innerHTML = `<table class='w-full text-xs'><thead><tr class='text-slate-500'><th>Date</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Price</th></tr></thead><tbody>${positions.map(p=>`<tr class='border-t border-slate-200 dark:border-white/10'><td>${p.openedAt?new Date(p.openedAt).toLocaleString():''}</td><td class='font-bold'>${p.ticker}</td><td class='${p.side==='buy'?'text-green-600':'text-red-500'}'>${p.side}</td><td>${p.qty}</td><td>$${p.price}</td></tr>`).join('')}</tbody></table>`;
-    }
-    renderPositions();
-    renderHistory();
+
+    // Initial Bootstrap Core Cycle Frame execution trigger
+    updateDomMetrics();
+    syncEstimatedCost();
   </script>
 </body>
 </html>
