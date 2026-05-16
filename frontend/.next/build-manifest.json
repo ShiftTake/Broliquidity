@@ -5,8 +5,8 @@
   "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/FfuOfr1DV5UPr8UazhWtX/_buildManifest.js",
-    "static/FfuOfr1DV5UPr8UazhWtX/_ssgManifest.js"
+    "static/-4ENR7LHt0e1ZKMqchqhA/_buildManifest.js",
+    "static/-4ENR7LHt0e1ZKMqchqhA/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "pages": {
@@ -34,6 +34,15 @@
       "static/chunks/framework-e078c2239b45ef29.js",
       "static/chunks/main-ccb8a7a0c5e3016d.js",
       "static/chunks/pages/bookmarks-322eb2b1690fd780.js"
+    ],
+    "/bro": [
+      "static/chunks/webpack-fa99431b15635937.js",
+      "static/chunks/framework-e078c2239b45ef29.js",
+      "static/chunks/main-ccb8a7a0c5e3016d.js",
+      "static/chunks/c20be2e0-dddf8ef18408d61d.js",
+      "static/chunks/e65ee1a5-d21c5180cd86e227.js",
+      "static/chunks/488-941e2dec63a5f179.js",
+      "static/chunks/pages/bro-b307a71ed199aa7a.js"
     ],
     "/bro-llm": [
       "static/chunks/webpack-fa99431b15635937.js",

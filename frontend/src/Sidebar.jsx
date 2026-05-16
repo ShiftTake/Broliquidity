@@ -11,7 +11,7 @@ const navItems = [
   { name: "Communities", path: "/communities" },
   { name: "Following", path: "/following" },
   { name: "Bookmarks", path: "/bookmarks" },
-  { name: "Bro LLM", path: "/bro-llm" },
+  { name: "Bro LLM", path: "/bro" },
   { name: "Direct Messages", path: "/dm" },
   { name: "Profile", path: "/profile" }
 ];
