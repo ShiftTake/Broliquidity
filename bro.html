@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <script type="module">
+        import { setGeminiApiKey, askBroLLM } from './frontend/src/broai.js';
+        window.setGeminiApiKey = setGeminiApiKey;
+        window.askBroLLM = askBroLLM;
+        setGeminiApiKey('AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE');
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bro LLM Chat | BroLiquidity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        broblue: "#125CFF",
+                        brogreen: "#B6FF22",
+                        ink: "#050816",
+                        panel: "#0B1024"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        :root { color-scheme: light; }
+        body {
+            font-family: "Inter", sans-serif;
+            min-height: 100vh;
+            color: #0f172a;
+            background: #f8fafc;
+        }
+        body.dark {
+            color-scheme: dark;
+            color: #fff;
+            background: #050816;
+        }
+        .panel {
+            background: #ffffff;
+            border: 1px solid rgba(15,23,42,.09);
+        }
+        body.dark .panel {
+            background: #050816;
+            border-color: rgba(255,255,255,.12);
+        }
+        .soft-card {
+            background: rgba(15,23,42,.035);
+            border: 1px solid rgba(15,23,42,.08);
+        }
+        body.dark .soft-card {
+            background: rgba(255,255,255,.055);
+            border-color: rgba(255,255,255,.10);
+        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="font-sans antialiased flex items-center justify-center p-4 min-h-screen">
+
+    <div class="w-full max-w-2xl panel rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh]">
+        
+        <div class="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white dark:bg-[#050816]">
+            <a href="feed.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
+                ← BACK TO FEED
+            </a>
+            <div class="text-right flex flex-col items-end">
+                <h1 class="font-black text-lg leading-none">Bro</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <img src="mainlogo.png" alt="BroLiquidity Logo" class="w-10 h-10 rounded-2xl object-cover border border-slate-200 dark:border-white/10" />
+                <button id="chat-theme-toggle" class="w-9 h-9 rounded-xl soft-card font-bold flex items-center justify-center text-sm">🌓</button>
+            </div>
+        </div>
+
+        <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50 dark:bg-[#050816]/30 scrollbar-hide">
+            <div class="soft-card rounded-2xl rounded-tl-none p-4 text-sm font-semibold leading-relaxed max-w-[85%]">
+                Yo! Welcome to the desk. Ask me anything about trade theses, options metrics, or interview intelligence. Let's maximize that upside.
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 dark:border-white/10 bg-white dark:bg-[#050816]">
+            <form id="chat-form" class="flex items-center gap-2 relative">
+                <input 
+                    type="text" 
+                    id="user-input" 
+                    placeholder="Ask Bro Anything" 
+                    autocomplete="off" 
+                    required 
+                    class="w-full px-5 py-4 pr-24 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-400 focus:border-broblue transition-all" 
+                />
+                <button 
+                    type="submit" 
+                    class="absolute right-2 top-2 bottom-2 px-5 rounded-xl bg-brogreen text-black font-black text-xs uppercase tracking-wider hover:opacity-90 transition-all shadow-md"
+                >
+                    Send
+                </button>
+            </form>
+            <div class="flex items-center justify-between px-2 mt-2">
+                <p class="text-[10px] text-slate-400 font-medium">Powered by Gemini Pro Architecture</p>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">System Terminal Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Automatic local device dark theme sync matching the app rules
+        const toggleBtn = document.getElementById('chat-theme-toggle');
+        toggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // Basic Auto-scroll handler helper
+        const messageContainer = document.getElementById('messages');
+        function scrollToBottom() {
+            messageContainer.scrollTo({
+                top: messageContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+    <script src="assets/defaults/bro-llm.js"></script>
+</body>
+</html>
