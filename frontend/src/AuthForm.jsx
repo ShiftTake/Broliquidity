@@ -1,19 +1,8 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
+import { useRouter } from "next/router";
 import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-// useNavigate removed for Next.js migration
-
-const handleGoogleSignIn = async () => {
-  setError("");
-  try {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    setUser(userCredential.user);
-  } catch (err) {
-    setError(err.message);
-  }
-};
 
 function AuthForm() {
   const [email, setEmail] = useState("");
@@ -21,7 +10,19 @@ function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      setUser(userCredential.user);
+      router.push("/feed");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -31,7 +32,7 @@ function AuthForm() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         // Assign random default profile image
         const randomIdx = Math.floor(Math.random() * 15) + 1;
-        const defaultPhotoURL = `/default${randomIdx}.png`;
+        const defaultPhotoURL = `/default` + randomIdx + `.png`;
         await updateProfile(userCredential.user, { photoURL: defaultPhotoURL });
         // Also store in Firestore user profile
         await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -41,11 +42,11 @@ function AuthForm() {
           bio: ""
         });
         setUser({ ...userCredential.user, photoURL: defaultPhotoURL });
-        navigate("/feed");
+        router.push("/feed");
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         setUser(userCredential.user);
-        navigate("/feed");
+        router.push("/feed");
       }
     } catch (err) {
       setError(err.message);

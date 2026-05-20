@@ -1,5 +1,3 @@
-
-
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
@@ -97,12 +95,12 @@ exports.broLLM = functions.https.onRequest(async (req, res) => {
   }
 });
 
-// Finance notification for new comment on a post
-exports.notifyOnNewComment = functions.firestore
-  .document("posts/{postId}/comments/{commentId}")
-  .onCreate(async (snap, context) => {
-    const comment = snap.data();
-    const postId = context.params.postId;
+// Finance notification for new comment on a post (v2 API)
+exports.notifyOnNewComment = functions.firestore.onDocumentCreated(
+  "posts/{postId}/comments/{commentId}",
+  async (event) => {
+    const comment = event.data.data();
+    const postId = event.params.postId;
     const postRef = db.collection("posts").doc(postId);
     const postSnap = await postRef.get();
     if (!postSnap.exists) return null;
@@ -118,15 +116,16 @@ exports.notifyOnNewComment = functions.firestore
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return null;
-  });
+  }
+);
 
-// Finance notification for bullish/bearish vote
-exports.notifyOnVote = functions.firestore
-  .document("posts/{postId}")
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
-    const postId = context.params.postId;
+// Finance notification for bullish/bearish vote (v2 API)
+exports.notifyOnVote = functions.firestore.onDocumentUpdated(
+  "posts/{postId}",
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+    const postId = event.params.postId;
     // Only notify if vote count changed
     if ((before.bullish !== after.bullish) || (before.bearish !== after.bearish)) {
       // Don't notify if author is missing
@@ -153,4 +152,31 @@ exports.notifyOnVote = functions.firestore
       }
     }
     return null;
-  });
+  }
+);
+
+// --- Next.js SSR Handler for Firebase Hosting with Express static serving ---
+const path = require('path');
+const next = require('next');
+const express = require('express');
+
+const nextApp = next({
+  dev: false,
+  conf: { distDir: path.join('..', 'frontend', '.next') }
+});
+const handle = nextApp.getRequestHandler();
+
+const server = express();
+// Serve Next.js static files
+server.use('/_next', express.static(path.join(__dirname, '../frontend/.next', 'static')));
+server.use('/static', express.static(path.join(__dirname, '../frontend/static')));
+server.use('/public', express.static(path.join(__dirname, '../frontend/public')));
+server.use('/mainlogo.png', express.static(path.join(__dirname, '../frontend/public/mainlogo.png')));
+
+server.use((req, res) => {
+  return nextApp.prepare().then(() => handle(req, res));
+});
+
+exports.nextjsFunc = functions.https.onRequest(server);
+// --- End Next.js SSR Handler ---
+

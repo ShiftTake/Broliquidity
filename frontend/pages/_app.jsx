@@ -1,3 +1,4 @@
+import '../styles/globals.css';
 import '../src/index.css';
 import { BroLLMProvider } from '../src/BroLLMContext';
 
