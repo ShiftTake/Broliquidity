@@ -1,7 +1,9 @@
 
 
+
 import Link from "next/link";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function Index() {
   const router = useRouter();
@@ -12,17 +14,18 @@ export default function Index() {
       <header className="px-6 py-5">
         <nav className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src="/mainlogo.png"
               alt="Bro Liquidity Logo"
-              className="w-14 h-14 rounded-2xl object-cover"
+              width={56}
+              height={56}
+              className="w-14 h-14 rounded-2xl object-cover logo-glow"
+              priority
             />
-
             <div>
               <h1 className="font-black text-xl tracking-tight">
                 Bro Liquidity
               </h1>
-
               <p className="text-xs text-slate-400">
                 Trades. Licenses. Careers.
               </p>
@@ -83,13 +86,15 @@ export default function Index() {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative flex justify-center items-center">
             <div className="absolute inset-0 bg-[#b6ff22]/20 blur-3xl rounded-full"></div>
-
-            <img
+            <Image
               src="/mainlogo.png"
               alt="Bro Liquidity mascot logo"
+              width={320}
+              height={320}
               className="relative logo-glow rounded-[2rem] w-full max-w-lg mx-auto"
+              priority
             />
           </div>
         </section>
