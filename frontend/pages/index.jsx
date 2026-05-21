@@ -27,6 +27,7 @@ export default function Index() {
               height={56}
               className="w-14 h-14 rounded-2xl object-cover logo-glow"
               priority
+              unoptimized
             />
             <div>
               <h1 className="font-black text-xl tracking-tight leading-tight">
@@ -104,6 +105,7 @@ export default function Index() {
                 sizes="(max-w-768px) 100vw, (max-w-1200px) 50vw, 33vw"
                 className="object-contain logo-glow rounded-[2rem]"
                 priority
+                unoptimized
               />
             </div>
           </div>

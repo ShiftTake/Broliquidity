@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { db } from "../../src/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  getDoc,
+  doc as firestoreDoc,
+  orderBy
+} from "firebase/firestore";
 
 export default function Community() {
   const router = useRouter();
@@ -18,18 +26,25 @@ export default function Community() {
     async function fetchData() {
       setLoading(true);
       // Fetch community info
-      const cDoc = await db.collection("communities").doc(communityId).get();
-      if (cDoc.exists) {
+      const cDocRef = firestoreDoc(db, "communities", communityId);
+      const cDoc = await getDoc(cDocRef);
+      if (cDoc.exists()) {
         const cData = { id: cDoc.id, ...cDoc.data() };
         setCommunity(cData);
       } else {
         setCommunity(null);
       }
       // Fetch posts for this community
-      const postsSnap = await db.collection("posts").where("communityId", "==", communityId).orderBy("createdAt", "desc").get();
+      const postsQ = query(
+        collection(db, "posts"),
+        where("communityId", "==", communityId),
+        orderBy("createdAt", "desc")
+      );
+      const postsSnap = await getDocs(postsQ);
       setPosts(postsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       // Fetch members
-      const memSnap = await getDocs(query(collection(db, "memberships"), where("communityId", "==", communityId)));
+      const memQ = query(collection(db, "memberships"), where("communityId", "==", communityId));
+      const memSnap = await getDocs(memQ);
       setMemberCount(memSnap.size);
       setMembers(memSnap.docs.map(d => d.data().userId));
       setLoading(false);

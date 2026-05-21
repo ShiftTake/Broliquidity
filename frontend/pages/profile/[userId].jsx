@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { db, auth } from "../../src/firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  doc as firestoreDoc
+} from "firebase/firestore";
 
 export default function UserProfile() {
   const router = useRouter();
@@ -18,26 +26,31 @@ export default function UserProfile() {
     async function fetchProfile() {
       setLoading(true);
       // Fetch user profile
-      const doc = await db.collection("profiles").doc(userId).get();
-      setProfile(doc.exists ? doc.data() : null);
+      // Fetch user profile
+      const profileDoc = await getDoc(firestoreDoc(db, "profiles", userId));
+      setProfile(profileDoc.exists() ? profileDoc.data() : null);
       // Fetch posts
-      const postsSnap = await db.collection("posts").where("authorId", "==", userId).get();
+      const postsQ = query(collection(db, "posts"), where("authorId", "==", userId));
+      const postsSnap = await getDocs(postsQ);
       setPosts(postsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       // Fetch upvotes
-      const upvotesSnap = await db.collection("votes").where("userId", "==", userId).where("type", "==", "upvote").get();
+      const upvotesQ = query(collection(db, "votes"), where("userId", "==", userId), where("type", "==", "upvote"));
+      const upvotesSnap = await getDocs(upvotesQ);
       setUpvotes(upvotesSnap.docs.map(d => d.data()));
       // Fetch following
-      const followingSnap = await db.collection("follows").where("followerId", "==", userId).get();
+      const followingQ = query(collection(db, "follows"), where("followerId", "==", userId));
+      const followingSnap = await getDocs(followingQ);
       setFollowing(followingSnap.docs.map(d => d.data()));
       // Fetch communities (with names)
-      const commSnap = await db.collection("memberships").where("userId", "==", userId).get();
+      const commQ = query(collection(db, "memberships"), where("userId", "==", userId));
+      const commSnap = await getDocs(commQ);
       const comms = commSnap.docs.map(d => d.data());
       // Fetch community names for each membership
       const commDetails = await Promise.all(
         comms.map(async m => {
           try {
-            const cDoc = await db.collection("communities").doc(m.communityId).get();
-            return { ...m, communityName: cDoc.exists ? cDoc.data().name : m.communityId };
+            const cDoc = await getDoc(firestoreDoc(db, "communities", m.communityId));
+            return { ...m, communityName: cDoc.exists() ? cDoc.data().name : m.communityId };
           } catch {
             return { ...m, communityName: m.communityId };
           }

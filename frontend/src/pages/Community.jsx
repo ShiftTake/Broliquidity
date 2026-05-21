@@ -30,8 +30,12 @@ export default function Community() {
     async function fetchData() {
       setLoading(true);
       // Fetch community info
-      const cDoc = await db.collection("communities").doc(communityId).get();
-      if (cDoc.exists) {
+      // Modular Firestore SDK
+      const { getDoc, doc: firestoreDoc, collection, query, where, getDocs, orderBy } = await import("firebase/firestore");
+      // Fetch community info
+      const cDocRef = firestoreDoc(db, "communities", communityId);
+      const cDoc = await getDoc(cDocRef);
+      if (cDoc.exists()) {
         const cData = { id: cDoc.id, ...cDoc.data() };
         setCommunity(cData);
         setRules(Array.isArray(cData.rules) ? cData.rules : [
@@ -45,18 +49,24 @@ export default function Community() {
         setCommunity(null);
       }
       // Fetch posts for this community
-      const postsSnap = await db.collection("posts").where("communityId", "==", communityId).orderBy("createdAt", "desc").get();
+      const postsQ = query(
+        collection(db, "posts"),
+        where("communityId", "==", communityId),
+        orderBy("createdAt", "desc")
+      );
+      const postsSnap = await getDocs(postsQ);
       setPosts(postsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       // Fetch members
-      const memSnap = await getDocs(query(collection(db, "memberships"), where("communityId", "==", communityId)));
+      const memQ = query(collection(db, "memberships"), where("communityId", "==", communityId));
+      const memSnap = await getDocs(memQ);
       setMemberCount(memSnap.size);
       const memberIds = memSnap.docs.map(d => d.data().userId);
       // Try to fetch usernames for each member
       const memberProfiles = await Promise.all(
         memberIds.map(async uid => {
           try {
-            const userDoc = await db.collection("users").doc(uid).get();
-            if (userDoc.exists) {
+            const userDoc = await getDoc(firestoreDoc(db, "users", uid));
+            if (userDoc.exists()) {
               const d = userDoc.data();
               return { uid, username: d.displayName || d.username || d.email || uid };
             }
@@ -67,7 +77,8 @@ export default function Community() {
       setMembers(memberProfiles);
       // Check if user is joined
       if (user) {
-        const joinedSnap = await getDocs(query(collection(db, "memberships"), where("userId", "==", user.uid), where("communityId", "==", communityId)));
+        const joinedQ = query(collection(db, "memberships"), where("userId", "==", user.uid), where("communityId", "==", communityId));
+        const joinedSnap = await getDocs(joinedQ);
         setJoined(!joinedSnap.empty);
       } else {
         setJoined(false);
@@ -121,6 +132,7 @@ export default function Community() {
       return;
     }
     try {
+      const { addDoc } = await import("firebase/firestore");
       await addDoc(collection(db, "posts"), {
         content: postContent,
         category: postCategory,
@@ -134,7 +146,12 @@ export default function Community() {
       setPostContent("");
       setPostCategory("stocks");
       // Refresh posts
-      const postsSnap = await db.collection("posts").where("communityId", "==", communityId).orderBy("createdAt", "desc").get();
+      const postsQ = query(
+        collection(db, "posts"),
+        where("communityId", "==", communityId),
+        orderBy("createdAt", "desc")
+      );
+      const postsSnap = await getDocs(postsQ);
       setPosts(postsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
       setPostError("Failed to post. Try again.");

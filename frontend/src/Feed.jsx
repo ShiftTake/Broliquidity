@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
 import { db, auth } from "./firebase";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  getDocs,
+  where,
+  doc,
+  getDoc,
+  addDoc
+} from "firebase/firestore";
 import Link from "next/link";
 import Comments from "./Comments";
 
 // Helper to fetch joined communities for the current user
 async function getJoinedCommunities(userId) {
-  const snap = await db.collection("memberships").where("userId", "==", userId).get();
+  const q = query(collection(db, "memberships"), where("userId", "==", userId));
+  const snap = await getDocs(q);
   return snap.docs.map(d => d.data().communityId);
 }
 
@@ -25,14 +37,15 @@ function Feed() {
   const user = auth.currentUser;
 
   useEffect(() => {
-    const unsubscribe = db.collection("posts").orderBy("createdAt", "desc").onSnapshot(async (snapshot) => {
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const postsWithPhotos = await Promise.all(snapshot.docs.map(async docSnap => {
         const data = docSnap.data();
         let photoURL = "/mainlogo.png";
         if (data.authorId) {
           try {
-            const userDoc = await db.collection("users").doc(data.authorId).get();
-            if (userDoc.exists) {
+            const userDoc = await getDoc(doc(db, "users", data.authorId));
+            if (userDoc.exists()) {
               photoURL = userDoc.data().photoURL || photoURL;
             }
           } catch {}
@@ -68,7 +81,7 @@ function Feed() {
       return;
     }
     try {
-      await db.collection("posts").add({
+      await addDoc(collection(db, "posts"), {
         content,
         category,
         communityId: postCommunity || null,
@@ -226,4 +239,4 @@ function Feed() {
   );
 }
 
-export default Feed;
+// This file was removed to prevent shadowing the main /feed route. See Feed.jsx.bak for backup.
