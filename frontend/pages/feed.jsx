@@ -502,7 +502,7 @@ const Feed = () => {
 
   return (
     <div className={theme === "dark" ? "dark" : ""}>
-    <>
+      <>
         {/* Ticker Quick View Modal */}
         <div id="ticker-modal" className="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
           <div className="panel rounded-3xl p-6 w-full max-w-2xl relative overflow-hidden shadow-2xl">
@@ -747,36 +747,36 @@ const Feed = () => {
           </div>
         </div>
 
-        <div className="min-h-screen xl:grid xl:grid-cols-[300px_minmax(520px,760px)_380px] xl:justify-center">
+        <div className="min-h-screen xl:grid xl:grid-cols-[300px_minmax(520px,760px)_380px] xl:justify-center bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
           {/* Left X-style Rail */}
-          <aside className="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
-            <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col">
+          <aside className="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+            <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
               <a href="feed.html" className="flex items-center gap-3 mb-6" aria-label="Go to home feed" role="link">
-                <img src="mainlogo.png" alt="BroLiquidity Logo" className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10" />
+                <img src="mainlogo.png" alt="BroLiquidity Logo" className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]" />
                 <div>
-                  <h1 className="font-black text-xl leading-tight">BroLiquidity</h1>
-                  <p className="text-[11px] text-slate-500 font-bold">Trades • Licenses • Jobs</p>
+                  <h1 className="font-black text-xl leading-tight text-slate-900 dark:text-slate-100">BroLiquidity</h1>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">Trades • Licenses • Jobs</p>
                 </div>
               </a>
-              <nav className="space-y-2 text-xl font-bold" role="navigation" aria-label="Sidebar navigation">
-                <button className="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left" data-view="home" aria-label="Home" title="Home" tabIndex={0}>
+              <nav className="space-y-2 text-xl font-bold text-slate-900 dark:text-slate-100" role="navigation" aria-label="Sidebar navigation">
+                <button className="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100" data-view="home" aria-label="Home" title="Home" tabIndex={0}>
                   <span>Home</span>
                 </button>
-                <button className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bookmarks" aria-label="Bookmarks" title="Bookmarks" tabIndex={0}>
+                <button className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" data-view="bookmarks" aria-label="Bookmarks" title="Bookmarks" tabIndex={0}>
                   <span>Bookmarks</span>
                 </button>
-                <a href="bro.jsx" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabIndex={0}>
+                <a href="bro.jsx" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabIndex={0}>
                   <span>Bro AI</span>
                 </a>
-                <a href="dm.html" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Direct Messages" title="Direct Messages" tabIndex={0}>
+                <a href="dm.html" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Direct Messages" title="Direct Messages" tabIndex={0}>
                   <span>Direct Messages</span>
                 </a>
               </nav>
               <div className="mt-6 space-y-4">
-                <section className="panel rounded-3xl p-4">
+                <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-black">Communities</h2>
-                    <button id="left-create-community" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow hover:bg-lime-300 transition-all" aria-label="Create new community" title="Create new community" tabIndex={0}>+ New</button>
+                    <h2 className="font-black text-slate-900 dark:text-slate-100">Communities</h2>
+                    <button id="left-create-community" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow hover:bg-lime-300 dark:hover:bg-lime-900 transition-all" aria-label="Create new community" title="Create new community" tabIndex={0}>+ New</button>
                   </div>
                   <div id="left-communities" className="space-y-2">
                     {communitiesCache.map(c => (
@@ -792,23 +792,23 @@ const Feed = () => {
                         title={c.name}
                       >
                         <img src={c.avatar} alt={c.name} className="w-8 h-8 rounded-full object-cover" onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name) + '&background=050816&color=B6FF22'; }} />
-                        <span className="flex-1 truncate">{c.name}</span>
-                        <span className="text-xs text-slate-500">{c.members} members</span>
+                        <span className="flex-1 truncate text-slate-900 dark:text-slate-100">{c.name}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">{c.members} members</span>
                       </button>
                     ))}
                   </div>
                 </section>
               </div>
               <div className="mt-6">
-                <section className="panel rounded-3xl p-4">
-                  <h2 className="font-black text-lg mb-3">Following</h2>
+                <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+                  <h2 className="font-black text-lg mb-3 text-slate-900 dark:text-slate-100">Following</h2>
                   <div className="space-y-2">
                     {following.map(f => (
                       <div key={f.id} className="flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
                         <img src={f.avatar} alt={f.name} className="w-8 h-8 rounded-full object-cover" />
                         <div className="flex-1 min-w-0">
-                          <div className="truncate font-black text-sm">{f.name}</div>
-                          <div className="truncate text-xs text-slate-500">{f.handle}</div>
+                          <div className="truncate font-black text-sm text-slate-900 dark:text-slate-100">{f.name}</div>
+                          <div className="truncate text-xs text-slate-500 dark:text-slate-400">{f.handle}</div>
                         </div>
                       </div>
                     ))}
@@ -820,42 +820,42 @@ const Feed = () => {
           </aside>
 
           {/* Mobile Header */}
-          <header className="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl">
+          <header className="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl text-slate-900 dark:text-slate-100">
             <nav className="px-4 py-3 flex items-center justify-between gap-3">
               <button id="mobile-menu-btn" className="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu" title="Open mobile menu">☰</button>
               <a href="feed.html" className="flex items-center gap-2" aria-label="Go to home feed" role="link">
                 <img src="mainlogo.png" className="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity" />
-                <span className="font-black">BroLiquidity</span>
+                <span className="font-black text-slate-900 dark:text-slate-100">BroLiquidity</span>
               </a>
               <button id="mobile-post-btn" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" aria-label="Create a post" title="Create a post">Post</button>
             </nav>
           </header>
 
           {/* Center Feed */}
-          <main className="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]">
+          <main className="min-h-screen border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
             <div className="sticky top-0 z-30 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
-              <div className="grid grid-cols-2 text-center font-black">
+              <div className="grid grid-cols-2 text-center font-black text-slate-900 dark:text-slate-100">
                 <button
                   id="tab-for-you"
                   className={
-                    "feed-tab py-4" + (feedTab === "for-you" ? " active-tab" : " text-slate-500")
+                    "feed-tab py-4" + (feedTab === "for-you" ? " active-tab text-slate-900 dark:text-slate-100" : " text-slate-500 dark:text-slate-400")
                   }
                   onClick={() => setFeedTab("for-you")}
                 >For you</button>
                 <button
                   id="tab-following"
                   className={
-                    "feed-tab py-4" + (feedTab === "following" ? " active-tab" : " text-slate-500")
+                    "feed-tab py-4" + (feedTab === "following" ? " active-tab text-slate-900 dark:text-slate-100" : " text-slate-500 dark:text-slate-400")
                   }
                   onClick={() => setFeedTab("following")}
                 >Following</button>
               </div>
             </div>
             <section className="border-b border-slate-200 dark:border-white/10 p-4">
-              <div className="flex gap-3">
+              <div className="flex gap-3 text-slate-900 dark:text-slate-100">
                 <img id="composer-profile-photo" src="https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22" className="w-12 h-12 rounded-full object-cover" alt="Profile" />
                 <div className="flex-1">
-                  <button id="composer-open" className="w-full text-left text-xl text-slate-500 font-semibold py-2">What’s happening?</button>
+                  <button id="composer-open" className="w-full text-left text-xl text-slate-500 dark:text-slate-400 font-semibold py-2">What’s happening?</button>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-4 text-broblue text-lg">
                       <button id="composer-image-open" title="Image">🖼️</button>
@@ -869,15 +869,15 @@ const Feed = () => {
               </div>
             </section>
             <section id="recommended-section" className="border-b border-slate-200 dark:border-white/10">
-              <div className="px-4 py-3 flex items-center justify-between">
+              <div className="px-4 py-3 flex items-center justify-between text-slate-900 dark:text-slate-100">
                 <div>
-                  <h2 className="font-black text-lg">Recommended Posts</h2>
-                  <p className="text-xs text-slate-500">Weighted by watchlist, following, and subscribed communities.</p>
+                  <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">Recommended Posts</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Weighted by watchlist, following, and subscribed communities.</p>
                 </div>
               </div>
               <ul id="recommended-posts-list">
                 {recommendedPosts.map(post => (
-                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4">
+                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
                     {post.user && post.user.avatar ? (
                       <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
@@ -895,7 +895,7 @@ const Feed = () => {
                           <img src={post.image} alt="Post attachment" className="w-full object-cover" />
                         </div>
                       )}
-                      <div className="flex items-center gap-6 text-slate-500 text-sm mt-2">
+                      <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400 text-sm mt-2">
                         <button
                           className="flex items-center gap-1 comment-toggle"
                           data-id={post.id}
@@ -965,7 +965,7 @@ const Feed = () => {
                                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
                               )}
                               <div className="flex-1">
-                                <div className="font-black text-sm">{comment.user?.name || "User"}</div>
+                                <div className="font-black text-sm text-slate-900 dark:text-slate-100">{comment.user?.name || "User"}</div>
                                 <div className="text-slate-700 dark:text-slate-200 text-sm">{comment.content}</div>
                               </div>
                             </div>
@@ -980,7 +980,7 @@ const Feed = () => {
                           }}
                         >
                           <input
-                            className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm"
+                            className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm text-slate-900 dark:text-slate-100"
                             placeholder="Add a comment..."
                             value={commentInputs[post.id] || ""}
                             onChange={e => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
@@ -999,10 +999,10 @@ const Feed = () => {
               </ul>
             </section>
             <section>
-              <div className="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100">
                 <div>
-                  <h2 className="font-black text-lg">Recent Posts</h2>
-                  <p id="feed-context" className="text-xs text-slate-500">
+                  <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">Recent Posts</h2>
+                  <p id="feed-context" className="text-xs text-slate-500 dark:text-slate-400">
                     {feedTab === "following"
                       ? "Following feed, newest first."
                       : selectedFilter === "home"
@@ -1016,7 +1016,7 @@ const Feed = () => {
                 </div>
                 <select
                   id="sort-posts"
-                  className="px-3 py-2 rounded-full bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none"
+                  className="px-3 py-2 rounded-full bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none text-slate-900 dark:text-slate-100"
                   value={sort}
                   onChange={e => setSort(e.target.value)}
                 >
@@ -1044,7 +1044,7 @@ const Feed = () => {
                     return true;
                   })
                   .map(post => (
-                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4">
+                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
                     {post.user && post.user.avatar ? (
                       <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
@@ -1052,8 +1052,8 @@ const Feed = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
-                        <span className="text-xs text-slate-500 truncate">{post.user?.handle || "@user"}</span>
+                        <span className="font-black text-base truncate text-slate-900 dark:text-slate-100">{post.user?.name || "User"}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
                       <div className="mb-2 whitespace-pre-line text-slate-800 dark:text-slate-100">{post.content}</div>
@@ -1062,7 +1062,7 @@ const Feed = () => {
                           <img src={post.image} alt="Post attachment" className="w-full object-cover" />
                         </div>
                       )}
-                      <div className="flex items-center gap-6 text-slate-500 text-sm mt-2">
+                      <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400 text-sm mt-2">
                         <button className="flex items-center gap-1 comment-toggle" data-id={post.id}>
                           <span>💬</span>
                           <span>{post.comments}</span>
@@ -1116,20 +1116,20 @@ const Feed = () => {
                 ))}
               </ul>
               {loading && (
-                <div id="loading" className="p-6 text-center text-slate-500 font-bold">Loading feed...</div>
+                <div id="loading" className="p-6 text-center text-slate-500 dark:text-slate-400 font-bold">Loading feed...</div>
               )}
             </section>
           </main>
 
           {/* Right Market Rail */}
-          <aside className="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816]">
-            <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4">
-              <button id="right-profile-card" className="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left" aria-label="Open profile" title="Open profile" tabIndex={0}>
+          <aside className="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+            <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+              <button id="right-profile-card" className="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100" aria-label="Open profile" title="Open profile" tabIndex={0}>
                 <div className="flex items-center gap-3 min-w-0">
                   <img id="right-profile-photo" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" className="w-12 h-12 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
                   <div className="min-w-0">
-                    <div id="right-profile-name" className="font-black truncate">User</div>
-                    <div id="right-profile-handle" className="text-xs text-slate-500 truncate">@bro</div>
+                    <div id="right-profile-name" className="font-black truncate text-slate-900 dark:text-slate-100">User</div>
+                    <div id="right-profile-handle" className="text-xs text-slate-500 dark:text-slate-400 truncate">@bro</div>
                     <div className="flex gap-4 mt-1">
                       <a href="follow.html?tab=following" id="profile-following-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-following-count">0</span> Following</a>
                       <a href="follow.html?tab=followers" id="profile-followers-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-followers-count">0</span> Followers</a>
@@ -1139,11 +1139,11 @@ const Feed = () => {
                 <span className="text-slate-500 font-black">•••</span>
               </button>
               <div className="relative">
-                <input id="global-search" className="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500" placeholder="Search users or communities..." aria-label="Global search" title="Search users or communities" tabIndex={0} />
+                <input id="global-search" className="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100" placeholder="Search users or communities..." aria-label="Global search" title="Search users or communities" tabIndex={0} />
                 <svg className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={11} cy={11} r={8}></circle><path d="m21 21-4.3-4.3"></path></svg>
                 <div id="global-search-results" className="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
               </div>
-              <section className="panel rounded-3xl p-4">
+                <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow inline-block mb-2">Markets</p>
@@ -1159,7 +1159,7 @@ const Feed = () => {
                   <button id="theme-toggle-rail" className="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabIndex={0}>Theme</button>
                 </div>
                 <div className="relative mb-4">
-                  <input id="asset-search" className="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabIndex={0} />
+                  <input id="asset-search" className="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabIndex={0} />
                   <svg className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={11} cy={11} r={8}></circle><path d="m21 21-4.3-4.3"></path></svg>
                   <div id="asset-search-results" className="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
                 </div>
@@ -1248,8 +1248,8 @@ const Feed = () => {
                   </div>
                 </div>
               </section>
-              <section className="panel rounded-3xl p-4">
-                <h2 className="font-black text-xl mb-3">Trending Topics</h2>
+                <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+                <h2 className="font-black text-xl mb-3 text-slate-900 dark:text-slate-100">Trending Topics</h2>
                 <div id="right-trending" className="space-y-3">
                   {trendingTopics.map(t => (
                     <div key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">

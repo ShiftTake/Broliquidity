@@ -14,7 +14,7 @@ body {
     radial-gradient(circle at top left, rgba(37, 99, 235, .35), transparent 35%),
     radial-gradient(circle at top right, rgba(163, 255, 18, .25), transparent 30%),
     #050816;
-  color: white;
+  color: #0f172a; /* slate-900 */
 }
 
 * {
