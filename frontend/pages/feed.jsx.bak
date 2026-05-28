@@ -1,0 +1,9 @@
+// STRICT STATIC JSX CLONE OF feed.html (NO LOGIC, NO HOOKS, NO LOGIC, NO FUNCTIONS)
+import React, { useState } from "react";
+import Link from "next/link";
+import { auth, db } from "../src/firebase";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { query, collection, orderBy, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+
+// ...rest of the code will be written in the next step to avoid context overflow...
