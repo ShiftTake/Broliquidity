@@ -878,11 +878,15 @@ const Feed = () => {
               <ul id="recommended-posts-list">
                 {recommendedPosts.map(post => (
                   <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4">
-                    <img src={post.user.avatar} alt={post.user.name} className="w-12 h-12 rounded-full object-cover" />
+                    {post.user && post.user.avatar ? (
+                      <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-base truncate">{post.user.name}</span>
-                        <span className="text-xs text-slate-500 truncate">{post.user.handle}</span>
+                        <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
+                        <span className="text-xs text-slate-500 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
                       <div className="mb-2 whitespace-pre-line text-slate-800 dark:text-slate-100">{post.content}</div>
@@ -955,9 +959,13 @@ const Feed = () => {
                         <div className="space-y-3 mb-3">
                           {(commentsByPost[post.id] || []).map(comment => (
                             <div key={comment.id} className="flex items-start gap-3">
-                              <img src={comment.user.avatar} alt={comment.user.name} className="w-8 h-8 rounded-full object-cover" />
+                              {comment.user && comment.user.avatar ? (
+                                <img src={comment.user.avatar} alt={comment.user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
+                              )}
                               <div className="flex-1">
-                                <div className="font-black text-sm">{comment.user.name}</div>
+                                <div className="font-black text-sm">{comment.user?.name || "User"}</div>
                                 <div className="text-slate-700 dark:text-slate-200 text-sm">{comment.content}</div>
                               </div>
                             </div>
@@ -1037,11 +1045,15 @@ const Feed = () => {
                   })
                   .map(post => (
                   <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4">
-                    <img src={post.user.avatar} alt={post.user.name} className="w-12 h-12 rounded-full object-cover" />
+                    {post.user && post.user.avatar ? (
+                      <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-base truncate">{post.user.name}</span>
-                        <span className="text-xs text-slate-500 truncate">{post.user.handle}</span>
+                        <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
+                        <span className="text-xs text-slate-500 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
                       <div className="mb-2 whitespace-pre-line text-slate-800 dark:text-slate-100">{post.content}</div>

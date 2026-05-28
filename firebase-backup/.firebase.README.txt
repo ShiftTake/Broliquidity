@@ -1,0 +1,1 @@
+Backup of .firebase directory (placeholder, actual directory contents not copied here).

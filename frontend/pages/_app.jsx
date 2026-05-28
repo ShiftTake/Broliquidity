@@ -1,5 +1,4 @@
 import '../styles/globals.css';
-import '../src/index.css';
 import { BroLLMProvider } from '../src/BroLLMContext';
 
 export default function MyApp({ Component, pageProps }) {
