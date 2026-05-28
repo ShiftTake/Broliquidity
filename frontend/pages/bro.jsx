@@ -1,15 +1,21 @@
 
+
 import React from "react";
+import Link from "next/link";
 import BroLLMChat from "../src/BroLLMChat";
+import { setGeminiApiKey, askBroLLM } from "../src/broai.js";
+
+// Set Gemini API key on load
+setGeminiApiKey("AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE");
 
 export default function BroPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-[#050816]">
       <div className="w-full max-w-2xl panel rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh]">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-white dark:bg-[#050816]">
-          <a href="/feed" className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
+          <Link className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors" href="/feed">
             ← BACK TO FEED
-          </a>
+          </Link>
           <div className="text-right flex flex-col items-end">
             <h1 className="font-black text-lg leading-none">Bro</h1>
           </div>

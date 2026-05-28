@@ -1,6 +1,7 @@
 // ...existing code...
 // STRICT STATIC JSX CLONE OF feed.html (NO LOGIC, NO HOOKS, NO LOGIC, NO FUNCTIONS)
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { auth, db } from "../src/firebase";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { query, collection, orderBy, onSnapshot } from "firebase/firestore";
@@ -145,18 +146,6 @@ const Feed = () => {
     const [communityError, setCommunityError] = useState("");
     const [communityLoading, setCommunityLoading] = useState(false);
 
-    // Modal open handlers
-    useEffect(() => {
-      const openBtn = document.getElementById("left-create-community");
-      if (openBtn) openBtn.onclick = () => setModal("create-community");
-      return () => { if (openBtn) openBtn.onclick = null; };
-    }, []);
-    // Modal close handler
-    useEffect(() => {
-      const closeBtn = document.getElementById("close-create-community");
-      if (closeBtn) closeBtn.onclick = () => setModal("");
-      return () => { if (closeBtn) closeBtn.onclick = null; };
-    }, []);
 
     // Image preview/removal for community avatar
     const handleCommunityImage = e => {
@@ -759,18 +748,26 @@ const Feed = () => {
                 </div>
               </a>
               <nav className="space-y-2 text-xl font-bold text-slate-900 dark:text-slate-100" role="navigation" aria-label="Sidebar navigation">
-                <button className="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100" data-view="home" aria-label="Home" title="Home" tabIndex={0}>
-                  <span>Home</span>
-                </button>
-                <button className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" data-view="bookmarks" aria-label="Bookmarks" title="Bookmarks" tabIndex={0}>
-                  <span>Bookmarks</span>
-                </button>
-                <a href="bro.jsx" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" data-view="bro-llm" aria-label="Bro LLM" title="Bro LLM" tabIndex={0}>
-                  <span>Bro AI</span>
-                </a>
-                <a href="dm.html" className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Direct Messages" title="Direct Messages" tabIndex={0}>
-                  <span>Direct Messages</span>
-                </a>
+                <Link href="/feed" legacyBehavior>
+                  <a className="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Home" title="Home" tabIndex={0}>
+                    <span>Home</span>
+                  </a>
+                </Link>
+                <Link href="/bookmarks" legacyBehavior>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Bookmarks" title="Bookmarks" tabIndex={0}>
+                    <span>Bookmarks</span>
+                  </a>
+                </Link>
+                <Link href="/bro" legacyBehavior>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Bro LLM" title="Bro LLM" tabIndex={0}>
+                    <span>Bro AI</span>
+                  </a>
+                </Link>
+                <Link href="/dm" legacyBehavior>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Direct Messages" title="Direct Messages" tabIndex={0}>
+                    <span>Direct Messages</span>
+                  </a>
+                </Link>
               </nav>
               <div className="mt-6 space-y-4">
                 <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
@@ -1030,8 +1027,8 @@ const Feed = () => {
                 {posts
                   .filter(post => {
                     if (feedTab === "following") {
-                      // Show only posts by following
-                      return following.some(f => f.name === post.user.name);
+                      // Show only posts by following (safe null checks)
+                      return following.some(f => f?.name && post.user?.name && f.name === post.user.name);
                     }
                     if (selectedFilter === "home") return true;
                     // Community filter

@@ -1,17 +1,18 @@
 
+import React, { useState, useRef, useEffect } from "react";
 import { db, auth } from "./firebase";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "firebase/firestore";
 const DEFAULT_API_KEY = 'AIzaSyBXMdogkBz-B_Poo7-ZDGH2XsSRj4qPXCE';
-
 
 function BroLLMChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(DEFAULT_API_KEY);
   const chatRef = useRef(null);
   const user = auth.currentUser;
 
-  React.useEffect(() => {
+  useEffect(() => {
     setGeminiApiKey(DEFAULT_API_KEY);
   }, []);
 
@@ -103,4 +104,3 @@ function BroLLMChat() {
 }
 
 export default BroLLMChat;
-import React, { useState, useRef } from "react";
