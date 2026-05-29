@@ -10,6 +10,7 @@ export default function DM() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
   const user = auth.currentUser;
   const messagesEndRef = useRef(null);
 
@@ -83,51 +84,73 @@ export default function DM() {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=050816&color=B6FF22`;
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-[#0f172a]">
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-        <Link href="/feed" className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
-          ← BACK TO FEED
-        </Link>
-        <div className="flex items-center gap-2">
-          <span className="font-black text-lg tracking-tight">SECURE CHAT PROTOCOL</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        </div>
-      </div>
+  // Filter users by search
+  const filteredUsers = users.filter(u =>
+    (u.displayName || u.email || u.id).toLowerCase().includes(search.toLowerCase())
+  );
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur-xl px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link href="/feed" className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
+            ← BACK TO FEED
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-lg tracking-tight">SECURE CHAT PROTOCOL</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </div>
+        </div>
+      </header>
+      <div className="max-w-7xl mx-auto p-4 lg:p-6 gap-6 flex overflow-hidden" style={{ minHeight: "calc(100vh - 88px)" }}>
         {/* Sidebar */}
-        <aside className="w-80 bg-white border-r border-slate-200 flex flex-col py-8 px-4">
-          <h2 className="text-lg font-black mb-6 px-2">Direct Messages</h2>
-          <div className="flex-1 overflow-y-auto space-y-2">
-            {users.map(u => {
-              // Find if a conversation exists with this user
-              const convo = conversations.find(c => c.participants.includes(u.id));
-              const isActive = convo && convo.id === selected;
-              return (
-                <button
-                  key={u.id}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all
-                    ${isActive
-                      ? "bg-brogreen text-black font-black shadow-lg"
-                      : "soft-card hover:bg-slate-100 text-slate-700"
-                    }`}
-                  onClick={() => startConversation(u.id)}
-                >
-                  <img src={getAvatar(u)} alt={u.displayName || u.email || u.id} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
-                  <span className="truncate">{u.displayName || u.email || u.id}</span>
-                </button>
-              );
-            })}
+        <aside className="w-80 panel rounded-3xl flex flex-col overflow-hidden shadow-xl hidden md:flex bg-slate-50/50">
+          <div className="p-4 border-b border-slate-200">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-black text-base">Direct Messages</span>
+            </div>
+            <input
+              type="text"
+              className="w-full mt-2 px-4 py-2 rounded-2xl bg-slate-100 border border-slate-200/60 outline-none text-sm text-slate-800 placeholder:text-slate-400 focus:border-broblue transition-all"
+              placeholder="Search users…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto scrollbar-hide bg-slate-50/20">
+            <div className="divide-y divide-slate-100">
+              {filteredUsers.map(u => {
+                const convo = conversations.find(c => c.participants.includes(u.id));
+                const isActive = convo && convo.id === selected;
+                return (
+                  <button
+                    key={u.id}
+                    className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left
+                      ${isActive
+                        ? "bg-brogreen/20 shadow-lg shadow-brogreen/10"
+                        : "hover:bg-slate-100"
+                      }`}
+                    onClick={() => startConversation(u.id)}
+                  >
+                    <img src={getAvatar(u)} alt={u.displayName || u.email || u.id} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-bold text-slate-900">{u.displayName || u.email || u.id}</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span className="text-xs text-slate-400">online</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </aside>
-
-        {/* Chat Area */}
-        <main className="flex-1 flex flex-col">
+        {/* Main Chat Panel */}
+        <main className="flex-1 panel rounded-3xl flex flex-col overflow-hidden shadow-xl relative bg-slate-50/50">
           {/* Chat Header */}
-          <div id="active-chat-header" className="flex items-center gap-4 px-8 py-6 border-b border-slate-200 bg-white min-h-[80px]">
+          <div id="active-chat-header" className="flex items-center gap-4 px-8 py-6 border-b border-slate-200 bg-white/90 min-h-[80px]">
             {otherUser ? (
               <>
                 <img src={getAvatar(otherUser)} alt={otherUser.displayName || otherUser.email || otherUser.id} className="w-12 h-12 rounded-full object-cover border border-slate-200" />
@@ -140,9 +163,8 @@ export default function DM() {
               <div className="text-slate-400 font-semibold">Select a user to start chatting</div>
             )}
           </div>
-
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-8 py-6 bg-[#f8fafc] space-y-4">
+          <div id="dm-chat" className="flex-1 overflow-y-auto px-8 py-6 bg-slate-50/20 space-y-4 max-h-[calc(100vh-88px-80px-88px)] scrollbar-hide">
             {messages.map(m => {
               const isMe = m.sender === user.uid;
               return (
@@ -153,8 +175,8 @@ export default function DM() {
                   <div className={`
                     max-w-[70%] px-5 py-3 mb-1
                     ${isMe
-                      ? "bg-brogreen text-black rounded-2xl rounded-tr-sm font-bold"
-                      : "bg-white border border-slate-200/60 text-slate-800 rounded-2xl rounded-tl-sm"
+                      ? "bg-brogreen text-black rounded-2xl rounded-tr-sm font-bold shadow-lg"
+                      : "bg-white border border-slate-200/60 text-slate-800 rounded-2xl rounded-tl-sm shadow"
                     }
                   `}>
                     {m.text}
@@ -164,10 +186,9 @@ export default function DM() {
             })}
             <div ref={messagesEndRef} />
           </div>
-
           {/* Input Form */}
           {selected && (
-            <form id="dm-form" onSubmit={sendMessage} className="flex items-center gap-4 px-8 py-6 border-t border-slate-200 bg-white">
+            <form id="dm-form" onSubmit={sendMessage} className="flex items-center gap-4 px-8 py-6 border-t border-slate-200 bg-white/90">
               <input
                 type="text"
                 value={newMessage}
