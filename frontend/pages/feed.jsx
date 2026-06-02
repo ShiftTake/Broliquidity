@@ -4,8 +4,33 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { auth, db } from "../src/firebase";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { query, collection, orderBy, onSnapshot } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { query, collection, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDocs, where, addDoc, serverTimestamp } from "firebase/firestore";
+import { ensureUserHasAvatar, getRandomDefaultAvatar } from "../src/avatarDefaults";
+  // Toggle bookmark handler
+  const handleToggleBookmark = async (post) => {
+    if (!user || !post.id) return;
+    try {
+      const bookmarksRef = collection(db, "bookmarks");
+      const q = query(bookmarksRef, where("userId", "==", user.uid), where("postId", "==", post.id));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        // Add bookmark
+        await addDoc(bookmarksRef, {
+          userId: user.uid,
+          postId: post.id,
+          bookmarkedAt: new Date()
+        });
+        setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, bookmarked: true } : p));
+      } else {
+        // Remove bookmark
+        await Promise.all(snap.docs.map(docu => deleteDoc(doc(db, "bookmarks", docu.id))));
+        setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, bookmarked: false } : p));
+      }
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 // (duplicate import removed)
   // Voting handlers
   const handleVote = async (post, type) => {
@@ -42,7 +67,7 @@ const initialPosts = [
     id: 1,
     user: {
       name: "Jane Doe",
-      avatar: "https://ui-avatars.com/api/?name=JD&background=050816&color=B6FF22",
+      avatar: "/defaults/default1.png",
       handle: "@janedoe"
     },
     time: "2m",
@@ -56,7 +81,7 @@ const initialPosts = [
     id: 2,
     user: {
       name: "John Smith",
-      avatar: "https://ui-avatars.com/api/?name=JS&background=050816&color=B6FF22",
+      avatar: "/defaults/default2.png",
       handle: "@johnsmith"
     },
     time: "10m",
@@ -74,7 +99,7 @@ const initialRecommendedPosts = [
     id: 101,
     user: {
       name: "Ava Analyst",
-      avatar: "https://ui-avatars.com/api/?name=AA&background=050816&color=B6FF22",
+      avatar: "/defaults/default3.png",
       handle: "@avaanalyst"
     },
     time: "5m",
@@ -88,7 +113,7 @@ const initialRecommendedPosts = [
     id: 102,
     user: {
       name: "Ben Bullish",
-      avatar: "https://ui-avatars.com/api/?name=BB&background=050816&color=B6FF22",
+      avatar: "/defaults/default4.png",
       handle: "@benbullish"
     },
     time: "12m",
@@ -113,14 +138,53 @@ const initialCommunities = [
   { id: 3, name: "Crypto Degens", members: 203, avatar: "https://ui-avatars.com/api/?name=CD&background=050816&color=B6FF22" },
 ];
 const initialFollowing = [
-  { id: 1, name: "Jane Doe", handle: "@janedoe", avatar: "https://ui-avatars.com/api/?name=JD&background=050816&color=B6FF22" },
-  { id: 2, name: "John Smith", handle: "@johnsmith", avatar: "https://ui-avatars.com/api/?name=JS&background=050816&color=B6FF22" },
+  { id: 1, name: "Jane Doe", handle: "@janedoe", avatar: "/defaults/default1.png" },
+  { id: 2, name: "John Smith", handle: "@johnsmith", avatar: "/defaults/default2.png" },
 ];
 const initialTrendingTopics = [
   { id: 1, topic: "#SIEPass", posts: 32 },
   { id: 2, topic: "#OptionsFlow", posts: 21 },
   { id: 3, topic: "#CryptoWinter", posts: 17 },
 ];
+
+const defaultAvatarOptions = Array.from({ length: 15 }, (_, i) => `/defaults/default${i + 1}.png`);
+
+const normalizePostAuthorAvatar = async (post) => {
+  const authorUid = post.authorId || post.userId || post.user?.uid;
+  const fallbackAvatar = post.user?.avatar || getRandomDefaultAvatar();
+
+  if (!authorUid) {
+    return {
+      ...post,
+      user: {
+        ...(post.user || {}),
+        name: post.user?.name || post.author || "User",
+        handle: post.user?.handle || "@user",
+        avatar: fallbackAvatar
+      }
+    };
+  }
+
+  const ensuredProfile = await ensureUserHasAvatar(db, authorUid);
+  const displayName =
+    ensuredProfile.displayName ||
+    ensuredProfile.username ||
+    post.user?.name ||
+    post.author ||
+    "User";
+
+  return {
+    ...post,
+    authorId: authorUid,
+    user: {
+      ...(post.user || {}),
+      uid: authorUid,
+      name: displayName,
+      handle: post.user?.handle || (ensuredProfile.email ? `@${ensuredProfile.email.split("@")[0]}` : "@user"),
+      avatar: ensuredProfile.photoURL || fallbackAvatar
+    }
+  };
+};
 
 const initialCommentsByPost = {
   1: [
@@ -246,10 +310,11 @@ const Feed = () => {
       else if (sort === "active") q = query(collection(db, "posts"), orderBy("comments", "desc"));
       const unsubscribe = onSnapshot(
         q,
-        (snapshot) => {
+        async (snapshot) => {
           if (!snapshot.empty) {
             const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setPosts(data);
+            const normalizedData = await Promise.all(data.map((post) => normalizePostAuthorAvatar(post)));
+            setPosts(normalizedData);
           } else {
             setPosts(demoPosts);
           }
@@ -440,6 +505,7 @@ const Feed = () => {
           avatar: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || "U"}&background=050816&color=B6FF22`,
           handle: user.email ? `@${user.email.split("@")[0]}` : "@user"
         },
+        authorId: user.uid,
         time: "now",
         content: postContent,
         image: imageUrl,
@@ -463,6 +529,12 @@ const Feed = () => {
   };
   // Modal visibility state
   const [modal, setModal] = useState(""); // "ticker" | "post" | "profile" | "create-community" | "bro-llm" | "dm" | ""
+  const [profileImagePickerOpen, setProfileImagePickerOpen] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [profileUploadFile, setProfileUploadFile] = useState(null);
+  const [profileBio, setProfileBio] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [assigningRandomAvatar, setAssigningRandomAvatar] = useState(false);
   // Mobile drawer state
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   // Tab state
@@ -488,6 +560,80 @@ const Feed = () => {
       localStorage.setItem("theme", theme);
     }
   }, [theme]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (user.photoURL) {
+      setProfilePhoto(user.photoURL);
+      return;
+    }
+
+    const randomAvatar = defaultAvatarOptions[Math.floor(Math.random() * defaultAvatarOptions.length)];
+    setProfilePhoto(randomAvatar);
+
+    if (assigningRandomAvatar) return;
+    setAssigningRandomAvatar(true);
+
+    const assignRandomAvatar = async () => {
+      try {
+        await updateProfile(auth.currentUser, { photoURL: randomAvatar });
+        await setDoc(doc(db, "users", user.uid), {
+          photoURL: randomAvatar
+        }, { merge: true });
+        setUser((prev) => (prev ? { ...prev, photoURL: randomAvatar } : prev));
+      } catch (err) {
+        // Non-blocking fallback; user can still manually choose an avatar.
+      }
+      setAssigningRandomAvatar(false);
+    };
+
+    assignRandomAvatar();
+  }, [user, assigningRandomAvatar]);
+
+  const handleProfileImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProfileUploadFile(file);
+    setProfilePhoto(URL.createObjectURL(file));
+  };
+
+  const handleSelectDefaultAvatar = (avatarUrl) => {
+    setProfileUploadFile(null);
+    setProfilePhoto(avatarUrl);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setProfileSaving(true);
+    try {
+      let finalPhotoUrl = profilePhoto;
+      if (profileUploadFile) {
+        const storage = getStorage();
+        const imgRef = storageRef(storage, `profile-images/${user.uid}-${Date.now()}-${profileUploadFile.name}`);
+        await uploadBytes(imgRef, profileUploadFile);
+        finalPhotoUrl = await getDownloadURL(imgRef);
+      }
+      await updateProfile(auth.currentUser, {
+        photoURL: finalPhotoUrl
+      });
+      setUser((prev) => (prev ? { ...prev, photoURL: finalPhotoUrl } : prev));
+      setProfileUploadFile(null);
+      setProfileImagePickerOpen(false);
+      setModal("");
+    } catch (err) {
+      // Keep non-blocking to preserve existing feed behavior.
+    }
+    setProfileSaving(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setModal("");
+    } catch (err) {
+      // Ignore logout UI errors.
+    }
+  };
 
   return (
     <div className={theme === "dark" ? "dark" : ""}>
@@ -635,34 +781,49 @@ const Feed = () => {
         </div>
 
         {/* Profile Modal */}
-        <div id="profile-modal" className="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
+        <div id="profile-modal" className="fixed inset-0 bg-black/70 items-center justify-center z-50 px-4" style={{ display: modal === "profile" ? "flex" : "none" }}>
           <div className="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
-            <button id="close-profile" className="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close profile modal" title="Close" tabIndex={0}>&times;</button>
+            <button id="close-profile" className="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close profile modal" title="Close" tabIndex={0} onClick={() => setModal("")}>×</button>
             <h2 className="text-2xl font-black mb-5">Your Profile</h2>
             <div className="flex flex-col items-center gap-4">
-              <button id="profile-photo-picker-btn" type="button" className="relative group">
-                <img id="profile-photo" src="" alt="Profile Photo" className="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
+              <button id="profile-photo-picker-btn" type="button" className="relative group" onClick={() => setProfileImagePickerOpen((open) => !open)}>
+                <img id="profile-photo" src={profilePhoto || "https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22"} alt="Profile Photo" className="w-24 h-24 rounded-full object-cover border-4 border-brogreen bg-slate-200" />
                 <span className="absolute inset-0 rounded-full bg-black/55 text-white text-xs font-black hidden group-hover:grid place-items-center">Change</span>
               </button>
-              <div id="profile-username-display" className="font-black text-lg text-center"></div>
-              <div id="profile-image-picker" className="hidden w-full soft-card rounded-3xl p-4">
+              <div id="profile-username-display" className="font-black text-lg text-center">{user?.displayName || user?.email || "User"}</div>
+              <div id="profile-image-picker" className={(profileImagePickerOpen ? "block" : "hidden") + " w-full soft-card rounded-3xl p-4"}>
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-black">Choose Profile Image</h3>
                     <p className="text-xs text-slate-500">Upload your own or pick a default avatar.</p>
                   </div>
-                  <button id="close-profile-image-picker" type="button" className="w-8 h-8 rounded-full soft-card font-black">×</button>
+                  <button id="close-profile-image-picker" type="button" className="w-8 h-8 rounded-full soft-card font-black" onClick={() => setProfileImagePickerOpen(false)}>×</button>
                 </div>
                 <label className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black cursor-pointer">
                   Upload Image
-                  <input type="file" id="profile-image-upload" accept="image/*" className="hidden" />
+                  <input type="file" id="profile-image-upload" accept="image/*" className="hidden" onChange={handleProfileImageUpload} />
                 </label>
-                <div id="default-avatar-grid" className="grid grid-cols-3 gap-3"></div>
+                <div id="default-avatar-grid" className="grid grid-cols-3 gap-3">
+                  {defaultAvatarOptions.map((avatarUrl) => (
+                    <button
+                      key={avatarUrl}
+                      type="button"
+                      onClick={() => handleSelectDefaultAvatar(avatarUrl)}
+                      className={
+                        "rounded-2xl border-2 p-0.5 transition " +
+                        (profilePhoto === avatarUrl ? "border-brogreen" : "border-transparent hover:border-slate-300")
+                      }
+                      aria-label="Select default avatar"
+                    >
+                      <img src={avatarUrl} alt="Default avatar" className="w-full aspect-square rounded-xl object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
-              <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows={3} placeholder="Add a short finance-bro bio..."></textarea>
+              <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows={3} placeholder="Add a short finance-bro bio..." value={profileBio} onChange={(e) => setProfileBio(e.target.value)}></textarea>
               <button id="profile-theme-toggle" className="w-full px-4 py-3 rounded-2xl soft-card font-bold">Toggle Theme</button>
-              <button id="save-profile" className="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black">Save Profile</button>
-              <button id="logout-btn" className="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black">Logout</button>
+              <button id="save-profile" className="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" onClick={handleSaveProfile} disabled={profileSaving}>{profileSaving ? "Saving..." : "Save Profile"}</button>
+              <button id="logout-btn" className="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black" onClick={handleLogout}>Logout</button>
             </div>
           </div>
         </div>
@@ -850,7 +1011,7 @@ const Feed = () => {
             </div>
             <section className="border-b border-slate-200 dark:border-white/10 p-4">
               <div className="flex gap-3 text-slate-900 dark:text-slate-100">
-                <img id="composer-profile-photo" src="https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22" className="w-12 h-12 rounded-full object-cover" alt="Profile" />
+                <img id="composer-profile-photo" src={profilePhoto || "https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22"} className="w-12 h-12 rounded-full object-cover" alt="Profile" />
                 <div className="flex-1">
                   <button id="composer-open" className="w-full text-left text-xl text-slate-500 dark:text-slate-400 font-semibold py-2">What’s happening?</button>
                   <div className="flex items-center justify-between mt-4">
@@ -873,16 +1034,32 @@ const Feed = () => {
                 </div>
               </div>
               <ul id="recommended-posts-list">
-                {recommendedPosts.map(post => (
+                {recommendedPosts.map(post => {
+                  const profileId = post.authorId || post.user?.uid;
+                  return (
                   <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
-                    {post.user && post.user.avatar ? (
+                    {profileId ? (
+                      <Link href={`/profile/${profileId}`} className="shrink-0">
+                        {post.user && post.user.avatar ? (
+                          <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
+                        )}
+                      </Link>
+                    ) : post.user && post.user.avatar ? (
                       <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
+                        {profileId ? (
+                          <Link href={`/profile/${profileId}`} className="font-black text-base truncate hover:underline">
+                            {post.user?.name || "User"}
+                          </Link>
+                        ) : (
+                          <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
+                        )}
                         <span className="text-xs text-slate-500 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
@@ -941,7 +1118,7 @@ const Feed = () => {
                               : "--% Bullish"}
                           </span>
                         </div>
-                        <button className={post.bookmarked ? "text-brogreen" : ""}>
+                        <button className={post.bookmarked ? "text-brogreen" : ""} onClick={() => handleToggleBookmark(post)} aria-label="Toggle bookmark">
                           <span>🔖</span>
                         </button>
                       </div>
@@ -992,7 +1169,7 @@ const Feed = () => {
                       </div>
                     </div>
                   </li>
-                ))}
+                )})}
               </ul>
             </section>
             <section>
@@ -1040,16 +1217,32 @@ const Feed = () => {
                     }
                     return true;
                   })
-                  .map(post => (
+                  .map(post => {
+                  const profileId = post.authorId || post.user?.uid;
+                  return (
                   <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
-                    {post.user && post.user.avatar ? (
+                    {profileId ? (
+                      <Link href={`/profile/${profileId}`} className="shrink-0">
+                        {post.user && post.user.avatar ? (
+                          <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
+                        )}
+                      </Link>
+                    ) : post.user && post.user.avatar ? (
                       <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-black text-base truncate text-slate-900 dark:text-slate-100">{post.user?.name || "User"}</span>
+                        {profileId ? (
+                          <Link href={`/profile/${profileId}`} className="font-black text-base truncate text-slate-900 dark:text-slate-100 hover:underline">
+                            {post.user?.name || "User"}
+                          </Link>
+                        ) : (
+                          <span className="font-black text-base truncate text-slate-900 dark:text-slate-100">{post.user?.name || "User"}</span>
+                        )}
                         <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
@@ -1110,7 +1303,7 @@ const Feed = () => {
                       </div>
                     </div>
                   </li>
-                ))}
+                )})}
               </ul>
               {loading && (
                 <div id="loading" className="p-6 text-center text-slate-500 dark:text-slate-400 font-bold">Loading feed...</div>
@@ -1121,12 +1314,12 @@ const Feed = () => {
           {/* Right Market Rail */}
           <aside className="hidden xl:block min-h-screen sticky top-0 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
             <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 space-y-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
-              <button id="right-profile-card" className="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100" aria-label="Open profile" title="Open profile" tabIndex={0}>
+              <button id="right-profile-card" className="w-full flex items-center justify-between gap-3 p-3 rounded-3xl panel hover:bg-slate-50 dark:hover:bg-white/5 text-left bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100" aria-label="Open profile" title="Open profile" tabIndex={0} onClick={() => setModal("profile")}>
                 <div className="flex items-center gap-3 min-w-0">
-                  <img id="right-profile-photo" src="https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22" alt="Profile" className="w-12 h-12 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
+                  <img id="right-profile-photo" src={profilePhoto || "https://ui-avatars.com/api/?name=User&background=050816&color=B6FF22"} alt="Profile" className="w-12 h-12 rounded-full object-cover border-2 border-brogreen bg-slate-700" />
                   <div className="min-w-0">
-                    <div id="right-profile-name" className="font-black truncate text-slate-900 dark:text-slate-100">User</div>
-                    <div id="right-profile-handle" className="text-xs text-slate-500 dark:text-slate-400 truncate">@bro</div>
+                    <div id="right-profile-name" className="font-black truncate text-slate-900 dark:text-slate-100">{user?.displayName || "User"}</div>
+                    <div id="right-profile-handle" className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email ? `@${user.email.split("@")[0]}` : "@bro"}</div>
                     <div className="flex gap-4 mt-1">
                       <a href="follow.html?tab=following" id="profile-following-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-following-count">0</span> Following</a>
                       <a href="follow.html?tab=followers" id="profile-followers-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-followers-count">0</span> Followers</a>

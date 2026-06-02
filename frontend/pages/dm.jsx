@@ -3,14 +3,19 @@ import React, { useEffect, useState, useRef } from "react";
 import { db, auth } from "../src/firebase";
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { ensureUserHasAvatar } from "../src/avatarDefaults";
 
 export default function DM() {
+  const router = useRouter();
+  const dmTargetId = Array.isArray(router.query.userId) ? router.query.userId[0] : router.query.userId;
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+  const [autoStartedDm, setAutoStartedDm] = useState(false);
   const user = auth.currentUser;
   const messagesEndRef = useRef(null);
 
@@ -18,8 +23,16 @@ export default function DM() {
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "users"));
-    const unsub = onSnapshot(q, snap => {
-      setUsers(snap.docs.filter(d => d.id !== user.uid).map(d => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, async (snap) => {
+      const normalizedUsers = await Promise.all(
+        snap.docs
+          .filter((d) => d.id !== user.uid)
+          .map(async (d) => {
+            const normalized = await ensureUserHasAvatar(db, d.id);
+            return { id: d.id, ...normalized };
+          })
+      );
+      setUsers(normalizedUsers);
     });
     return () => unsub();
   }, [user]);
@@ -71,6 +84,26 @@ export default function DM() {
     setNewMessage("");
   };
 
+  useEffect(() => {
+    setAutoStartedDm(false);
+  }, [dmTargetId]);
+
+  useEffect(() => {
+    if (!user || !dmTargetId || dmTargetId === user.uid) return;
+
+    const existing = conversations.find((c) => c.participants?.includes(dmTargetId));
+    if (existing) {
+      if (selected !== existing.id) setSelected(existing.id);
+      return;
+    }
+
+    if (autoStartedDm) return;
+    if (!users.some((u) => u.id === dmTargetId)) return;
+
+    setAutoStartedDm(true);
+    startConversation(dmTargetId);
+  }, [dmTargetId, user, conversations, users, autoStartedDm, selected]);
+
   if (!user) return <div className="p-8 text-slate-400">Sign in to use direct messages.</div>;
 
   // Find the other user in the current conversation
@@ -80,6 +113,7 @@ export default function DM() {
 
   // Avatar helper
   const getAvatar = (u) => {
+    if (u?.photoURL) return u.photoURL;
     const name = u?.displayName || u?.email || "User";
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=050816&color=B6FF22`;
   };

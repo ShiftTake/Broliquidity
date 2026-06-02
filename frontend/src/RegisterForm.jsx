@@ -5,6 +5,11 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, up
 import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 
+const getRandomDefaultAvatar = () => {
+  const idx = Math.floor(Math.random() * 15) + 1;
+  return `/defaults/default${idx}.png`;
+};
+
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,11 +25,20 @@ export default function RegisterForm() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
+      const randomAvatar = getRandomDefaultAvatar();
+      await updateProfile(user, { photoURL: randomAvatar });
       await setDoc(doc(db, "profiles", user.uid), {
         username: user.displayName || user.email,
         bio: '',
         email: user.email,
+        photoURL: randomAvatar,
         createdAt: new Date()
+      }, { merge: true });
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        displayName: user.displayName || "",
+        photoURL: randomAvatar,
+        bio: ""
       }, { merge: true });
       router.push("/feed");
     } catch (err) {
@@ -41,11 +55,12 @@ export default function RegisterForm() {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName });
+      const randomAvatar = getRandomDefaultAvatar();
+      await updateProfile(userCredential.user, { displayName, photoURL: randomAvatar });
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email,
         displayName,
-        photoURL: userCredential.user.photoURL || '',
+        photoURL: randomAvatar,
         bio: ""
       });
       router.push("/feed");

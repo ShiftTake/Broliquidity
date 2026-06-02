@@ -4,6 +4,11 @@ import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
+const getRandomDefaultAvatar = () => {
+  const idx = Math.floor(Math.random() * 15) + 1;
+  return `/defaults/default${idx}.png`;
+};
+
 function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +22,13 @@ function AuthForm() {
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
+      if (!userCredential.user.photoURL) {
+        const randomAvatar = getRandomDefaultAvatar();
+        await updateProfile(userCredential.user, { photoURL: randomAvatar });
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          photoURL: randomAvatar
+        }, { merge: true });
+      }
       setUser(userCredential.user);
       router.push("/feed");
     } catch (err) {
@@ -31,8 +43,7 @@ function AuthForm() {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         // Assign random default profile image
-        const randomIdx = Math.floor(Math.random() * 15) + 1;
-        const defaultPhotoURL = `/default` + randomIdx + `.png`;
+        const defaultPhotoURL = getRandomDefaultAvatar();
         await updateProfile(userCredential.user, { photoURL: defaultPhotoURL });
         // Also store in Firestore user profile
         await setDoc(doc(db, "users", userCredential.user.uid), {
