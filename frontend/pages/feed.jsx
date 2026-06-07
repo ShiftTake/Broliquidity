@@ -1,157 +1,214 @@
 // ...existing code...
 // STRICT STATIC JSX CLONE OF feed.html (NO LOGIC, NO HOOKS, NO LOGIC, NO FUNCTIONS)
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { auth, db } from "../src/firebase";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { query, collection, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDocs, where, addDoc, serverTimestamp } from "firebase/firestore";
-import { ensureUserHasAvatar, getRandomDefaultAvatar } from "../src/avatarDefaults";
-  // Toggle bookmark handler
-  const handleToggleBookmark = async (post) => {
-    if (!user || !post.id) return;
-    try {
-      const bookmarksRef = collection(db, "bookmarks");
-      const q = query(bookmarksRef, where("userId", "==", user.uid), where("postId", "==", post.id));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        // Add bookmark
-        await addDoc(bookmarksRef, {
-          userId: user.uid,
-          postId: post.id,
-          bookmarkedAt: new Date()
-        });
-        setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, bookmarked: true } : p));
-      } else {
-        // Remove bookmark
-        await Promise.all(snap.docs.map(docu => deleteDoc(doc(db, "bookmarks", docu.id))));
-        setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, bookmarked: false } : p));
-      }
-    } catch (err) {
-      // Optionally handle error
-    }
-  };
+import { query, collection, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDocs, where, addDoc, serverTimestamp, updateDoc, increment as firestoreIncrement, runTransaction } from "firebase/firestore";
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
-// (duplicate import removed)
-  // Voting handlers
-  const handleVote = async (post, type) => {
-    // Demo posts fallback: update local state only
-    if (!post.id || typeof post.id === "number") {
-      setPosts(prevPosts => prevPosts.map(p => {
-        if (p.id !== post.id) return p;
-        if (type === "bullish") {
-          const bullishVotes = (p.bullishVotes || 0) + 1;
-          return { ...p, bullishVotes };
-        } else if (type === "bearish") {
-          const bearishVotes = (p.bearishVotes || 0) + 1;
-          return { ...p, bearishVotes };
-        }
-        return p;
-      }));
-      return;
-    }
-    // Firestore atomic increment
-    try {
-      const postRef = doc(db, "posts", post.id);
-      if (type === "bullish") {
-        await updateDoc(postRef, { bullishVotes: firestoreIncrement(1) });
-      } else if (type === "bearish") {
-        await updateDoc(postRef, { bearishVotes: firestoreIncrement(1) });
-      }
-    } catch (err) {
-      // Optionally show error (not required by requirements)
-    }
-  };
+import { ensureUserHasAvatar, getRandomDefaultAvatar } from "../src/avatarDefaults";
+import { getFollowing, getFollowers } from "../src/following";
+import { STARTING_PAPER_CASH, ensurePaperAccount, isMarketOpenNow, placePaperOrder, placePaperTrade, processPendingPaperOrders } from "../src/paperTrading";
 
-const initialPosts = [
-  {
-    id: 1,
-    user: {
-      name: "Jane Doe",
-      avatar: "/defaults/default1.png",
-      handle: "@janedoe"
-    },
-    time: "2m",
-    content: "Just passed my SIE! Ready for the next step.",
-    image: null,
-    comments: 3,
-    likes: 12,
-    bookmarked: false
-  },
-  {
-    id: 2,
-    user: {
-      name: "John Smith",
-      avatar: "/defaults/default2.png",
-      handle: "@johnsmith"
-    },
-    time: "10m",
-    content: "Anyone prepping for the Series 7? Tips welcome!",
-    image: null,
-    comments: 1,
-    likes: 7,
-    bookmarked: true
-  }
-  // Add more static posts as needed for visual parity
-];
+const trendingTokenRegex = /(?:^|\s)([#$][A-Za-z][\w]{1,19})\b/g;
 
-const initialRecommendedPosts = [
-  {
-    id: 101,
-    user: {
-      name: "Ava Analyst",
-      avatar: "/defaults/default3.png",
-      handle: "@avaanalyst"
-    },
-    time: "5m",
-    content: "Check out this new ETF for 2026!",
-    image: null,
-    comments: 2,
-    likes: 9,
-    bookmarked: false
-  },
-  {
-    id: 102,
-    user: {
-      name: "Ben Bullish",
-      avatar: "/defaults/default4.png",
-      handle: "@benbullish"
-    },
-    time: "12m",
-    content: "Bullish on tech for the next quarter.",
-    image: null,
-    comments: 0,
-    likes: 4,
-    bookmarked: true
-  }
-  // Add more static recommended posts as needed for visual parity
-];
+const extractTrendingTokens = (text) => {
+  if (!text || typeof text !== "string") return [];
+  const matches = [...text.matchAll(trendingTokenRegex)];
+  return matches
+    .map((match) => match[1])
+    .filter(Boolean)
+    .map((token) => `#${token.slice(1).toUpperCase()}`);
+};
 
-const initialWatchlist = [
-  { symbol: "AAPL", name: "Apple Inc.", active: true },
-  { symbol: "TSLA", name: "Tesla Inc.", active: false },
-  { symbol: "BTC", name: "Bitcoin", active: false },
-];
+const normalizePostCreatedAtMs = (createdAt) => {
+  if (!createdAt) return 0;
+  if (createdAt?.toDate) return createdAt.toDate().getTime();
+  if (createdAt?.seconds) return createdAt.seconds * 1000;
+  if (createdAt instanceof Date) return createdAt.getTime();
+  return 0;
+};
 
-const initialCommunities = [
-  { id: 1, name: "Equity Bros", members: 120, avatar: "https://ui-avatars.com/api/?name=EB&background=050816&color=B6FF22" },
-  { id: 2, name: "Options Desk", members: 87, avatar: "https://ui-avatars.com/api/?name=OD&background=050816&color=B6FF22" },
-  { id: 3, name: "Crypto Degens", members: 203, avatar: "https://ui-avatars.com/api/?name=CD&background=050816&color=B6FF22" },
-];
-const initialFollowing = [
-  { id: 1, name: "Jane Doe", handle: "@janedoe", avatar: "/defaults/default1.png" },
-  { id: 2, name: "John Smith", handle: "@johnsmith", avatar: "/defaults/default2.png" },
-];
-const initialTrendingTopics = [
-  { id: 1, topic: "#SIEPass", posts: 32 },
-  { id: 2, topic: "#OptionsFlow", posts: 21 },
-  { id: 3, topic: "#CryptoWinter", posts: 17 },
-];
+const getTradeTimestampMs = (trade) => {
+  if (!trade || typeof trade !== "object") return 0;
+
+  const timestampCandidate =
+    trade.executedAt ||
+    trade.createdAt ||
+    trade.updatedAt ||
+    trade.timestamp ||
+    trade.time ||
+    null;
+
+  if (!timestampCandidate) return 0;
+  if (typeof timestampCandidate?.toDate === "function") return timestampCandidate.toDate().getTime();
+  if (typeof timestampCandidate?.seconds === "number") return timestampCandidate.seconds * 1000;
+  if (timestampCandidate instanceof Date) return timestampCandidate.getTime();
+
+  const parsed = Date.parse(String(timestampCandidate));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const defaultAvatarOptions = Array.from({ length: 15 }, (_, i) => `/defaults/default${i + 1}.png`);
 
+const getDeterministicDefaultAvatar = (seed) => {
+  const normalized = String(seed || "user");
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = ((hash << 5) - hash + normalized.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(hash) % defaultAvatarOptions.length;
+  return defaultAvatarOptions[idx] || defaultAvatarOptions[0];
+};
+
+const defaultCryptoAssets = [
+  { symbol: "BTC", name: "Bitcoin", assetType: "crypto" },
+  { symbol: "ETH", name: "Ethereum", assetType: "crypto" },
+  { symbol: "SOL", name: "Solana", assetType: "crypto" },
+  { symbol: "XRP", name: "XRP", assetType: "crypto" },
+  { symbol: "DOGE", name: "Dogecoin", assetType: "crypto" },
+  { symbol: "BNB", name: "BNB", assetType: "crypto" },
+  { symbol: "ADA", name: "Cardano", assetType: "crypto" }
+];
+
+const defaultOptionAssets = [
+  { symbol: "AAPL", name: "Apple Options", assetType: "options" },
+  { symbol: "TSLA", name: "Tesla Options", assetType: "options" },
+  { symbol: "NVDA", name: "NVIDIA Options", assetType: "options" },
+  { symbol: "SPY", name: "SPY Options", assetType: "options" },
+  { symbol: "QQQ", name: "QQQ Options", assetType: "options" }
+];
+
+const cryptoSymbolSet = new Set(defaultCryptoAssets.map((a) => a.symbol));
+const optionSymbolSet = new Set(defaultOptionAssets.map((a) => a.symbol));
+
+function inferAssetType(symbol) {
+  const s = (symbol || "").toUpperCase();
+  if (cryptoSymbolSet.has(s)) return "crypto";
+  if (optionSymbolSet.has(s)) return "options";
+  return "stocks";
+}
+
+const pnlChartRanges = ["day", "week", "mtd", "ytd", "ltd"];
+const pnlRangeLabels = {
+  day: "Day",
+  week: "Week",
+  mtd: "MTD",
+  ytd: "YTD",
+  ltd: "LTD"
+};
+
+const activeTickerChartRanges = ["day", "week", "mtd", "ytd", "ltd"];
+const activeTickerChartRangeLabels = {
+  day: "Day",
+  week: "Week",
+  mtd: "MTD",
+  ytd: "YTD",
+  ltd: "LTD"
+};
+
+const getStartOfLocalDay = (date) => {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
+
+const getStartOfLocalWeek = (date) => {
+  const next = getStartOfLocalDay(date);
+  const day = next.getDay();
+  const distanceToMonday = day === 0 ? 6 : day - 1;
+  next.setDate(next.getDate() - distanceToMonday);
+  return next;
+};
+
+const getStartOfLocalMonth = (date) => {
+  const next = getStartOfLocalDay(date);
+  next.setDate(1);
+  return next;
+};
+
+const getStartOfLocalYear = (date) => {
+  const next = getStartOfLocalDay(date);
+  next.setMonth(0, 1);
+  return next;
+};
+
+const formatActiveTickerAxisLabel = (timestamp, range) => {
+  const safeTs = Number(timestamp || 0);
+  if (!safeTs) return "--";
+  const date = new Date(safeTs);
+  if (Number.isNaN(date.getTime())) return "--";
+
+  if (range === "day") {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  if (range === "week") {
+    return date.toLocaleDateString([], { weekday: "short" });
+  }
+  if (range === "mtd" || range === "ytd") {
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+  return date.toLocaleDateString([], { month: "short", year: "2-digit" });
+};
+
+const getActiveTickerChartRequest = (range, firstTradeMs = 0) => {
+  const nowMs = Date.now();
+  const nowSec = Math.floor(nowMs / 1000);
+  let fromMs = nowMs - 24 * 60 * 60 * 1000;
+  let resolution = "5";
+
+  if (range === "day") {
+    fromMs = getStartOfLocalDay(new Date(nowMs)).getTime();
+    resolution = "5";
+  } else if (range === "week") {
+    fromMs = getStartOfLocalWeek(new Date(nowMs)).getTime();
+    resolution = "30";
+  } else if (range === "mtd") {
+    fromMs = getStartOfLocalMonth(new Date(nowMs)).getTime();
+    resolution = "60";
+  } else if (range === "ytd") {
+    fromMs = getStartOfLocalYear(new Date(nowMs)).getTime();
+    resolution = "D";
+  } else if (range === "ltd") {
+    fromMs = Number(firstTradeMs || 0) || nowMs - 365 * 24 * 60 * 60 * 1000;
+    resolution = "D";
+  }
+
+  const fromSec = Math.min(Math.floor(fromMs / 1000), nowSec - 60);
+  return {
+    resolution,
+    from: Math.max(0, fromSec),
+    to: nowSec
+  };
+};
+
+const selectNearestContracts = (contracts, spotPrice, limit = 6) => {
+  const spot = Number(spotPrice || 0);
+  if (!Array.isArray(contracts) || !contracts.length) return [];
+
+  return contracts
+    .filter((contract) => Number(contract?.strike || 0) > 0)
+    .map((contract) => {
+      const strike = Number(contract?.strike || 0);
+      const distance = spot > 0 ? Math.abs(strike - spot) : strike;
+      const liquidity = Number(contract?.openInterest || 0) + Number(contract?.volume || 0);
+      return { contract, distance, liquidity };
+    })
+    .sort((a, b) => {
+      if (a.distance !== b.distance) return a.distance - b.distance;
+      if (a.liquidity !== b.liquidity) return b.liquidity - a.liquidity;
+      return Number(a.contract?.strike || 0) - Number(b.contract?.strike || 0);
+    })
+    .slice(0, Math.max(1, Number(limit || 6)))
+    .map((entry) => entry.contract)
+    .sort((a, b) => Number(a?.strike || 0) - Number(b?.strike || 0));
+};
+
 const normalizePostAuthorAvatar = async (post) => {
-  const authorUid = post.authorId || post.userId || post.user?.uid;
-  const fallbackAvatar = post.user?.avatar || getRandomDefaultAvatar();
+  const authorUid = post?.authorId || post?.uid || post?.user?.uid || null;
+  const fallbackSeed = authorUid || post.user?.name || post.author || post.id || "user";
+  const fallbackAvatar = post.user?.avatar || getDeterministicDefaultAvatar(fallbackSeed);
 
   if (!authorUid) {
     return {
@@ -173,6 +230,12 @@ const normalizePostAuthorAvatar = async (post) => {
     post.author ||
     "User";
 
+  const isCurrentUser = auth.currentUser?.uid && authorUid === auth.currentUser.uid;
+  const resolvedAvatar =
+    (isCurrentUser ? auth.currentUser?.photoURL : null) ||
+    ensuredProfile.photoURL ||
+    fallbackAvatar;
+
   return {
     ...post,
     authorId: authorUid,
@@ -181,30 +244,59 @@ const normalizePostAuthorAvatar = async (post) => {
       uid: authorUid,
       name: displayName,
       handle: post.user?.handle || (ensuredProfile.email ? `@${ensuredProfile.email.split("@")[0]}` : "@user"),
-      avatar: ensuredProfile.photoURL || fallbackAvatar
+      avatar: resolvedAvatar
     }
   };
 };
 
-const initialCommentsByPost = {
-  1: [
-    { id: 1, user: { name: "Alice", avatar: "https://ui-avatars.com/api/?name=Alice&background=050816&color=B6FF22" }, content: "Congrats!" },
-    { id: 2, user: { name: "Bob", avatar: "https://ui-avatars.com/api/?name=Bob&background=050816&color=B6FF22" }, content: "Well done!" }
-  ],
-  2: [
-    { id: 3, user: { name: "Charlie", avatar: "https://ui-avatars.com/api/?name=Charlie&background=050816&color=B6FF22" }, content: "Good luck!" }
-  ],
-  101: [],
-  102: []
-};
+function WatchlistRow({ item, activeTicker, setActiveTicker, onRemove, quoteData }) {
+  const price = quoteData?.c;
+  const prevClose = quoteData?.pc;
+  const change = price != null && prevClose ? price - prevClose : null;
+  const changePct = prevClose && change != null ? (change / prevClose) * 100 : null;
+  const up = change != null ? change >= 0 : null;
+  return (
+    <div
+      className={
+        "flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black cursor-pointer mb-2" +
+        (activeTicker === item.symbol ? " bg-brogreen/10 border border-brogreen" : "")
+      }
+      onClick={() => setActiveTicker(item.symbol)}
+    >
+      <span className="text-xs font-black uppercase w-14 shrink-0">{item.symbol}</span>
+      {price != null ? (
+        <span className="text-xs font-black text-slate-900 dark:text-slate-100">${Number(price).toFixed(2)}</span>
+      ) : null}
+      {changePct != null ? (
+        <span className={`text-[10px] font-black ${up ? "text-green-600" : "text-red-500"}`}>
+          {up ? "+" : ""}{changePct.toFixed(2)}%
+        </span>
+      ) : null}
+      <span className="text-[10px] text-slate-400 flex-1 truncate hidden sm:inline">{item.name}</span>
+      <button
+        className="ml-auto shrink-0 w-5 h-5 rounded-full bg-red-100 flex items-center justify-center text-red-500 text-xs font-black leading-none"
+        title="Remove"
+        onClick={async (e) => {
+          e.stopPropagation();
+          await onRemove(item.symbol);
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
-const Feed = () => {
+function Feed() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
     // Community creation state
     const [communityName, setCommunityName] = useState("");
     const [communityDesc, setCommunityDesc] = useState("");
     const [communityCategory, setCommunityCategory] = useState("");
     const [communityImage, setCommunityImage] = useState(null);
     const [communityImagePreview, setCommunityImagePreview] = useState(null);
+    const [communityDefaultAvatar, setCommunityDefaultAvatar] = useState("");
     const [communityBanner, setCommunityBanner] = useState(null);
     const [communityBannerPreview, setCommunityBannerPreview] = useState(null);
     const [communityError, setCommunityError] = useState("");
@@ -216,11 +308,18 @@ const Feed = () => {
       const file = e.target.files[0];
       if (file) {
         setCommunityImage(file);
+        setCommunityDefaultAvatar("");
         setCommunityImagePreview(URL.createObjectURL(file));
       }
     };
+    const handleSelectCommunityDefaultAvatar = (avatarUrl) => {
+      setCommunityImage(null);
+      setCommunityDefaultAvatar(avatarUrl);
+      setCommunityImagePreview(avatarUrl);
+    };
     const handleRemoveCommunityImage = () => {
       setCommunityImage(null);
+      setCommunityDefaultAvatar("");
       setCommunityImagePreview(null);
     };
     // Banner preview/removal
@@ -237,77 +336,200 @@ const Feed = () => {
     };
 
     // Community creation handler
-    const handleCreateCommunity = async e => {
+    const handleCreateCommunity = async (e) => {
       e.preventDefault();
       setCommunityError("");
+
+      if (!user?.uid) {
+        setCommunityError("You must be signed in to create a community.");
+        return;
+      }
       if (!communityName.trim()) {
         setCommunityError("Community name is required.");
         return;
       }
+
       setCommunityLoading(true);
       try {
-        let avatarUrl = null;
+        let avatarUrl = communityDefaultAvatar || getRandomDefaultAvatar();
         let bannerUrl = null;
+
         if (communityImage) {
           const storage = getStorage();
-          const imgRef = storageRef(storage, `community-avatars/${user?.uid || "nouser"}-${Date.now()}-${communityImage.name}`);
+          const imgRef = storageRef(storage, `community-images/${user.uid}-${Date.now()}-${communityImage.name}`);
           await uploadBytes(imgRef, communityImage);
           avatarUrl = await getDownloadURL(imgRef);
         }
+
         if (communityBanner) {
           const storage = getStorage();
-          const bannerRef = storageRef(storage, `community-banners/${user?.uid || "nouser"}-${Date.now()}-${communityBanner.name}`);
+          const bannerRef = storageRef(storage, `community-banners/${user.uid}-${Date.now()}-${communityBanner.name}`);
           await uploadBytes(bannerRef, communityBanner);
           bannerUrl = await getDownloadURL(bannerRef);
         }
-        // Add to Firestore
-        const newCommunity = {
+
+        const communityRef = await addDoc(collection(db, "communities"), {
           name: communityName.trim(),
           description: communityDesc.trim(),
           category: communityCategory.trim(),
-          avatar: avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(communityName)}&background=050816&color=B6FF22`,
-          banner: bannerUrl || "",
+          avatar: avatarUrl,
+          banner: bannerUrl,
           members: 1,
-          createdAt: new Date(),
-          createdBy: user?.uid || "anon"
-        };
-        const docRef = await addDoc(collection(db, "communities"), newCommunity);
-        setCommunitiesCache(prev => [{ id: docRef.id, ...newCommunity }, ...prev]);
-        // Reset form
+          createdAt: serverTimestamp(),
+          createdBy: user.uid,
+          topModeratorId: user.uid,
+          assistantModeratorIds: []
+        });
+
+        await setDoc(doc(db, "memberships", `${user.uid}_${communityRef.id}`), {
+          userId: user.uid,
+          communityId: communityRef.id,
+          joinedAt: Date.now(),
+          role: "owner"
+        }, { merge: true });
+
         setCommunityName("");
         setCommunityDesc("");
         setCommunityCategory("");
         setCommunityImage(null);
         setCommunityImagePreview(null);
+        setCommunityDefaultAvatar("");
         setCommunityBanner(null);
         setCommunityBannerPreview(null);
         setModal("");
       } catch (err) {
-        setCommunityError("Failed to create community. Try again.");
+        setCommunityError("Failed to create community. Please try again.");
+      } finally {
+        setCommunityLoading(false);
       }
-      setCommunityLoading(false);
     };
-  // Firebase user state
-  const [user, setUser] = useState(null);
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-    });
-    return () => unsubscribe();
-  }, []);
-  const demoPosts = initialPosts;
-  const [posts, setPosts] = useState(demoPosts);
-  const [sort, setSort] = useState("newest"); // "newest" | "bullish" | "bearish" | "active"
+
+  const [posts, setPosts] = useState([]);
+  const [sort, setSort] = useState("recommended"); // "recommended" | "newest" | "bullish" | "bearish" | "active"
   const [loading, setLoading] = useState(true);
+
+  const handleToggleBookmark = async (post) => {
+    if (!user || !post?.id) return;
+    try {
+      const bookmarksRef = collection(db, "bookmarks");
+      const bookmarksQ = query(
+        bookmarksRef,
+        where("userId", "==", user.uid),
+        where("postId", "==", post.id)
+      );
+      const snap = await getDocs(bookmarksQ);
+
+      if (snap.empty) {
+        await addDoc(bookmarksRef, {
+          userId: user.uid,
+          postId: post.id,
+          bookmarkedAt: new Date()
+        });
+        setPosts((prevPosts) =>
+          prevPosts.map((p) => (p.id === post.id ? { ...p, bookmarked: true } : p))
+        );
+        return;
+      }
+
+      await Promise.all(snap.docs.map((docu) => deleteDoc(doc(db, "bookmarks", docu.id))));
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => (p.id === post.id ? { ...p, bookmarked: false } : p))
+      );
+    } catch (err) {
+      // Keep bookmark errors non-blocking to preserve feed UX.
+    }
+  };
+
+  const handleVote = async (post, type) => {
+    if (!post?.id || !user?.uid) return;
+
+    try {
+      const postRef = doc(db, "posts", post.id);
+      const voteRef = doc(db, "votes", `${user.uid}_${post.id}`);
+      let nextBullish = post.bullishVotes || 0;
+      let nextBearish = post.bearishVotes || 0;
+      let changed = false;
+
+      await runTransaction(db, async (transaction) => {
+        const [postSnap, voteSnap] = await Promise.all([
+          transaction.get(postRef),
+          transaction.get(voteRef)
+        ]);
+
+        if (!postSnap.exists()) return;
+
+        const previousVote = voteSnap.exists() ? voteSnap.data()?.voteType : null;
+        if (previousVote === type) return;
+
+        let bullishVotes = postSnap.data()?.bullishVotes || 0;
+        let bearishVotes = postSnap.data()?.bearishVotes || 0;
+
+        if (previousVote === "bullish") bullishVotes = Math.max(0, bullishVotes - 1);
+        if (previousVote === "bearish") bearishVotes = Math.max(0, bearishVotes - 1);
+
+        if (type === "bullish") bullishVotes += 1;
+        if (type === "bearish") bearishVotes += 1;
+
+        transaction.update(postRef, {
+          bullishVotes,
+          bearishVotes
+        });
+        transaction.set(voteRef, {
+          userId: user.uid,
+          postId: post.id,
+          voteType: type,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        nextBullish = bullishVotes;
+        nextBearish = bearishVotes;
+        changed = true;
+      });
+
+      if (!changed) return;
+
+      setPosts((prevPosts) =>
+        prevPosts.map((p) => {
+          if (p.id !== post.id) return p;
+          return {
+            ...p,
+            bullishVotes: nextBullish,
+            bearishVotes: nextBearish
+          };
+        })
+      );
+    } catch (err) {
+      // Keep vote errors non-blocking to preserve feed UX.
+    }
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!post?.id || typeof post.id === "number") return;
+    const postOwnerId = post.authorId || post.userId || post.user?.uid;
+    if (!user?.uid || postOwnerId !== user.uid) return;
+    const shouldDelete = window.confirm("Delete this post permanently?");
+    if (!shouldDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "posts", post.id));
+      setPosts((prevPosts) => prevPosts.filter((p) => p.id !== post.id));
+      setCommentsByPost((prev) => {
+        const next = { ...prev };
+        delete next[post.id];
+        return next;
+      });
+    } catch (err) {
+      // Keep delete failures non-blocking for feed rendering.
+    }
+  };
+
     // Firestore realtime posts subscription
     useEffect(() => {
       setLoading(true);
       let q = query(collection(db, "posts"));
-      if (sort === "newest") q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+      if (sort === "newest" || sort === "recommended" || sort === "active") q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
       else if (sort === "bullish") q = query(collection(db, "posts"), orderBy("bullishVotes", "desc"));
       else if (sort === "bearish") q = query(collection(db, "posts"), orderBy("bearishVotes", "desc"));
-      else if (sort === "active") q = query(collection(db, "posts"), orderBy("comments", "desc"));
       const unsubscribe = onSnapshot(
         q,
         async (snapshot) => {
@@ -316,25 +538,25 @@ const Feed = () => {
             const normalizedData = await Promise.all(data.map((post) => normalizePostAuthorAvatar(post)));
             setPosts(normalizedData);
           } else {
-            setPosts(demoPosts);
+            setPosts([]);
           }
           setLoading(false);
         },
         (error) => {
-          setPosts(demoPosts);
+          setPosts([]);
           setLoading(false);
         }
       );
       return () => unsubscribe();
       // eslint-disable-next-line
     }, [sort]);
-  const [recommendedPosts, setRecommendedPosts] = useState(initialRecommendedPosts);
-  const [watchlist, setWatchlist] = useState(initialWatchlist);
-  const [activeTicker, setActiveTicker] = useState(watchlist.find(w => w.active)?.symbol || "AAPL");
+  const [watchlist, setWatchlist] = useState([]);
+  const [activeTicker, setActiveTicker] = useState("AAPL");
   // Communities state
-  const [communitiesCache, setCommunitiesCache] = useState(initialCommunities);
+  const [communitiesCache, setCommunitiesCache] = useState([]);
+  const [joinedCommunityIds, setJoinedCommunityIds] = useState([]);
 
-  // Firestore communities loading with fallback
+  // Firestore communities loading
   useEffect(() => {
     const q = collection(db, "communities");
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -342,68 +564,46 @@ const Feed = () => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setCommunitiesCache(data);
       } else {
-        setCommunitiesCache(initialCommunities);
+        setCommunitiesCache([]);
       }
     }, () => {
-      setCommunitiesCache(initialCommunities);
+      setCommunitiesCache([]);
     });
     return () => unsubscribe();
   }, [db]);
-  const [following] = useState(initialFollowing);
-  const [trendingTopics] = useState(initialTrendingTopics);
-  const [expandedComments, setExpandedComments] = useState([]);
-  const [commentsByPost, setCommentsByPost] = useState(initialCommentsByPost);
-  const [commentInputs, setCommentInputs] = useState({});
 
-  // Firestore-backed comments: subscribe to comments for expanded posts
   useEffect(() => {
-    // Only subscribe for Firestore posts (string IDs)
-    const unsubscribes = expandedComments.map(postId => {
-      if (typeof postId !== "string") return null;
-      const commentsRef = collection(db, "posts", postId, "comments");
-      const q = query(commentsRef, orderBy("createdAt", "asc"));
-      return onSnapshot(q, (snapshot) => {
-        setCommentsByPost(prev => ({
-          ...prev,
-          [postId]: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-        }));
-      });
-    });
-    return () => { unsubscribes.forEach(u => u && u()); };
-  }, [expandedComments, db]);
+    if (!user?.uid) {
+      setJoinedCommunityIds([]);
+      return;
+    }
 
+    const membershipsQuery = query(collection(db, "memberships"), where("userId", "==", user.uid));
+    const unsubscribe = onSnapshot(membershipsQuery, (snapshot) => {
+      setJoinedCommunityIds(snapshot.docs.map((membershipDoc) => membershipDoc.data().communityId).filter(Boolean));
+    }, () => {
+      setJoinedCommunityIds([]);
+    });
+
+    return () => unsubscribe();
+  }, [db, user]);
   // Add comment handler
   const handleAddComment = async (post, val) => {
     if (!val.trim()) return;
-    // Demo post fallback
-    if (!post.id || typeof post.id === "number") {
-      setCommentsByPost(prev => ({
-        ...prev,
-        [post.id]: [
-          ...(prev[post.id] || []),
-          {
-            id: Date.now(),
-            user: { name: "You", avatar: "https://ui-avatars.com/api/?name=You&background=050816&color=B6FF22" },
-            content: val,
-            createdAt: new Date()
-          }
-        ]
-      }));
-      setCommentInputs(inputs => ({ ...inputs, [post.id]: "" }));
-      // Increment comment count for demo post
-      setPosts(prevPosts => prevPosts.map(p => p.id === post.id ? { ...p, comments: (p.comments || 0) + 1 } : p));
-      return;
-    }
     // Firestore-backed
     try {
       const commentsRef = collection(db, "posts", post.id, "comments");
       await addDoc(commentsRef, {
         user: {
           name: user?.displayName || "User",
-          avatar: user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || "U"}&background=050816&color=B6FF22`
+          avatar: user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || "U"}&background=050816&color=B6FF22`,
+          uid: user?.uid || null
         },
+        userId: user?.uid || null,
         content: val,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        likeCount: 0,
+        likedBy: []
       });
       setCommentInputs(inputs => ({ ...inputs, [post.id]: "" }));
       // Increment comment count in Firestore
@@ -413,92 +613,495 @@ const Feed = () => {
       // Optionally handle error
     }
   };
+  const [followingIds, setFollowingIds] = useState([]);
+  const [followingUsers, setFollowingUsers] = useState([]);
+  const [followersUsers, setFollowersUsers] = useState([]);
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const [activeTopic, setActiveTopic] = useState("");
+  const [expandedComments, setExpandedComments] = useState([]);
+  const [commentsByPost, setCommentsByPost] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+  const [replyInputs, setReplyInputs] = useState({});
+  const [activeReplyTarget, setActiveReplyTarget] = useState(null);
+  const [repliesByComment, setRepliesByComment] = useState({});
+
+  useEffect(() => {
+    let active = true;
+
+    const mapUsersByIds = async (ids) => {
+      if (!ids?.length) return [];
+      const usersSnap = await getDocs(collection(db, "users"));
+      return Promise.all(
+        usersSnap.docs
+          .filter((d) => ids.includes(d.id))
+          .map(async (d) => {
+            const normalized = await ensureUserHasAvatar(db, d.id);
+            const displayName = normalized.displayName || normalized.username || normalized.email || d.id;
+            return {
+              id: d.id,
+              name: displayName,
+              handle: normalized.email ? `@${normalized.email.split("@")[0]}` : `@${d.id.slice(0, 8)}`,
+              avatar: normalized.photoURL || "/defaults/default1.png"
+            };
+          })
+      );
+    };
+
+    const loadSocialData = async () => {
+      if (!user) {
+        if (active) {
+          setFollowingIds([]);
+          setFollowingUsers([]);
+          setFollowersUsers([]);
+        }
+        return;
+      }
+
+      try {
+        const [following, followers] = await Promise.all([
+          getFollowing(user.uid),
+          getFollowers(user.uid)
+        ]);
+        if (!active) return;
+        setFollowingIds(following);
+
+        const [followingMapped, followersMapped] = await Promise.all([
+          mapUsersByIds(following),
+          mapUsersByIds(followers)
+        ]);
+
+        if (!active) return;
+        setFollowingUsers(followingMapped);
+        setFollowersUsers(followersMapped);
+      } catch (err) {
+        if (!active) return;
+        setFollowingIds([]);
+        setFollowingUsers([]);
+        setFollowersUsers([]);
+      }
+    };
+
+    loadSocialData();
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    const firestorePostIds = posts
+      .map((post) => post.id)
+      .filter((postId) => typeof postId === "string");
+
+    if (!firestorePostIds.length) return undefined;
+
+    const unsubscribes = firestorePostIds.map((postId) => {
+      const commentsRef = collection(db, "posts", postId, "comments");
+      const commentsQuery = query(commentsRef, orderBy("createdAt", "asc"));
+      return onSnapshot(commentsQuery, (snapshot) => {
+        setCommentsByPost((prev) => ({
+          ...prev,
+          [postId]: snapshot.docs.map((commentDoc) => ({ id: commentDoc.id, ...commentDoc.data() }))
+        }));
+      });
+    });
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe && unsubscribe());
+    };
+  }, [db, posts]);
+
+  useEffect(() => {
+    const targets = expandedComments
+      .filter((postId) => typeof postId === "string")
+      .flatMap((postId) =>
+        (commentsByPost[postId] || [])
+          .map((comment) => ({ postId, commentId: comment.id }))
+          .filter((entry) => typeof entry.commentId === "string")
+      );
+
+    if (!targets.length) return undefined;
+
+    const unsubscribes = targets.map(({ postId, commentId }) => {
+      const repliesRef = collection(db, "posts", postId, "comments", commentId, "replies");
+      const repliesQuery = query(repliesRef, orderBy("createdAt", "asc"));
+      return onSnapshot(repliesQuery, (snapshot) => {
+        setRepliesByComment((prev) => ({
+          ...prev,
+          [`${postId}_${commentId}`]: snapshot.docs.map((replyDoc) => ({ id: replyDoc.id, ...replyDoc.data() }))
+        }));
+      });
+    });
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe && unsubscribe());
+    };
+  }, [commentsByPost, db, expandedComments]);
+
+  useEffect(() => {
+    const topicMap = new Map();
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+    posts.forEach((post) => {
+      const tokens = Array.from(new Set(extractTrendingTokens(post.content || "")));
+      if (!tokens.length) return;
+
+      const postCreatedAtMs = normalizePostCreatedAtMs(post.createdAt);
+      const recencyWeight = postCreatedAtMs >= oneDayAgo ? 2 : 1;
+
+      tokens.forEach((topic) => {
+        const row = topicMap.get(topic) || { topic, posts: 0, score: 0 };
+        row.posts += 1;
+        row.score += recencyWeight;
+        topicMap.set(topic, row);
+      });
+    });
+
+    const nextTopics = [...topicMap.values()]
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (b.posts !== a.posts) return b.posts - a.posts;
+        return a.topic.localeCompare(b.topic);
+      })
+      .slice(0, 8)
+      .map((topicRow, index) => ({
+        id: `${topicRow.topic}_${index}`,
+        topic: topicRow.topic,
+        posts: topicRow.posts
+      }));
+
+    setTrendingTopics(nextTopics);
+  }, [posts]);
+
+  const handleAddReply = async (post, comment, value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const replyKey = `${post.id}_${comment.id}`;
+
+    if (!post?.id || typeof post.id === "number" || typeof comment?.id !== "string") {
+      setRepliesByComment((prev) => ({
+        ...prev,
+        [replyKey]: [
+          ...(prev[replyKey] || []),
+          {
+            id: `${Date.now()}`,
+            user: {
+              name: user?.displayName || "You",
+              avatar: user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || "You"}&background=050816&color=B6FF22`
+            },
+            content: trimmed,
+            createdAt: new Date()
+          }
+        ]
+      }));
+      setReplyInputs((prev) => ({ ...prev, [replyKey]: "" }));
+      setActiveReplyTarget(null);
+      return;
+    }
+
+    try {
+      const repliesRef = collection(db, "posts", post.id, "comments", comment.id, "replies");
+      await addDoc(repliesRef, {
+        user: {
+          name: user?.displayName || "User",
+          avatar: user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName || "U"}&background=050816&color=B6FF22`
+        },
+        content: trimmed,
+        createdAt: serverTimestamp()
+      });
+      setReplyInputs((prev) => ({ ...prev, [replyKey]: "" }));
+      setActiveReplyTarget(null);
+    } catch {
+      // Non-blocking
+    }
+  };
+
+  const handleReportComment = async (post, comment) => {
+    if (!user?.uid || !post?.id || !comment?.id) return;
+
+    const shouldReport = window.confirm("Are you sure you want to report this post?");
+    if (!shouldReport) return;
+
+    try {
+      const reportRef = doc(db, "commentReports", `${user.uid}_${post.id}_${comment.id}`);
+      await setDoc(reportRef, {
+        reporterId: user.uid,
+        postId: post.id,
+        commentId: comment.id,
+        commentContent: comment.content || "",
+        commentAuthorName: comment.user?.name || "User",
+        status: "open",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch {
+      // Non-blocking
+    }
+  };
+
+  const handleReportPost = async (post) => {
+    if (!user?.uid || !post?.id) return;
+
+    const shouldReport = window.confirm("Are you sure you want to report this post?");
+    if (!shouldReport) return;
+
+    if (typeof post.id !== "string") return;
+
+    try {
+      const reportRef = doc(db, "postReports", `${user.uid}_${post.id}`);
+      await setDoc(reportRef, {
+        reporterId: user.uid,
+        postId: post.id,
+        postContent: post.content || "",
+        postAuthorName: post.user?.name || "User",
+        status: "open",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch {
+      // Non-blocking
+    }
+  };
+
+  const handleToggleCommentLike = async (post, comment) => {
+    if (!user?.uid || !post?.id || !comment?.id) return;
+
+    const likedBy = Array.isArray(comment.likedBy) ? comment.likedBy : [];
+    const alreadyLiked = likedBy.includes(user.uid);
+
+    if (typeof post.id !== "string" || typeof comment.id !== "string") {
+      setCommentsByPost((prev) => ({
+        ...prev,
+        [post.id]: (prev[post.id] || []).map((row) => {
+          if (row.id !== comment.id) return row;
+          const rowLikedBy = Array.isArray(row.likedBy) ? row.likedBy : [];
+          const rowAlreadyLiked = rowLikedBy.includes(user.uid);
+          const nextLikedBy = rowAlreadyLiked
+            ? rowLikedBy.filter((uid) => uid !== user.uid)
+            : [...rowLikedBy, user.uid];
+          return {
+            ...row,
+            likedBy: nextLikedBy,
+            likeCount: rowAlreadyLiked ? Math.max(0, (row.likeCount || 0) - 1) : (row.likeCount || 0) + 1
+          };
+        })
+      }));
+      return;
+    }
+
+    try {
+      const commentRef = doc(db, "posts", post.id, "comments", comment.id);
+      let nextLikeCount = comment.likeCount || 0;
+      let nextLikedBy = likedBy;
+
+      await runTransaction(db, async (transaction) => {
+        const commentSnap = await transaction.get(commentRef);
+        if (!commentSnap.exists()) return;
+
+        const data = commentSnap.data() || {};
+        const currentLikedBy = Array.isArray(data.likedBy) ? data.likedBy : [];
+        const currentLikeCount = data.likeCount || 0;
+        const isLiked = currentLikedBy.includes(user.uid);
+
+        nextLikedBy = isLiked
+          ? currentLikedBy.filter((uid) => uid !== user.uid)
+          : [...currentLikedBy, user.uid];
+        nextLikeCount = isLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1;
+
+        transaction.update(commentRef, {
+          likedBy: nextLikedBy,
+          likeCount: nextLikeCount
+        });
+      });
+
+      setCommentsByPost((prev) => ({
+        ...prev,
+        [post.id]: (prev[post.id] || []).map((row) =>
+          row.id === comment.id ? { ...row, likedBy: nextLikedBy, likeCount: nextLikeCount } : row
+        )
+      }));
+    } catch {
+      // Non-blocking
+    }
+  };
+
   // --- UI STATE REPLACEMENTS FOR IMPERATIVE DOM ---
   // Post creation state
   const [postDestination, setPostDestination] = useState("timeline");
   const [postCommunity, setPostCommunity] = useState("");
-  const [postSubject, setPostSubject] = useState("");
-  const [postLabel, setPostLabel] = useState("");
+  const [postCommunityId, setPostCommunityId] = useState("");
+  const [postCategories, setPostCategories] = useState([]);
+  const [postNewsCategory, setPostNewsCategory] = useState("");
   const [postContent, setPostContent] = useState("");
-  const [postImage, setPostImage] = useState(null);
-  const [postImagePreview, setPostImagePreview] = useState(null);
+  const [postHasPoll, setPostHasPoll] = useState(false);
+  const [postPollQuestion, setPostPollQuestion] = useState("");
+  const [postPollOptionA, setPostPollOptionA] = useState("");
+  const [postPollOptionB, setPostPollOptionB] = useState("");
   const [allowComments, setAllowComments] = useState(true);
   const [postError, setPostError] = useState("");
+  const [postSuccess, setPostSuccess] = useState("");
   const [postCharCount, setPostCharCount] = useState(0);
   const [postLoading, setPostLoading] = useState(false);
+  const [communityMenuOpen, setCommunityMenuOpen] = useState(false);
+  const communityMenuRef = useRef(null);
+  const assetSearchRef = useRef(null);
+  const globalSearchRef = useRef(null);
+
+  const postCategoryOptions = ["Prediction Markets", "Collectible Items", "Crypto", "Options", "FX", "News"];
+  const postNewsCategoryOptions = ["Stock News", "Politics", "World News"];
+  const isNewsCategorySelected = postCategories.includes("News");
+  const joinedCommunities = communitiesCache.filter((community) => community?.createdBy === user?.uid || joinedCommunityIds.includes(community.id));
+  const selectedJoinedCommunity = joinedCommunities.find((community) => community.id === postCommunityId) || joinedCommunities.find((community) => community.name === postCommunity) || null;
+
+  const isPostDraftDirty =
+    postContent.trim().length > 0 ||
+    postCategories.length > 0 ||
+    postNewsCategory !== "" ||
+    postCommunity !== "" ||
+    postCommunityId !== "" ||
+    postHasPoll ||
+    postPollQuestion.trim().length > 0 ||
+    postPollOptionA.trim().length > 0 ||
+    postPollOptionB.trim().length > 0;
+
+  const isPollReady =
+    !postHasPoll ||
+    (postPollQuestion.trim().length > 0 && postPollOptionA.trim().length > 0 && postPollOptionB.trim().length > 0);
+
+  const canPost =
+    (postContent.trim().length > 0 || postHasPoll) &&
+    postCategories.length > 0 &&
+    (!isNewsCategorySelected || postNewsCategory !== "") &&
+    isPollReady &&
+    (postDestination === "timeline" || (postDestination === "community" && postCommunity !== "" && postCommunityId !== ""));
 
   // Handle post form field changes
-  const handlePostDestination = e => setPostDestination(e.target.value);
-  const handlePostCommunity = e => setPostCommunity(e.target.value);
-  const handlePostSubject = e => setPostSubject(e.target.value);
-  const handlePostLabel = e => setPostLabel(e.target.value);
+  const handlePostDestination = nextDestination => {
+    setPostDestination(nextDestination);
+    if (nextDestination !== "community") {
+      setPostCommunity("");
+      setPostCommunityId("");
+      setCommunityMenuOpen(false);
+    }
+  };
+  const handleSelectPostCommunity = (community) => {
+    setPostCommunity(community.name);
+    setPostCommunityId(community.id);
+    setCommunityMenuOpen(false);
+  };
+  const handlePostCategory = nextCategory => {
+    let nextCategories = [];
+    setPostCategories((currentCategories) => {
+      const isSelected = currentCategories.includes(nextCategory);
+      if (isSelected) {
+        nextCategories = currentCategories.filter((category) => category !== nextCategory);
+        return nextCategories;
+      }
+      if (currentCategories.length >= 3) {
+        nextCategories = currentCategories;
+        return currentCategories;
+      }
+      nextCategories = [...currentCategories, nextCategory];
+      return nextCategories;
+    });
+    if (!nextCategories.includes("News")) {
+      setPostNewsCategory("");
+    }
+  };
+  const handlePostNewsCategory = nextNewsCategory => setPostNewsCategory(nextNewsCategory);
   const handlePostContent = e => {
     setPostContent(e.target.value);
     setPostCharCount(e.target.value.length);
   };
   const handleAllowComments = e => setAllowComments(e.target.checked);
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!communityMenuRef.current?.contains(event.target)) {
+        setCommunityMenuOpen(false);
+      }
+    };
 
-  // Image preview/removal
-  const handlePostImage = e => {
-    const file = e.target.files[0];
-    if (file) {
-      setPostImage(file);
-      setPostImagePreview(URL.createObjectURL(file));
-    }
-  };
-  const handleRemovePostImage = () => {
-    setPostImage(null);
-    setPostImagePreview(null);
-  };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   // Reset post form
   const resetPostForm = () => {
     setPostDestination("timeline");
     setPostCommunity("");
-    setPostSubject("");
-    setPostLabel("");
+    setPostCommunityId("");
+    setPostCategories([]);
+    setPostNewsCategory("");
     setPostContent("");
-    setPostImage(null);
-    setPostImagePreview(null);
+    setPostHasPoll(false);
+    setPostPollQuestion("");
+    setPostPollOptionA("");
+    setPostPollOptionB("");
     setAllowComments(true);
     setPostError("");
     setPostCharCount(0);
     setPostLoading(false);
+    setCommunityMenuOpen(false);
+  };
+
+  const handleClosePostModal = () => {
+    if (postLoading) return;
+    if (isPostDraftDirty) {
+      const discard = window.confirm("Discard this draft post?");
+      if (!discard) return;
+    }
+    resetPostForm();
+    setModal("");
   };
 
   // Post submit handler
   const handlePostSubmit = async e => {
     e.preventDefault();
+    if (postLoading) return;
     setPostError("");
+    setPostSuccess("");
     if (!user) {
       setPostError("You must be signed in to post.");
       return;
     }
-    if (!postContent.trim()) {
-      setPostError("Post content cannot be empty.");
+    if (!postContent.trim() && !postHasPoll) {
+      setPostError("Add content or include a poll before posting.");
       return;
     }
-    if (!postSubject) {
-      setPostError("Please select a subject.");
+    if (postCategories.length === 0) {
+      setPostError("Please select up to three categories.");
       return;
     }
-    if (!postLabel) {
-      setPostError("Please select a label.");
+    if (isNewsCategorySelected && !postNewsCategory) {
+      setPostError("Please select a news category.");
       return;
     }
-    if (postDestination === "community" && !postCommunity) {
+    if (postDestination === "community" && (!postCommunity || !postCommunityId)) {
       setPostError("Please select a community.");
       return;
     }
+    if (postHasPoll && !isPollReady) {
+      setPostError("Poll question and both options are required.");
+      return;
+    }
+
+    const blockedWordPattern = /\b(nigger|nigga|rape)\b/i;
+    const textToModerate = [
+      postContent,
+      postPollQuestion,
+      postPollOptionA,
+      postPollOptionB
+    ].filter(Boolean).join(" ");
+
+    if (blockedWordPattern.test(textToModerate)) {
+      const moderationMessage = "Your post contains prohibited language and cannot be published.";
+      setPostError(moderationMessage);
+      window.alert(moderationMessage);
+      return;
+    }
+
     setPostLoading(true);
-    let imageUrl = null;
     try {
-      if (postImage) {
-        const storage = getStorage();
-        const imgRef = storageRef(storage, `post-images/${user.uid}-${Date.now()}-${postImage.name}`);
-        await uploadBytes(imgRef, postImage);
-        imageUrl = await getDownloadURL(imgRef);
-      }
       const postData = {
         user: {
           name: user.displayName || "User",
@@ -508,24 +1111,111 @@ const Feed = () => {
         authorId: user.uid,
         time: "now",
         content: postContent,
-        image: imageUrl,
+        image: null,
         comments: 0,
         likes: 0,
         bookmarked: false,
-        subject: postSubject,
-        label: postLabel,
+        category: postCategories[0],
+        categories: postCategories,
+        newsCategory: isNewsCategorySelected ? postNewsCategory : null,
         allowComments,
+        poll: postHasPoll
+          ? {
+              question: postPollQuestion.trim(),
+              options: [
+                { id: "option-1", label: postPollOptionA.trim(), votes: 0 },
+                { id: "option-2", label: postPollOptionB.trim(), votes: 0 }
+              ],
+              totalVotes: 0
+            }
+          : null,
         destination: postDestination,
         community: postDestination === "community" ? postCommunity : null,
+        communityId: postDestination === "community" ? postCommunityId : null,
         createdAt: serverTimestamp()
       };
-      await addDoc(collection(db, "posts"), postData);
+      const createdPost = {
+        ...postData,
+        createdAt: new Date(),
+        user: {
+          ...postData.user,
+          uid: user.uid
+        }
+      };
+      const docRef = await addDoc(collection(db, "posts"), postData);
+      setPosts((prevPosts) => [{ id: docRef.id, ...createdPost }, ...prevPosts]);
+      setPostSuccess("Posted successfully.");
       resetPostForm();
       setModal("");
     } catch (err) {
       setPostError("Failed to post. Please try again.");
     }
     setPostLoading(false);
+  };
+
+  const handleShareHistoricalTrade = async (trade) => {
+    if (!user?.uid || !trade?.id) return;
+
+    const normalizedSymbol = String(trade.symbol || "").toUpperCase();
+    const normalizedSide = String(trade.side || "trade").toLowerCase();
+    const assetType = trade.assetType === "option" ? "option" : "stock";
+    const underlyingSymbol = String(trade.underlyingSymbol || normalizedActiveTicker || normalizedSymbol).toUpperCase();
+    const optionType = String(trade.optionType || "call").toLowerCase() === "put" ? "put" : "call";
+    const strike = Number(trade.strike || 0);
+    const contractMultiplier = Number(trade.contractMultiplier || 1);
+    const quantity = Number(trade.quantity || 0);
+    const price = Number(trade.price || 0);
+    const realizedPnl = Number(trade.realizedPnl || 0);
+    const pnlText = normalizedSide === "sell"
+      ? ` | Trade PnL: ${realizedPnl >= 0 ? "+" : "-"}$${Math.abs(realizedPnl).toFixed(2)}`
+      : "";
+    const tradeSummary = assetType === "option"
+      ? `${normalizedSide.toUpperCase()} ${quantity} ${normalizedSymbol} contracts @ $${price.toFixed(2)} (${optionType.toUpperCase()} ${underlyingSymbol} $${strike.toFixed(2)})`
+      : `${normalizedSide.toUpperCase()} ${quantity} ${normalizedSymbol} @ $${price.toFixed(2)}`;
+
+    try {
+      await addDoc(collection(db, "posts"), {
+        author: user.displayName || user.email?.split("@")[0] || "Trader",
+        authorId: user.uid,
+        content: `Shared paper trade: ${tradeSummary}${pnlText}`,
+        createdAt: serverTimestamp(),
+        comments: 0,
+        bullishVotes: 0,
+        bearishVotes: 0,
+        user: {
+          uid: user.uid,
+          name: user.displayName || user.email?.split("@")[0] || "Trader",
+          avatar: user.photoURL || "/defaults/default1.png",
+          handle: user.email ? `@${user.email.split("@")[0]}` : "@trader"
+        },
+        paperTrade: {
+          symbol: normalizedSymbol,
+          assetType,
+          underlyingSymbol,
+          quantity,
+          price,
+          contractMultiplier,
+          notional: Number(trade.notional || quantity * price * contractMultiplier),
+          side: normalizedSide,
+          realizedPnl: normalizedSide === "sell" ? realizedPnl : null,
+          ...(assetType === "option"
+            ? {
+                optionType,
+                strike,
+                expiration: trade.expiration || null
+              }
+            : {}),
+          originalTradeId: trade.id
+        }
+      });
+
+      await updateDoc(doc(db, "users", user.uid, "paperTrades", trade.id), {
+        sharedToFeed: true,
+        sharedAt: serverTimestamp()
+      });
+    } catch {
+      // Non-blocking for feed UX.
+    }
   };
   // Modal visibility state
   const [modal, setModal] = useState(""); // "ticker" | "post" | "profile" | "create-community" | "bro-llm" | "dm" | ""
@@ -541,8 +1231,132 @@ const Feed = () => {
   const [feedTab, setFeedTab] = useState("for-you"); // "for-you" or "following"
   // Bookmark filter state
   const [selectedFilter, setSelectedFilter] = useState("home");
+
+  const filteredPosts = useMemo(
+    () => posts.filter((post) => {
+      if (feedTab === "following") {
+        // Show only posts by following (safe null checks + legacy name fallback)
+        const authorUid = post.authorId || post.user?.uid;
+        if (authorUid && followingIds.includes(authorUid)) {
+          // continue
+        } else {
+          const comments = commentsByPost[post.id] || [];
+          const followedComment = comments.some((comment) => {
+            const commenterUid = comment.userId || comment.user?.uid;
+            if (commenterUid) return followingIds.includes(commenterUid);
+            const commenterName = comment.user?.name?.trim()?.toLowerCase();
+            if (!commenterName) return false;
+            return followingUsers.some((f) => f?.name?.trim()?.toLowerCase() === commenterName);
+          });
+          if (!followedComment) {
+            const postName = post.user?.name?.trim()?.toLowerCase();
+            if (!postName || !followingUsers.some((f) => f?.name?.trim()?.toLowerCase() === postName)) {
+              return false;
+            }
+          }
+        }
+      }
+
+      if (selectedFilter !== "home") {
+        if (typeof selectedFilter === "number" || typeof selectedFilter === "string") {
+          const comm = communitiesCache.find((c) => c.id === selectedFilter);
+          if (comm && post.community) {
+            const matchesCommunity = post.community === comm.name || post.community === comm.id;
+            if (!matchesCommunity) return false;
+          }
+        }
+      }
+
+      if (!activeTopic) return true;
+      return extractTrendingTokens(post.content || "").includes(activeTopic);
+    }),
+    [activeTopic, commentsByPost, communitiesCache, feedTab, followingIds, followingUsers, posts, selectedFilter]
+  );
+
+  const visiblePosts = useMemo(() => {
+    const ranked = [...filteredPosts];
+
+    // Keep non-For-You tabs predictable and chronological.
+    if (feedTab !== "for-you") {
+      return ranked.sort((a, b) => normalizePostCreatedAtMs(b.createdAt) - normalizePostCreatedAtMs(a.createdAt));
+    }
+
+    if (sort === "newest") {
+      return ranked.sort((a, b) => normalizePostCreatedAtMs(b.createdAt) - normalizePostCreatedAtMs(a.createdAt));
+    }
+
+    if (sort === "bullish") {
+      return ranked.sort((a, b) => Number(b.bullishVotes || 0) - Number(a.bullishVotes || 0));
+    }
+
+    if (sort === "bearish") {
+      return ranked.sort((a, b) => Number(b.bearishVotes || 0) - Number(a.bearishVotes || 0));
+    }
+
+    if (sort === "active") {
+      return ranked.sort((a, b) => {
+        const aComments = Number(a.comments || commentsByPost[a.id]?.length || 0);
+        const bComments = Number(b.comments || commentsByPost[b.id]?.length || 0);
+        const aVotes = Number(a.bullishVotes || 0) + Number(a.bearishVotes || 0);
+        const bVotes = Number(b.bullishVotes || 0) + Number(b.bearishVotes || 0);
+        return (bComments + bVotes) - (aComments + aVotes);
+      });
+    }
+
+    // Default For You algorithm: recency + engagement + social graph + content quality.
+    const now = Date.now();
+    const scored = ranked.map((post) => {
+      const createdAtMs = normalizePostCreatedAtMs(post.createdAt) || now;
+      const ageHours = Math.max(0, (now - createdAtMs) / (1000 * 60 * 60));
+      const recencyScore = Math.max(0, (36 - ageHours) / 36) * 6;
+
+      const voteScore = Number(post.bullishVotes || 0) + Number(post.bearishVotes || 0);
+      const commentScore = Number(post.comments || commentsByPost[post.id]?.length || 0) * 1.5;
+      const engagementScore = voteScore + commentScore;
+
+      const authorUid = post.authorId || post.user?.uid;
+      const socialScore = authorUid && followingIds.includes(authorUid) ? 3 : 0;
+
+      const contentLength = String(post.content || "").trim().length;
+      const qualityScore = Math.min(contentLength / 140, 1) * 1.5;
+
+      const entropySource = String(post.id || post.content || "");
+      const stableNoise = (entropySource.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 100) / 500;
+
+      return {
+        post,
+        score: recencyScore + engagementScore + socialScore + qualityScore + stableNoise
+      };
+    });
+
+    return scored.sort((a, b) => b.score - a.score).map((entry) => entry.post);
+  }, [filteredPosts, feedTab, sort, commentsByPost, followingIds]);
   // Watchlist form state
   const [watchlistFormOpen, setWatchlistFormOpen] = useState(false);
+  const [watchlistInput, setWatchlistInput] = useState("");
+  const [watchlistSaving, setWatchlistSaving] = useState(false);
+  const [paperTradeSubmitting, setPaperTradeSubmitting] = useState("");
+  const [paperAccount, setPaperAccount] = useState(null);
+  const [paperTrades, setPaperTrades] = useState([]);
+  const [paperOrders, setPaperOrders] = useState([]);
+  const [showAllPaperTrades, setShowAllPaperTrades] = useState(false);
+  const [stockOrderType, setStockOrderType] = useState("market");
+  const [stockLimitPrice, setStockLimitPrice] = useState("");
+  const [pnlChartRange, setPnlChartRange] = useState("day");
+  const [pnlRangeMenuOpen, setPnlRangeMenuOpen] = useState(false);
+  const [positionQuotes, setPositionQuotes] = useState({});
+  const [watchlistQuotes, setWatchlistQuotes] = useState({});
+  const [activeTickerChartRange, setActiveTickerChartRange] = useState("day");
+  const [activeTickerRangeMenuOpen, setActiveTickerRangeMenuOpen] = useState(false);
+  const [activeTickerQuote, setActiveTickerQuote] = useState(null);
+  const [activeTickerCandles, setActiveTickerCandles] = useState([]);
+  const [activeTickerChartLoading, setActiveTickerChartLoading] = useState(false);
+  const [optionChainOpen, setOptionChainOpen] = useState(false);
+  const [optionChainData, setOptionChainData] = useState(null);
+  const [optionChainLoading, setOptionChainLoading] = useState(false);
+  const [optionChainError, setOptionChainError] = useState("");
+  const [selectedOptionExpiration, setSelectedOptionExpiration] = useState("");
+  const [marketOpen, setMarketOpen] = useState(() => isMarketOpenNow());
   // Theme state
   const [theme, setTheme] = useState(() => {
     if (typeof window !== "undefined" && window.localStorage) {
@@ -551,8 +1365,22 @@ const Feed = () => {
     return "light";
   });
   // Search dropdowns
+  const [assetSearchInput, setAssetSearchInput] = useState("");
+  const [assetSearchResults, setAssetSearchResults] = useState([]);
   const [assetSearchOpen, setAssetSearchOpen] = useState(false);
+  const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [globalSearchInput, setGlobalSearchInput] = useState("");
+  const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const pendingOrderProcessingRef = useRef(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser || null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Theme effect
   React.useEffect(() => {
@@ -562,13 +1390,20 @@ const Feed = () => {
   }, [theme]);
 
   useEffect(() => {
+    const syncMarketStatus = () => setMarketOpen(isMarketOpenNow());
+    syncMarketStatus();
+    const intervalId = setInterval(syncMarketStatus, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
     if (user.photoURL) {
       setProfilePhoto(user.photoURL);
       return;
     }
 
-    const randomAvatar = defaultAvatarOptions[Math.floor(Math.random() * defaultAvatarOptions.length)];
+    const randomAvatar = getDeterministicDefaultAvatar(user.uid);
     setProfilePhoto(randomAvatar);
 
     if (assigningRandomAvatar) return;
@@ -588,7 +1423,1004 @@ const Feed = () => {
     };
 
     assignRandomAvatar();
-  }, [user, assigningRandomAvatar]);
+  }, [user?.uid, user?.photoURL]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setWatchlist([]);
+      return;
+    }
+
+    const watchlistRef = collection(db, "users", user.uid, "watchlist");
+    const unsubscribe = onSnapshot(
+      watchlistRef,
+      (snapshot) => {
+        const items = snapshot.docs
+          .map((watchlistDoc) => {
+            const data = watchlistDoc.data() || {};
+            const symbol = (data.symbol || watchlistDoc.id || "").toUpperCase();
+            return {
+              id: watchlistDoc.id,
+              symbol,
+              name: data.name || symbol
+            };
+          })
+          .filter((item) => item.symbol)
+          .sort((a, b) => a.symbol.localeCompare(b.symbol));
+        setWatchlist(items);
+      },
+      () => {
+        setWatchlist([]);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    const watchlistSymbols = watchlist.map((item) => String(item.symbol || "").toUpperCase()).filter(Boolean);
+    const holdingSymbols = Object.entries(paperAccount?.positions || {})
+      .filter(([, qty]) => Number(qty || 0) > 0)
+      .map(([symbol]) => String(symbol || "").toUpperCase())
+      .filter(Boolean);
+    const selectableSymbols = [...new Set([...watchlistSymbols, ...holdingSymbols])];
+
+    if (!selectableSymbols.length) {
+      setActiveTicker("AAPL");
+      return;
+    }
+
+    const normalizedActive = String(activeTicker || "").toUpperCase();
+    if (!selectableSymbols.includes(normalizedActive)) {
+      setActiveTicker(selectableSymbols[0]);
+    }
+  }, [watchlist, activeTicker, paperAccount?.positions]);
+
+  const handleAddToSharedWatchlist = async (rawSymbol, rawName, assetType = "stocks") => {
+    const symbol = (rawSymbol || "").trim().toUpperCase();
+    if (!symbol || !user?.uid) return;
+
+    if (watchlist.some((item) => item.symbol === symbol)) {
+      setActiveTicker(symbol);
+      return;
+    }
+
+    const normalizedType = ["stocks", "options", "crypto"].includes(assetType) ? assetType : "stocks";
+
+    setWatchlistSaving(true);
+    try {
+      await setDoc(
+        doc(db, "users", user.uid, "watchlist", symbol),
+        {
+          symbol,
+          name: (rawName || symbol).trim() || symbol,
+          assetType: normalizedType,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+      setActiveTicker(symbol);
+    } catch (err) {
+      // Keep non-blocking to preserve feed behavior.
+    }
+    setWatchlistSaving(false);
+  };
+
+  const handleSaveWatchlistInput = async () => {
+    const symbol = watchlistInput.trim().toUpperCase();
+    if (!symbol) return;
+    await handleAddToSharedWatchlist(symbol, symbol);
+    setWatchlistInput("");
+    setWatchlistFormOpen(false);
+  };
+
+  const handleRemoveFromSharedWatchlist = async (symbol) => {
+    if (!user?.uid || !symbol) return;
+
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "watchlist", symbol));
+    } catch (err) {
+      // Keep non-blocking to preserve feed behavior.
+    }
+  };
+
+  const handleExecuteSelectedTickerTrade = async (side) => {
+    if (!user?.uid) return;
+
+    const symbol = String(activeTicker || "").toUpperCase();
+    if (!symbol) {
+      window.alert("Select a ticker first.");
+      return;
+    }
+
+    const marketPrice = Number(
+      activeTickerQuote?.c ||
+      positionQuotes[symbol] ||
+      latestTradePriceBySymbol[symbol] ||
+      0
+    );
+    if (!marketPrice || marketPrice <= 0) {
+      window.alert("Live price is unavailable right now. Try again in a moment.");
+      return;
+    }
+
+    const currentHeldQty = Math.max(0, Number(paperAccount?.positions?.[symbol] || 0));
+    const suggestedQty = side === "sell"
+      ? Math.max(1, Math.floor(currentHeldQty || 1))
+      : 1;
+    const promptLabel = side === "sell" ? "Sell" : "Buy";
+    const qtyInput = window.prompt(
+      `${promptLabel} how many shares of ${symbol}?`,
+      String(suggestedQty)
+    );
+    if (qtyInput == null) return;
+
+    const quantity = Math.floor(Number(qtyInput));
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      window.alert("Enter a valid share quantity.");
+      return;
+    }
+
+    if (side === "sell" && quantity > currentHeldQty) {
+      window.alert(`You only hold ${currentHeldQty.toLocaleString()} shares of ${symbol}.`);
+      return;
+    }
+
+    setPaperTradeSubmitting(`${side}-${stockOrderType}`);
+    try {
+      await placePaperOrder(symbol, quantity, marketPrice, side, {
+        shareAsPost: false,
+        orderType: stockOrderType,
+        limitPrice: stockOrderType === "limit" ? Number(stockLimitPrice) : null
+      });
+    } catch (err) {
+      window.alert(err?.message || `Paper ${side} failed.`);
+    }
+    setPaperTradeSubmitting("");
+  };
+
+  const handleOpenOptionChain = () => {
+    if (!normalizedActiveTicker) return;
+    setOptionChainOpen((prev) => !prev);
+  };
+
+  const handleExecuteOptionContractTrade = async (contract, side, optionType) => {
+    if (!user?.uid) return;
+    if (!marketOpen) {
+      window.alert("Market is closed. Paper trades are only allowed during market hours.");
+      return;
+    }
+
+    const contractSymbol = String(contract?.contractSymbol || "").toUpperCase();
+    if (!contractSymbol) {
+      window.alert("Option contract is unavailable right now.");
+      return;
+    }
+
+    const bid = Number(contract?.bid || 0);
+    const ask = Number(contract?.ask || 0);
+    const lastPrice = Number(contract?.lastPrice || 0);
+    const entryPrice = ask > 0 ? ask : (lastPrice > 0 ? lastPrice : bid);
+    if (!entryPrice || entryPrice <= 0) {
+      window.alert("Option price is unavailable right now.");
+      return;
+    }
+
+    const heldContracts = Math.max(0, Number(paperAccount?.optionPositions?.[contractSymbol] || 0));
+    const suggestedQty = side === "sell" ? Math.max(1, heldContracts || 1) : 1;
+    const qtyInput = window.prompt(
+      `${side === "buy" ? "Buy" : "Sell"} how many contracts of ${contractSymbol}?`,
+      String(suggestedQty)
+    );
+    if (qtyInput == null) return;
+
+    const quantity = Math.floor(Number(qtyInput));
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      window.alert("Enter a valid contract quantity.");
+      return;
+    }
+
+    if (side === "sell" && quantity > heldContracts) {
+      window.alert(`You only hold ${heldContracts.toLocaleString()} contracts of ${contractSymbol}.`);
+      return;
+    }
+
+    const submitKey = `${side}-option-${contractSymbol}`;
+    setPaperTradeSubmitting(submitKey);
+    try {
+      await placePaperTrade(contractSymbol, quantity, entryPrice, side, {
+        shareAsPost: false,
+        assetType: "option",
+        underlyingSymbol: normalizedActiveTicker,
+        optionType,
+        strike: Number(contract?.strike || 0),
+        expiration: contract?.expiration || selectedOptionExpiration,
+        contractMultiplier: 100
+      });
+    } catch (err) {
+      window.alert(err?.message || `Paper ${side} failed.`);
+    }
+    setPaperTradeSubmitting("");
+  };
+
+  useEffect(() => {
+    const queryText = assetSearchInput.trim();
+    if (!queryText) {
+      setAssetSearchResults([]);
+      setAssetSearchOpen(false);
+      return;
+    }
+
+    let active = true;
+    const runSearch = async () => {
+      setAssetSearchLoading(true);
+      const lowered = queryText.toLowerCase();
+
+      const optionMatches = defaultOptionAssets
+        .filter((asset) =>
+          asset.symbol.toLowerCase().includes(lowered) || asset.name.toLowerCase().includes(lowered)
+        )
+        .map((asset) => ({ ...asset, source: "local" }));
+
+      const cryptoMatches = defaultCryptoAssets
+        .filter((asset) =>
+          asset.symbol.toLowerCase().includes(lowered) || asset.name.toLowerCase().includes(lowered)
+        )
+        .map((asset) => ({ ...asset, source: "local" }));
+
+      let stockMatches = [];
+      try {
+        const res = await fetch(`/api/searchSymbol?query=${encodeURIComponent(queryText)}`);
+        if (res.ok) {
+          const data = await res.json();
+          stockMatches = (data.result || []).slice(0, 8).map((item) => ({
+            symbol: item.symbol,
+            name: item.description || item.symbol,
+            assetType: "stocks",
+            source: "finnhub"
+          }));
+        }
+      } catch (err) {
+        // Keep search resilient if stock API fails.
+      }
+
+      if (!active) return;
+
+      // Reclassify Finnhub results: crypto/option symbols override "stocks" label
+      stockMatches = stockMatches.map((item) => ({
+        ...item,
+        assetType: inferAssetType(item.symbol)
+      }));
+
+      // Dedup by symbol only; local crypto/option entries take priority
+      const merged = [...optionMatches, ...cryptoMatches, ...stockMatches];
+      const deduped = [];
+      const seen = new Set();
+      for (const item of merged) {
+        if (seen.has(item.symbol)) continue;
+        seen.add(item.symbol);
+        deduped.push(item);
+      }
+
+      setAssetSearchResults(deduped.slice(0, 12));
+      setAssetSearchOpen(true);
+      setAssetSearchLoading(false);
+    };
+
+    const timer = setTimeout(runSearch, 220);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [assetSearchInput]);
+
+  useEffect(() => {
+    const queryText = globalSearchInput.trim();
+    if (!queryText) {
+      setGlobalSearchResults([]);
+      setGlobalSearchOpen(false);
+      return;
+    }
+
+    let active = true;
+    const runSearch = async () => {
+      setGlobalSearchLoading(true);
+      const lowered = queryText.toLowerCase();
+
+      const communityMatches = communitiesCache
+        .filter((community) => {
+          const name = String(community.name || "").toLowerCase();
+          return name.includes(lowered);
+        })
+        .slice(0, 6)
+        .map((community) => ({
+          type: "community",
+          id: community.id,
+          title: community.name,
+          subtitle: `${community.members || 0} members`
+        }));
+
+      let userMatches = [];
+      try {
+        const usersSnap = await getDocs(collection(db, "users"));
+        userMatches = usersSnap.docs
+          .map((userDoc) => ({ id: userDoc.id, ...userDoc.data() }))
+          .filter((entry) => {
+            const displayName = String(entry.displayName || entry.username || "").toLowerCase();
+            const email = String(entry.email || "").toLowerCase();
+            return displayName.includes(lowered) || email.includes(lowered);
+          })
+          .slice(0, 6)
+          .map((entry) => ({
+            type: "user",
+            id: entry.id,
+            title: entry.displayName || entry.username || entry.email || "User",
+            subtitle: entry.email ? `@${String(entry.email).split("@")[0]}` : "Profile"
+          }));
+      } catch (err) {
+        // Keep search resilient if user directory fetch fails.
+      }
+
+      if (!active) return;
+
+      setGlobalSearchResults([...userMatches, ...communityMatches].slice(0, 12));
+      setGlobalSearchOpen(true);
+      setGlobalSearchLoading(false);
+    };
+
+    const timer = setTimeout(runSearch, 220);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [globalSearchInput, communitiesCache]);
+
+  const handleGlobalResultClick = (result) => {
+    if (!result) return;
+    if (result.type === "user") {
+      router.push(`/profile/${result.id}`);
+    } else if (result.type === "community") {
+      router.push(`/communities/${result.id}`);
+    }
+    setGlobalSearchOpen(false);
+    setGlobalSearchInput("");
+  };
+
+  const handleAssetResultClick = (result) => {
+    if (!result?.symbol) return;
+    setActiveTicker(result.symbol);
+    setAssetSearchInput("");
+    setAssetSearchOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (assetSearchRef.current && !assetSearchRef.current.contains(e.target)) {
+        setAssetSearchOpen(false);
+      }
+      if (globalSearchRef.current && !globalSearchRef.current.contains(e.target)) {
+        setGlobalSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setPaperAccount(null);
+      setPaperTrades([]);
+      setPaperOrders([]);
+      setPositionQuotes({});
+      return;
+    }
+
+    let accountUnsub = () => {};
+    let tradesUnsub = () => {};
+    let ordersUnsub = () => {};
+
+    const startSubscriptions = async () => {
+      try {
+        await ensurePaperAccount();
+      } catch (err) {
+        // Do not block feed rendering if account bootstrap fails.
+      }
+
+      const accountRef = doc(db, "users", user.uid, "paperMeta", "account");
+      accountUnsub = onSnapshot(accountRef, (snap) => {
+        setPaperAccount(snap.exists() ? snap.data() : null);
+      });
+
+      const tradesQuery = query(
+        collection(db, "users", user.uid, "paperTrades"),
+        orderBy("createdAt", "desc")
+      );
+      tradesUnsub = onSnapshot(tradesQuery, (snapshot) => {
+        setPaperTrades(snapshot.docs.map((tradeDoc) => ({ id: tradeDoc.id, ...tradeDoc.data() })));
+      });
+
+      const ordersQuery = query(
+        collection(db, "users", user.uid, "paperOrders"),
+        orderBy("createdAt", "desc")
+      );
+      ordersUnsub = onSnapshot(ordersQuery, (snapshot) => {
+        setPaperOrders(snapshot.docs.map((orderDoc) => ({ id: orderDoc.id, ...orderDoc.data() })));
+      });
+    };
+
+    startSubscriptions();
+
+    return () => {
+      accountUnsub();
+      tradesUnsub();
+      ordersUnsub();
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid || !paperOrders.length) return;
+    if (pendingOrderProcessingRef.current) return;
+    const localNormalizedActiveTicker = String(activeTicker || "").toUpperCase();
+
+    const latestTradePrices = {};
+    for (const trade of paperTrades) {
+      if (!trade?.symbol || latestTradePrices[trade.symbol]) continue;
+      latestTradePrices[trade.symbol] = Number(trade.price || 0);
+    }
+
+    const symbolPrices = {
+      ...watchlistQuotes,
+      ...positionQuotes,
+      ...latestTradePrices
+    };
+    if (activeTickerQuote?.c && localNormalizedActiveTicker) {
+      symbolPrices[localNormalizedActiveTicker] = Number(activeTickerQuote.c || 0);
+    }
+
+    pendingOrderProcessingRef.current = true;
+    const timer = setTimeout(async () => {
+      try {
+        await processPendingPaperOrders(symbolPrices);
+      } finally {
+        pendingOrderProcessingRef.current = false;
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [paperOrders, watchlistQuotes, positionQuotes, paperTrades, activeTickerQuote, activeTicker, user?.uid]);
+
+  const latestTradePriceBySymbol = useMemo(() => {
+    const map = {};
+    for (const trade of paperTrades) {
+      if (!trade?.symbol || map[trade.symbol]) continue;
+      map[trade.symbol] = Number(trade.price || 0);
+    }
+    return map;
+  }, [paperTrades]);
+
+  useEffect(() => {
+    const symbols = Object.keys(paperAccount?.positions || {}).filter(
+      (symbol) => Number(paperAccount?.positions?.[symbol] || 0) > 0
+    );
+
+    if (!symbols.length) {
+      setPositionQuotes({});
+      return;
+    }
+
+    let active = true;
+    const loadQuotes = async () => {
+      const quoteEntries = await Promise.all(
+        symbols.map(async (symbol) => {
+          try {
+            const res = await fetch(`/api/getQuote?symbol=${encodeURIComponent(symbol)}`);
+            if (!res.ok) return [symbol, null];
+            const data = await res.json();
+            return [symbol, Number(data?.c || 0)];
+          } catch (err) {
+            return [symbol, null];
+          }
+        })
+      );
+
+      if (!active) return;
+      setPositionQuotes(Object.fromEntries(quoteEntries));
+    };
+
+    loadQuotes();
+    const intervalId = setInterval(loadQuotes, 60000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [paperAccount?.positions]);
+
+  useEffect(() => {
+    const symbols = watchlist.map((item) => item.symbol).filter(Boolean);
+    if (!symbols.length) {
+      setWatchlistQuotes({});
+      return;
+    }
+    let active = true;
+    const loadWatchlistQuotes = async () => {
+      const entries = await Promise.all(
+        symbols.map(async (symbol) => {
+          try {
+            const res = await fetch(`/api/getQuote?symbol=${encodeURIComponent(symbol)}`);
+            if (!res.ok) return [symbol, null];
+            const data = await res.json();
+            return [symbol, data];
+          } catch {
+            return [symbol, null];
+          }
+        })
+      );
+      if (!active) return;
+      setWatchlistQuotes(Object.fromEntries(entries.filter(([, v]) => v)));
+    };
+    loadWatchlistQuotes();
+    const wqInterval = setInterval(loadWatchlistQuotes, 60000);
+    return () => {
+      active = false;
+      clearInterval(wqInterval);
+    };
+  }, [watchlist]);
+
+  useEffect(() => {
+    const symbol = String(activeTicker || "").toUpperCase();
+    if (!symbol) {
+      setActiveTickerQuote(null);
+      return;
+    }
+
+    setActiveTickerRangeMenuOpen(false);
+
+    let active = true;
+
+    const loadActiveTickerQuote = async () => {
+      try {
+        const res = await fetch(`/api/getQuote?symbol=${encodeURIComponent(symbol)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        setActiveTickerQuote(data);
+      } catch {
+        // Keep non-blocking for feed resilience.
+      }
+    };
+
+    loadActiveTickerQuote();
+    const intervalId = setInterval(loadActiveTickerQuote, 60000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [activeTicker]);
+
+  const activeTickerFirstTradeMs = useMemo(() => {
+    const timestamps = paperTrades
+      .filter((trade) => String(trade?.symbol || "").toUpperCase() === String(activeTicker || "").toUpperCase())
+      .map((trade) => getTradeTimestampMs(trade))
+      .filter(Boolean);
+    return timestamps.length ? Math.min(...timestamps) : 0;
+  }, [paperTrades, activeTicker]);
+
+  useEffect(() => {
+    const symbol = String(activeTicker || "").toUpperCase();
+    if (!symbol) {
+      setActiveTickerCandles([]);
+      return;
+    }
+
+    let active = true;
+    const request = getActiveTickerChartRequest(activeTickerChartRange, activeTickerFirstTradeMs);
+
+    const loadCandles = async () => {
+      setActiveTickerChartLoading(true);
+      try {
+        const res = await fetch(
+          `/api/getCandles?symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(request.resolution)}&from=${encodeURIComponent(request.from)}&to=${encodeURIComponent(request.to)}`
+        );
+        if (!res.ok) {
+          if (active) setActiveTickerCandles([]);
+          return;
+        }
+        const data = await res.json();
+        if (!active) return;
+
+        if (data?.s !== "ok" || !Array.isArray(data?.t) || !Array.isArray(data?.c)) {
+          setActiveTickerCandles([]);
+          return;
+        }
+
+        const candles = data.t.map((timestampSec, index) => ({
+          ts: Number(timestampSec || 0) * 1000,
+          close: Number(data.c?.[index] || 0),
+          open: Number(data.o?.[index] || 0),
+          high: Number(data.h?.[index] || 0),
+          low: Number(data.l?.[index] || 0),
+          volume: Number(data.v?.[index] || 0)
+        })).filter((point) => point.ts && point.close > 0);
+
+        setActiveTickerCandles(candles);
+      } catch {
+        if (active) setActiveTickerCandles([]);
+      }
+      if (active) setActiveTickerChartLoading(false);
+    };
+
+    loadCandles();
+    const intervalId = setInterval(loadCandles, 60000);
+    return () => {
+      active = false;
+      clearInterval(intervalId);
+    };
+  }, [activeTicker, activeTickerChartRange, activeTickerFirstTradeMs]);
+
+  useEffect(() => {
+    const symbol = String(activeTicker || "").toUpperCase();
+    if (!symbol) {
+      setOptionChainData(null);
+      setOptionChainError("");
+      setSelectedOptionExpiration("");
+      return;
+    }
+
+    let active = true;
+    const loadOptionChain = async () => {
+      setOptionChainLoading(true);
+      setOptionChainError("");
+      try {
+        const params = new URLSearchParams({ symbol });
+        if (selectedOptionExpiration) params.set("date", selectedOptionExpiration);
+        const res = await fetch(`/api/getOptionChain?${params.toString()}`);
+        const data = await res.json();
+        if (!active) return;
+
+        if (!res.ok) {
+          setOptionChainData(null);
+          setOptionChainError(data?.error || "Failed to load option chain.");
+          return;
+        }
+
+        setOptionChainData(data);
+        if (!selectedOptionExpiration && Array.isArray(data?.expirationDates) && data.expirationDates.length) {
+          setSelectedOptionExpiration(String(data.expirationDates[0]));
+        }
+      } catch {
+        if (!active) return;
+        setOptionChainData(null);
+        setOptionChainError("Failed to load option chain.");
+      } finally {
+        if (active) setOptionChainLoading(false);
+      }
+    };
+
+    loadOptionChain();
+    return () => {
+      active = false;
+    };
+  }, [activeTicker, selectedOptionExpiration]);
+
+  const paperCash = Number(paperAccount?.cashBalance ?? STARTING_PAPER_CASH);
+  const paperPositions = paperAccount?.positions || {};
+  const paperOptionPositions = paperAccount?.optionPositions || {};
+  const paperCostBasis = paperAccount?.positionCostBasis || {};
+  const paperOptionCostBasis = paperAccount?.optionPositionCostBasis || {};
+  const openPaperPositions = Object.entries(paperPositions).filter(([, qty]) => Number(qty || 0) > 0);
+  const paperPositionCount = openPaperPositions.length;
+  const paperPositionValue = Object.entries(paperPositions).reduce((acc, [symbol, qty]) => {
+    const numericQty = Number(qty || 0);
+    const quote = Number(positionQuotes[symbol]);
+    const fallbackPrice = Number(latestTradePriceBySymbol[symbol] || 0);
+    const averageCost = Number(paperCostBasis[symbol] || 0);
+    const effectivePrice = Number.isFinite(quote) && quote > 0 ? quote : fallbackPrice || averageCost;
+    return acc + (numericQty * effectivePrice);
+  }, 0);
+  const paperEquity = paperCash + paperPositionValue;
+  const paperPnl = paperEquity - STARTING_PAPER_CASH;
+  const paperHoldings = useMemo(() => {
+    return Object.entries(paperPositions)
+      .map(([symbol, qty]) => {
+        const quantity = Number(qty || 0);
+        if (!symbol || quantity <= 0) return null;
+
+        const averageCost = Number(paperCostBasis[symbol] || 0);
+        const quote = Number(positionQuotes[symbol]);
+        const fallbackPrice = Number(latestTradePriceBySymbol[symbol] || 0);
+        const currentPrice = Number.isFinite(quote) && quote > 0 ? quote : fallbackPrice || averageCost;
+        const marketValue = quantity * currentPrice;
+        const costValue = quantity * averageCost;
+        const unrealizedPnl = marketValue - costValue;
+
+        return {
+          symbol,
+          quantity,
+          averageCost,
+          currentPrice,
+          marketValue,
+          unrealizedPnl,
+          unrealizedPnlPct: costValue > 0 ? (unrealizedPnl / costValue) * 100 : 0
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.marketValue - a.marketValue || a.symbol.localeCompare(b.symbol));
+  }, [paperPositions, paperCostBasis, positionQuotes, latestTradePriceBySymbol]);
+
+  const paperTradesChronological = useMemo(
+    () => [...paperTrades].sort((a, b) => getTradeTimestampMs(a) - getTradeTimestampMs(b)),
+    [paperTrades]
+  );
+
+  const paperEquityTimeline = useMemo(() => {
+    let runningCash = STARTING_PAPER_CASH;
+    const runningPositions = {};
+    const runningAvgCost = {};
+    const runningLastPrice = {};
+    const runningContractMultiplier = {};
+    const points = [];
+
+    for (const trade of paperTradesChronological) {
+      const symbol = String(trade?.symbol || "").toUpperCase();
+      const side = String(trade?.side || "").toLowerCase();
+      const quantity = Math.max(0, Number(trade?.quantity || 0));
+      const price = Math.max(0, Number(trade?.price || 0));
+      const multiplier = Math.max(1, Number(trade?.contractMultiplier || 1));
+      const timestampMs = getTradeTimestampMs(trade);
+
+      if (!symbol || !quantity || !price || !timestampMs) continue;
+
+      const existingQty = Number(runningPositions[symbol] || 0);
+      const existingAvgCost = Number(runningAvgCost[symbol] || 0);
+
+      if (side === "buy") {
+        runningCash -= quantity * price * multiplier;
+        const nextQty = existingQty + quantity;
+        runningPositions[symbol] = nextQty;
+        runningAvgCost[symbol] = nextQty > 0
+          ? ((existingQty * existingAvgCost) + (quantity * price)) / nextQty
+          : price;
+      } else if (side === "sell") {
+        const soldQty = Math.min(quantity, existingQty);
+        if (!soldQty) continue;
+        runningCash += soldQty * price * multiplier;
+        const nextQty = existingQty - soldQty;
+        if (nextQty <= 0) {
+          delete runningPositions[symbol];
+          delete runningAvgCost[symbol];
+          delete runningContractMultiplier[symbol];
+        } else {
+          runningPositions[symbol] = nextQty;
+        }
+      } else {
+        continue;
+      }
+
+      runningLastPrice[symbol] = price;
+      runningContractMultiplier[symbol] = multiplier;
+
+      const markValue = Object.entries(runningPositions).reduce((acc, [rowSymbol, rowQty]) => {
+        const markPrice = Number(runningLastPrice[rowSymbol] || runningAvgCost[rowSymbol] || 0);
+        const rowMultiplier = Number(runningContractMultiplier[rowSymbol] || 1);
+        return acc + (Number(rowQty || 0) * markPrice * rowMultiplier);
+      }, 0);
+
+      points.push({ ts: timestampMs, equity: runningCash + markValue });
+    }
+
+    const nowTs = Date.now();
+    if (!points.length) {
+      return [{ ts: nowTs, equity: paperEquity }];
+    }
+
+    const lastPoint = points[points.length - 1];
+    if (Math.abs(lastPoint.equity - paperEquity) > 0.01 || nowTs - lastPoint.ts > 60000) {
+      points.push({ ts: nowTs, equity: paperEquity });
+    }
+
+    return points;
+  }, [paperTradesChronological, paperEquity]);
+
+  const now = new Date();
+  const periodStartMs = {
+    day: getStartOfLocalDay(now).getTime(),
+    week: getStartOfLocalWeek(now).getTime(),
+    mtd: getStartOfLocalMonth(now).getTime(),
+    ytd: getStartOfLocalYear(now).getTime(),
+    ltd: 0
+  };
+
+  const getEquityAtTime = (targetMs) => {
+    let baseline = STARTING_PAPER_CASH;
+    for (const point of paperEquityTimeline) {
+      if (point.ts <= targetMs) baseline = point.equity;
+      else break;
+    }
+    return baseline;
+  };
+
+  const pnlByRange = {
+    day: paperEquity - getEquityAtTime(periodStartMs.day),
+    week: paperEquity - getEquityAtTime(periodStartMs.week),
+    mtd: paperEquity - getEquityAtTime(periodStartMs.mtd),
+    ytd: paperEquity - getEquityAtTime(periodStartMs.ytd),
+    ltd: paperPnl
+  };
+
+  const baseEquityByRange = {
+    day: getEquityAtTime(periodStartMs.day),
+    week: getEquityAtTime(periodStartMs.week),
+    mtd: getEquityAtTime(periodStartMs.mtd),
+    ytd: getEquityAtTime(periodStartMs.ytd),
+    ltd: STARTING_PAPER_CASH
+  };
+
+  const pnlPctByRange = {
+    day: baseEquityByRange.day ? (pnlByRange.day / baseEquityByRange.day) * 100 : 0,
+    week: baseEquityByRange.week ? (pnlByRange.week / baseEquityByRange.week) * 100 : 0,
+    mtd: baseEquityByRange.mtd ? (pnlByRange.mtd / baseEquityByRange.mtd) * 100 : 0,
+    ytd: baseEquityByRange.ytd ? (pnlByRange.ytd / baseEquityByRange.ytd) * 100 : 0,
+    ltd: baseEquityByRange.ltd ? (pnlByRange.ltd / baseEquityByRange.ltd) * 100 : 0
+  };
+
+  const selectedRangePnl = Number(pnlByRange[pnlChartRange] || 0);
+  const selectedRangePct = Number(pnlPctByRange[pnlChartRange] || 0);
+
+  const selectedChartStart = pnlChartRange === "ltd"
+    ? (paperEquityTimeline[0]?.ts || Date.now())
+    : periodStartMs[pnlChartRange];
+
+  const chartPoints = (() => {
+    const filtered = paperEquityTimeline.filter((point) => point.ts >= selectedChartStart);
+    if (filtered.length) return filtered;
+    return [
+      { ts: selectedChartStart, equity: getEquityAtTime(selectedChartStart) },
+      { ts: Date.now(), equity: paperEquity }
+    ];
+  })();
+
+  const chartMin = Math.min(...chartPoints.map((point) => point.equity));
+  const chartMax = Math.max(...chartPoints.map((point) => point.equity));
+  const chartRange = chartMax - chartMin || 1;
+  const chartStartTs = chartPoints[0]?.ts || Date.now();
+  const chartEndTs = chartPoints[chartPoints.length - 1]?.ts || chartStartTs + 1;
+  const chartSpan = chartEndTs - chartStartTs || 1;
+
+  const chartPath = chartPoints
+    .map((point, index) => {
+      const x = (index === 0 && chartPoints.length === 1)
+        ? 0
+        : ((point.ts - chartStartTs) / chartSpan) * 100;
+      const y = 100 - (((point.equity - chartMin) / chartRange) * 100);
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+
+  const sixtyDaysAgoMs = Date.now() - (60 * 24 * 60 * 60 * 1000);
+  const normalizedActiveTicker = String(activeTicker || "").toUpperCase();
+  const activeTickerPrice = Number(
+    activeTickerQuote?.c ||
+    positionQuotes[normalizedActiveTicker] ||
+    latestTradePriceBySymbol[normalizedActiveTicker] ||
+    0
+  );
+  const activeTickerPrevClose = Number(activeTickerQuote?.pc || 0);
+  const activeTickerChange = activeTickerPrice > 0 && activeTickerPrevClose > 0
+    ? activeTickerPrice - activeTickerPrevClose
+    : 0;
+  const activeTickerChangePct = activeTickerPrice > 0 && activeTickerPrevClose > 0
+    ? (activeTickerChange / activeTickerPrevClose) * 100
+    : 0;
+  const activeTickerChartPoints = activeTickerCandles.length
+    ? activeTickerCandles.map((candle) => ({ ts: candle.ts, price: candle.close }))
+    : (activeTickerPrice > 0 ? [{ ts: Date.now(), price: activeTickerPrice }] : []);
+  const activeTickerChartMin = activeTickerChartPoints.length
+    ? Math.min(...activeTickerChartPoints.map((point) => point.price))
+    : 0;
+  const activeTickerChartMax = activeTickerChartPoints.length
+    ? Math.max(...activeTickerChartPoints.map((point) => point.price))
+    : 0;
+  const activeTickerPriceRange = (activeTickerChartMax - activeTickerChartMin) || 1;
+  const activeTickerChartStartTs = activeTickerChartPoints[0]?.ts || Date.now();
+  const activeTickerChartEndTs = activeTickerChartPoints[activeTickerChartPoints.length - 1]?.ts || activeTickerChartStartTs + 1;
+  const activeTickerChartSpan = (activeTickerChartEndTs - activeTickerChartStartTs) || 1;
+  const activeTickerChartPath = activeTickerChartPoints
+    .map((point, index) => {
+      const x = (index === 0 && activeTickerChartPoints.length === 1)
+        ? 0
+        : ((point.ts - activeTickerChartStartTs) / activeTickerChartSpan) * 100;
+      const y = 100 - (((point.price - activeTickerChartMin) / activeTickerPriceRange) * 100);
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+  const activeTickerChartStartLabel = formatActiveTickerAxisLabel(activeTickerChartStartTs, activeTickerChartRange);
+  const activeTickerChartEndLabel = formatActiveTickerAxisLabel(activeTickerChartEndTs, activeTickerChartRange);
+  const nearestCallContracts = selectNearestContracts(optionChainData?.calls || [], activeTickerPrice, 6);
+  const nearestPutContracts = selectNearestContracts(optionChainData?.puts || [], activeTickerPrice, 6);
+  const optionContractsBySymbol = useMemo(() => {
+    const allContracts = [
+      ...(optionChainData?.calls || []),
+      ...(optionChainData?.puts || [])
+    ];
+    const entries = allContracts
+      .filter((contract) => contract?.contractSymbol)
+      .map((contract) => [String(contract.contractSymbol).toUpperCase(), contract]);
+    return Object.fromEntries(entries);
+  }, [optionChainData]);
+
+  const latestOptionTradeMetaBySymbol = useMemo(() => {
+    const map = {};
+    for (const trade of paperTrades) {
+      if (String(trade?.assetType || "stock") !== "option") continue;
+      const symbol = String(trade?.symbol || "").toUpperCase();
+      if (!symbol) continue;
+      map[symbol] = trade;
+    }
+    return map;
+  }, [paperTrades]);
+
+  const openOptionContractsForActiveTicker = useMemo(() => {
+    return Object.entries(paperOptionPositions)
+      .map(([contractSymbol, rawQty]) => {
+        const symbol = String(contractSymbol || "").toUpperCase();
+        const quantity = Number(rawQty || 0);
+        if (!symbol || quantity <= 0) return null;
+
+        const meta = latestOptionTradeMetaBySymbol[symbol] || null;
+        const inferredUnderlying = String(meta?.underlyingSymbol || "").toUpperCase();
+        const matchesTicker = inferredUnderlying
+          ? inferredUnderlying === normalizedActiveTicker
+          : symbol.startsWith(normalizedActiveTicker);
+        if (!matchesTicker) return null;
+
+        const avgContractPrice = Number(paperOptionCostBasis[symbol] || 0);
+        const multiplier = Math.max(1, Number(meta?.contractMultiplier || 100));
+        const liveContract = optionContractsBySymbol[symbol] || null;
+        const markPrice = Number(
+          liveContract?.lastPrice ||
+          liveContract?.bid ||
+          liveContract?.ask ||
+          avgContractPrice ||
+          0
+        );
+        const costValue = quantity * avgContractPrice * multiplier;
+        const marketValue = quantity * markPrice * multiplier;
+        const unrealizedPnl = marketValue - costValue;
+        const unrealizedPct = costValue > 0 ? (unrealizedPnl / costValue) * 100 : 0;
+
+        return {
+          symbol,
+          quantity,
+          avgContractPrice,
+          multiplier,
+          markPrice,
+          costValue,
+          marketValue,
+          unrealizedPnl,
+          unrealizedPct,
+          optionType: String(meta?.optionType || "call").toUpperCase(),
+          strike: Number(meta?.strike || liveContract?.strike || 0),
+          expiration: meta?.expiration?.toDate?.() || (meta?.expiration ? new Date(meta.expiration) : null),
+          hasLiveMark: Boolean(liveContract)
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.marketValue - a.marketValue || a.symbol.localeCompare(b.symbol));
+  }, [paperOptionPositions, latestOptionTradeMetaBySymbol, normalizedActiveTicker, paperOptionCostBasis, optionContractsBySymbol]);
+  const paperTradesWithin60Days = paperTrades.filter((trade) => {
+    const tradeDate = trade.createdAt?.toDate?.();
+    if (!tradeDate) return true;
+    return tradeDate.getTime() >= sixtyDaysAgoMs;
+  });
+  const paperTradesForActiveTicker = paperTradesWithin60Days.filter((trade) => {
+    const tradeSymbol = String(trade?.symbol || "").toUpperCase();
+    const underlyingSymbol = String(trade?.underlyingSymbol || "").toUpperCase();
+    return tradeSymbol === normalizedActiveTicker || underlyingSymbol === normalizedActiveTicker;
+  });
+  const hasMoreThanTenPaperTrades = paperTradesForActiveTicker.length > 10;
+  const visiblePaperTrades = showAllPaperTrades
+    ? paperTradesForActiveTicker
+    : paperTradesForActiveTicker.slice(0, 10);
 
   const handleProfileImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -616,6 +2448,9 @@ const Feed = () => {
       await updateProfile(auth.currentUser, {
         photoURL: finalPhotoUrl
       });
+      await setDoc(doc(db, "users", user.uid), {
+        photoURL: finalPhotoUrl
+      }, { merge: true });
       setUser((prev) => (prev ? { ...prev, photoURL: finalPhotoUrl } : prev));
       setProfileUploadFile(null);
       setProfileImagePickerOpen(false);
@@ -666,7 +2501,15 @@ const Feed = () => {
               <div className="soft-card rounded-2xl p-3"><div className="text-slate-500">Type</div><div id="ticker-type" className="text-lg">Stock</div></div>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <button id="ticker-add-btn" className="px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-xs" aria-label="Add to watchlist">Add Watchlist</button>
+              <button
+                id="ticker-add-btn"
+                className="px-4 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-xs disabled:opacity-60"
+                aria-label="Add to watchlist"
+                onClick={() => handleAddToSharedWatchlist(activeTicker, activeTicker)}
+                disabled={!user || watchlistSaving}
+              >
+                Add Watchlist
+              </button>
               <button id="ticker-paper-buy" className="px-4 py-3 rounded-2xl bg-green-600 text-white font-black text-xs" aria-label="Paper buy">Paper Buy</button>
               <button id="ticker-paper-sell" className="px-4 py-3 rounded-2xl bg-red-500 text-white font-black text-xs" aria-label="Paper sell">Paper Sell</button>
             </div>
@@ -677,104 +2520,257 @@ const Feed = () => {
         </div>
 
         {/* Post Modal */}
-        <div id="post-modal" className="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
-          <div className="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl">
-            <button id="close-post-modal" className="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close post modal" title="Close" tabIndex={0}>&times;</button>
-            <p className="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
-            <h2 className="text-2xl font-black mb-1">Drop it on the floor</h2>
-            <p className="text-sm text-slate-500 mb-5">Post to your timeline or a community you belong to.</p>
-            <form id="post-form" className="space-y-4" onSubmit={handlePostSubmit}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select
-                  id="post-destination"
-                  className="px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold"
-                  value={postDestination}
-                  onChange={handlePostDestination}
-                >
-                  <option value="timeline">My Timeline</option>
-                  <option value="community">Community</option>
-                </select>
-                <select
-                  id="community-select"
-                  className={
-                    "px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold" +
-                    (postDestination === "community" ? "" : " hidden")
-                  }
-                  value={postCommunity}
-                  onChange={handlePostCommunity}
-                  disabled={postDestination !== "community"}
-                >
-                  <option value="">Select Community</option>
-                  {communitiesCache.map(c => (
-                    <option key={c.id} value={c.name}>{c.name}</option>
-                  ))}
-                </select>
-                <select
-                  id="post-subject"
-                  className="px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold"
-                  value={postSubject}
-                  onChange={handlePostSubject}
-                >
-                  <option value="">Subject</option>
-                  <option value="stocks">Stocks</option>
-                  <option value="options">Options</option>
-                  <option value="crypto">Crypto</option>
-                  <option value="jobs">Jobs</option>
-                  <option value="careers">Careers</option>
-                  <option value="licenses">Licenses</option>
-                  <option value="rich-list">Rich List</option>
-                  <option value="other">Other</option>
-                </select>
-                <select
-                  id="post-label"
-                  className="px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold"
-                  value={postLabel}
-                  onChange={handlePostLabel}
-                >
-                  <option value="">Label</option>
-                  <option value="General">General</option>
-                  <option value="Trade">Trade</option>
-                  <option value="Question">Question</option>
-                  <option value="News">News</option>
-                  <option value="Alert">Alert</option>
-                </select>
+        <div id="post-modal" className="fixed inset-0 bg-black/70 items-center justify-center z-50 px-4" style={{ display: modal === "post" ? "flex" : "none" }}>
+          <div className="panel rounded-3xl p-6 w-full max-w-2xl relative shadow-2xl max-h-[92vh] overflow-y-auto bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+            <div className="flex items-start justify-between gap-4 mb-6 pb-5 border-b border-slate-200 dark:border-white/10">
+              <div className="min-w-0">
+                <p className="text-xs font-black tracking-[0.28em] uppercase text-brogreen mb-2">Post</p>
+                <h2 className="text-2xl font-black leading-tight text-slate-900 dark:text-slate-100">Create Post</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Write your post, choose where it belongs, and add any optional attachments.</p>
               </div>
-              <textarea
-                id="post-content"
-                maxLength={700}
-                placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..."
-                className="w-full px-4 py-4 rounded-3xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none min-h-[140px] font-semibold resize-y"
-                value={postContent}
-                onChange={handlePostContent}
-              ></textarea>
-              {postImagePreview && (
-                <div id="post-image-preview" className="rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 bg-black/20 mb-2">
-                  <img src={postImagePreview} alt="Preview" className="w-full object-cover" />
-                </div>
-              )}
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <label className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl soft-card font-black cursor-pointer">
-                  <span>🖼️ Add Image</span>
-                  <input id="post-image" type="file" accept="image/*" className="hidden" onChange={handlePostImage} />
-                </label>
-                {postImagePreview && (
-                  <button type="button" id="remove-post-image" className="px-4 py-3 rounded-2xl soft-card font-black text-red-500" onClick={handleRemovePostImage}>Remove Image</button>
-                )}
-                <label className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl soft-card font-black cursor-pointer">
-                  <input id="allow-comments" type="checkbox" className="accent-lime-400" checked={allowComments} onChange={handleAllowComments} />
-                  Allow comments
-                </label>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <button
+                id="close-post-modal"
+                className="shrink-0 w-10 h-10 rounded-full soft-card text-2xl leading-none text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition"
+                aria-label="Close post modal"
+                title="Close"
+                tabIndex={0}
+                onClick={handleClosePostModal}
+              >
+                ×
+              </button>
+            </div>
+            <form id="post-form" className="space-y-5" onSubmit={handlePostSubmit}>
+              <section className="space-y-3">
                 <div>
-                  {postError && <div id="post-error" className="text-red-500 text-sm">{postError}</div>}
-                  <div className="text-xs text-slate-500"><span id="char-count">{postCharCount}</span>/700 characters</div>
+                  <label htmlFor="post-content" className="block text-sm font-black text-slate-900 dark:text-slate-100 mb-2">Content</label>
+                  <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-4">
+                    <textarea
+                      id="post-content"
+                      maxLength={700}
+                      placeholder="Post your trade thesis, interview intel, license question, rich-list take, or desk rumor..."
+                      className="w-full bg-transparent outline-none min-h-[160px] font-semibold resize-y text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                      value={postContent}
+                      onChange={handlePostContent}
+                    ></textarea>
+                    <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 dark:border-white/10 pt-4">
+                      {postCategoryOptions.map((category) => {
+                        const isSelected = postCategories.includes(category);
+                        const isDisabled = !isSelected && postCategories.length >= 3;
+                        return (
+                          <button
+                            key={category}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => handlePostCategory(category)}
+                            className={
+                              "px-4 py-2 rounded-full border text-sm font-black transition " +
+                              (isSelected
+                                ? "bg-brogreen border-brogreen text-black shadow-lg shadow-lime-500/20"
+                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-brogreen/60") +
+                              (isDisabled ? " opacity-45 cursor-not-allowed" : "")
+                            }
+                            disabled={isDisabled}
+                          >
+                            {category}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      <span>{postCategories.length}/3 categories selected</span>
+                      <div>
+                        <span id="char-count" className="font-black text-slate-800 dark:text-slate-100">{postCharCount}</span>/700 characters
+                      </div>
+                    </div>
+                  </div>
+                  {isNewsCategorySelected && (
+                    <div className="mt-3 space-y-2">
+                      <label className="block text-sm font-black text-slate-900 dark:text-slate-100">News Category</label>
+                      <div id="post-news-category" className="flex flex-wrap gap-2">
+                        {postNewsCategoryOptions.map((category) => {
+                          const isSelected = postNewsCategory === category;
+                          return (
+                            <button
+                              key={category}
+                              type="button"
+                              aria-pressed={isSelected}
+                              onClick={() => handlePostNewsCategory(category)}
+                              className={
+                                "px-4 py-2 rounded-full border text-sm font-black transition " +
+                                (isSelected
+                                  ? "bg-brogreen border-brogreen text-black shadow-lg shadow-lime-500/20"
+                                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:border-brogreen/60")
+                              }
+                            >
+                              {category}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black"
-                  disabled={postLoading}
-                >{postLoading ? "Posting..." : "Post"}</button>
+              </section>
+
+              <section className="space-y-3 pt-2">
+                <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Attachments & Settings</h3>
+                <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-3">
+                  <label className="inline-flex items-center gap-2 text-sm font-black text-slate-900 dark:text-slate-100">
+                    <input
+                      type="checkbox"
+                      className="accent-lime-400"
+                      checked={postHasPoll}
+                      onChange={(e) => setPostHasPoll(e.target.checked)}
+                    />
+                    Add Poll
+                  </label>
+                  {postHasPoll ? (
+                    <div className="space-y-2">
+                      <input
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        placeholder="Poll question"
+                        value={postPollQuestion}
+                        onChange={(e) => setPostPollQuestion(e.target.value)}
+                        maxLength={180}
+                      />
+                      <input
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        placeholder="Option 1"
+                        value={postPollOptionA}
+                        onChange={(e) => setPostPollOptionA(e.target.value)}
+                        maxLength={80}
+                      />
+                      <input
+                        className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                        placeholder="Option 2"
+                        value={postPollOptionB}
+                        onChange={(e) => setPostPollOptionB(e.target.value)}
+                        maxLength={80}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-sm">
+                  <label className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl soft-card font-black cursor-pointer text-slate-900 dark:text-slate-100">
+                    <input id="allow-comments" type="checkbox" className="accent-lime-400" checked={allowComments} onChange={handleAllowComments} />
+                    Allow comments
+                  </label>
+                </div>
+              </section>
+
+              <section className="space-y-4 pt-2">
+                <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Destination</h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-black text-slate-900 dark:text-slate-100">Post To</label>
+                    <div id="post-destination" className="space-y-2">
+                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-lime-400"
+                          checked={postDestination === "timeline"}
+                          onChange={() => handlePostDestination("timeline")}
+                        />
+                        <span className="text-sm font-black text-slate-900 dark:text-slate-100">My Timeline</span>
+                      </label>
+                      <label className="flex items-center gap-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-4 py-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-lime-400"
+                          checked={postDestination === "community"}
+                          onChange={() => handlePostDestination("community")}
+                        />
+                        <span className="text-sm font-black text-slate-900 dark:text-slate-100">Community</span>
+                      </label>
+                    </div>
+                    {postDestination === "community" && (
+                      <div ref={communityMenuRef} className="relative">
+                        <button
+                          type="button"
+                          id="community-select"
+                          className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                          onClick={() => setCommunityMenuOpen((open) => !open)}
+                          aria-haspopup="listbox"
+                          aria-expanded={communityMenuOpen}
+                        >
+                          <span className="flex items-center gap-3 min-w-0">
+                            {selectedJoinedCommunity ? (
+                              <>
+                                  <img
+                                    src={selectedJoinedCommunity.avatar || getDeterministicDefaultAvatar(selectedJoinedCommunity.id || selectedJoinedCommunity.name)}
+                                  alt={selectedJoinedCommunity.name}
+                                  className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10"
+                                />
+                                <span className="truncate">{selectedJoinedCommunity.name}</span>
+                              </>
+                            ) : (
+                              <span className="text-slate-400 dark:text-slate-500">Select Community</span>
+                            )}
+                          </span>
+                          <span className="text-slate-400 dark:text-slate-500">▾</span>
+                        </button>
+                        {communityMenuOpen && joinedCommunities.length > 0 && (
+                          <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                            <div role="listbox" aria-label="Select community" className="max-h-64 overflow-y-auto py-2">
+                              {joinedCommunities.map((community) => {
+                                const isSelected = postCommunityId === community.id;
+                                return (
+                                  <button
+                                    key={community.id}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/5"
+                                    onClick={() => handleSelectPostCommunity(community)}
+                                  >
+                                    <span className="flex items-center gap-3 min-w-0">
+                                        <img
+                                          src={community.avatar || getDeterministicDefaultAvatar(community.id || community.name)}
+                                        alt={community.name}
+                                        className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-white/10"
+                                      />
+                                      <span className="truncate font-black text-slate-900 dark:text-slate-100">{community.name}</span>
+                                    </span>
+                                    <span className="w-5 flex justify-end" aria-hidden="true">
+                                      {isSelected ? <span className="text-brogreen font-black">✓</span> : null}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {postDestination === "community" && joinedCommunities.length === 0 && (
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Join a community before posting there.</p>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-200 dark:border-white/10">
+                <div>
+                  {postError && <div id="post-error" className="text-red-500 text-sm font-semibold">{postError}</div>}
+                  {postSuccess && <div className="text-green-600 dark:text-green-400 text-sm font-semibold">{postSuccess}</div>}
+                </div>
+                <div className="flex items-center gap-3 justify-end">
+                  <button
+                    type="button"
+                    className="px-6 py-3 rounded-2xl soft-card font-black text-slate-900 dark:text-slate-100"
+                    onClick={handleClosePostModal}
+                    disabled={postLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 rounded-2xl bg-brogreen text-black font-black shadow-lg shadow-lime-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={postLoading || !canPost}
+                  >
+                    {postLoading ? "Posting..." : "Post"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -782,7 +2778,7 @@ const Feed = () => {
 
         {/* Profile Modal */}
         <div id="profile-modal" className="fixed inset-0 bg-black/70 items-center justify-center z-50 px-4" style={{ display: modal === "profile" ? "flex" : "none" }}>
-          <div className="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl">
+          <div className="panel rounded-3xl p-6 w-full max-w-md relative shadow-2xl bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
             <button id="close-profile" className="absolute top-4 right-4 w-9 h-9 rounded-full soft-card text-2xl leading-none" aria-label="Close profile modal" title="Close" tabIndex={0} onClick={() => setModal("")}>×</button>
             <h2 className="text-2xl font-black mb-5">Your Profile</h2>
             <div className="flex flex-col items-center gap-4">
@@ -791,7 +2787,7 @@ const Feed = () => {
                 <span className="absolute inset-0 rounded-full bg-black/55 text-white text-xs font-black hidden group-hover:grid place-items-center">Change</span>
               </button>
               <div id="profile-username-display" className="font-black text-lg text-center">{user?.displayName || user?.email || "User"}</div>
-              <div id="profile-image-picker" className={(profileImagePickerOpen ? "block" : "hidden") + " w-full soft-card rounded-3xl p-4"}>
+              <div id="profile-image-picker" className={(profileImagePickerOpen ? "block" : "hidden") + " w-full rounded-3xl p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10"}>
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-black">Choose Profile Image</h3>
@@ -820,8 +2816,8 @@ const Feed = () => {
                   ))}
                 </div>
               </div>
-              <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none font-semibold" rows={3} placeholder="Add a short finance-bro bio..." value={profileBio} onChange={(e) => setProfileBio(e.target.value)}></textarea>
-              <button id="profile-theme-toggle" className="w-full px-4 py-3 rounded-2xl soft-card font-bold">Toggle Theme</button>
+              <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500" rows={3} placeholder="Add a short finance-bro bio..." value={profileBio} onChange={(e) => setProfileBio(e.target.value)}></textarea>
+              <button id="profile-theme-toggle" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-bold text-slate-900 dark:text-slate-100">Toggle Theme</button>
               <button id="save-profile" className="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" onClick={handleSaveProfile} disabled={profileSaving}>{profileSaving ? "Saving..." : "Save Profile"}</button>
               <button id="logout-btn" className="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black" onClick={handleLogout}>Logout</button>
             </div>
@@ -872,6 +2868,24 @@ const Feed = () => {
                 {communityImagePreview && (
                   <button type="button" className="ml-2 text-xs text-red-500" onClick={handleRemoveCommunityImage}>Remove</button>
                 )}
+                <p className="mt-3 text-xs font-black uppercase tracking-wide text-slate-500">Or pick a default avatar</p>
+                <div className="mt-2 grid grid-cols-5 gap-2">
+                  {defaultAvatarOptions.map((avatarUrl) => (
+                    <button
+                      key={avatarUrl}
+                      type="button"
+                      onClick={() => handleSelectCommunityDefaultAvatar(avatarUrl)}
+                      className={
+                        "rounded-xl border-2 p-0.5 " +
+                        (communityImagePreview === avatarUrl ? "border-brogreen" : "border-transparent hover:border-slate-300")
+                      }
+                      aria-label="Select default avatar"
+                      disabled={communityLoading}
+                    >
+                      <img src={avatarUrl} alt="Default avatar" className="h-10 w-10 rounded-lg object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
               {/* Banner upload */}
               <div className="mb-3">
@@ -915,13 +2929,8 @@ const Feed = () => {
                   </a>
                 </Link>
                 <Link href="/bookmarks" legacyBehavior>
-                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Bookmarks" title="Bookmarks" tabIndex={0}>
-                    <span>Bookmarks</span>
-                  </a>
-                </Link>
-                <Link href="/bro" legacyBehavior>
-                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Bro LLM" title="Bro LLM" tabIndex={0}>
-                    <span>Bro AI</span>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Saved posts" title="Saved posts" tabIndex={0}>
+                    <span>Saved posts</span>
                   </a>
                 </Link>
                 <Link href="/dm" legacyBehavior>
@@ -929,22 +2938,35 @@ const Feed = () => {
                     <span>Direct Messages</span>
                   </a>
                 </Link>
+                <Link href="/notifications" legacyBehavior>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Notifications" title="Notifications" tabIndex={0}>
+                    <span>Notifications</span>
+                  </a>
+                </Link>
+                <Link href="/explore" legacyBehavior>
+                  <a className="left-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Stock Explorer" title="Stock Explorer" tabIndex={0}>
+                    <span>Stock Explorer</span>
+                  </a>
+                </Link>
               </nav>
               <div className="mt-6 space-y-4">
                 <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="font-black text-slate-900 dark:text-slate-100">Communities</h2>
-                    <button id="left-create-community" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow hover:bg-lime-300 dark:hover:bg-lime-900 transition-all" aria-label="Create new community" title="Create new community" tabIndex={0}>+ New</button>
+                    <Link href="/communities/create" id="left-create-community" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black text-base shadow hover:bg-lime-300 dark:hover:bg-lime-900 transition-all" aria-label="Create new community" title="Create new community" tabIndex={0}>+ New</Link>
                   </div>
                   <div id="left-communities" className="space-y-2">
                     {communitiesCache.map(c => (
                       <button
                         key={c.id}
                         className={
-                          "flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer w-full text-left" +
+                          "w-full flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer text-left" +
                           (selectedFilter === c.id ? " bg-brogreen/10 border border-brogreen" : " hover:bg-brogreen/10")
                         }
-                        onClick={() => setSelectedFilter(c.id)}
+                        onClick={() => {
+                          setSelectedFilter(c.id);
+                          router.push(`/communities/${c.id}`);
+                        }}
                         tabIndex={0}
                         aria-label={c.name}
                         title={c.name}
@@ -953,22 +2975,6 @@ const Feed = () => {
                         <span className="flex-1 truncate text-slate-900 dark:text-slate-100">{c.name}</span>
                         <span className="text-xs text-slate-500 dark:text-slate-400">{c.members} members</span>
                       </button>
-                    ))}
-                  </div>
-                </section>
-              </div>
-              <div className="mt-6">
-                <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
-                  <h2 className="font-black text-lg mb-3 text-slate-900 dark:text-slate-100">Following</h2>
-                  <div className="space-y-2">
-                    {following.map(f => (
-                      <div key={f.id} className="flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
-                        <img src={f.avatar} alt={f.name} className="w-8 h-8 rounded-full object-cover" />
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate font-black text-sm text-slate-900 dark:text-slate-100">{f.name}</div>
-                          <div className="truncate text-xs text-slate-500 dark:text-slate-400">{f.handle}</div>
-                        </div>
-                      </div>
                     ))}
                   </div>
                 </section>
@@ -985,7 +2991,7 @@ const Feed = () => {
                 <img src="mainlogo.png" className="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity" />
                 <span className="font-black text-slate-900 dark:text-slate-100">BroLiquidity</span>
               </a>
-              <button id="mobile-post-btn" className="px-4 py-2 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" aria-label="Create a post" title="Create a post">Post</button>
+                  <button id="mobile-post-btn" className="px-4 py-2 rounded-2xl bg-brogreen text-black font-black" aria-label="Create a post" title="Create a post" onClick={() => setModal("post")}>Post</button>
             </nav>
           </header>
 
@@ -1013,31 +3019,96 @@ const Feed = () => {
               <div className="flex gap-3 text-slate-900 dark:text-slate-100">
                 <img id="composer-profile-photo" src={profilePhoto || "https://ui-avatars.com/api/?name=BL&background=050816&color=B6FF22"} className="w-12 h-12 rounded-full object-cover" alt="Profile" />
                 <div className="flex-1">
-                  <button id="composer-open" className="w-full text-left text-xl text-slate-500 dark:text-slate-400 font-semibold py-2">What’s happening?</button>
+                  <button id="composer-open" className="w-full text-left text-xl text-slate-500 dark:text-slate-400 font-semibold py-2" onClick={() => setModal("post")}>What’s happening?</button>
+                  {postSuccess && <div className="text-xs text-green-600 dark:text-green-400 font-bold mt-1">{postSuccess}</div>}
                   <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-4 text-broblue text-lg">
-                      <button id="composer-image-open" title="Image">🖼️</button>
-                      <button title="Poll">📊</button>
-                      <button title="Cashtag">$</button>
-                      <button title="Community">💬</button>
-                    </div>
-                    <button id="composer-post-btn" className="px-6 py-2 rounded-full bg-brogreen text-black dark:text-brogreen font-black">Post</button>
+                    <div className="flex items-center gap-4 text-broblue text-lg"></div>
+                    <button id="composer-post-btn" className="px-6 py-2 rounded-full bg-brogreen text-black font-black" onClick={() => setModal("post")}>Post</button>
                   </div>
                 </div>
               </div>
             </section>
-            <section id="recommended-section" className="border-b border-slate-200 dark:border-white/10">
-              <div className="px-4 py-3 flex items-center justify-between text-slate-900 dark:text-slate-100">
+            <section>
+              <div className="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100">
                 <div>
-                  <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">Recommended Posts</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Weighted by watchlist, following, and subscribed communities.</p>
+                  <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">{feedTab === "following" ? "Following" : "For You"}</h2>
+                  <p id="feed-context" className="text-xs text-slate-500 dark:text-slate-400">
+                    {feedTab === "following"
+                      ? "Posts from accounts you follow."
+                      : selectedFilter === "home"
+                        ? "Algorithm-ranked posts across your desks."
+                        : (() => {
+                            const comm = communitiesCache.find(c => c.id === selectedFilter);
+                            return comm ? `${comm.name} desk feed.` : "Algorithm-ranked posts across your desks.";
+                          })()
+                    }
+                  </p>
+                  {activeTopic ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="rounded-full bg-brogreen/15 px-3 py-1 text-[11px] font-black text-brogreen">Topic Filter: {activeTopic}</span>
+                      <button
+                        type="button"
+                        className="text-[11px] font-black text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                        onClick={() => setActiveTopic("")}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
+                <select
+                  id="sort-posts"
+                  className="px-3 py-2 rounded-full bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none text-slate-900 dark:text-slate-100"
+                  value={sort}
+                  onChange={e => setSort(e.target.value)}
+                >
+                    <option value="recommended">Recommended</option>
+                    <option value="newest">Newest</option>
+                  <option value="bullish">Most Uptrended</option>
+                  <option value="bearish">Most Downtrended</option>
+                  <option value="active">Most Active</option>
+                </select>
               </div>
-              <ul id="recommended-posts-list">
-                {recommendedPosts.map(post => {
+              <ul id="posts-list">
+                {visiblePosts.map(post => {
                   const profileId = post.authorId || post.user?.uid;
+                  const authorUid = post.authorId || post.user?.uid;
+                  const comments = commentsByPost[post.id] || [];
+                  const followedComment = comments
+                    .slice()
+                    .reverse()
+                    .find((comment) => {
+                      const commenterUid = comment.userId || comment.user?.uid;
+                      if (commenterUid) return followingIds.includes(commenterUid);
+                      const commenterName = comment.user?.name?.trim()?.toLowerCase();
+                      if (!commenterName) return false;
+                      return followingUsers.some((f) => f?.name?.trim()?.toLowerCase() === commenterName);
+                    });
+                  const showFollowingContext = feedTab === "following" && !followingIds.includes(authorUid) && Boolean(followedComment);
+                  const postOwnerId = post.authorId || post.userId || post.user?.uid;
+                  const canDeletePost = Boolean(user?.uid && postOwnerId === user.uid && typeof post.id !== "number");
                   return (
-                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
+                  <li key={post.id} className="relative border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
+                    <div className="absolute right-3 top-3 flex items-center gap-2">
+                      {canDeletePost && (
+                        <button
+                          className="text-lg font-black leading-none text-brogreen hover:opacity-80"
+                          onClick={() => handleDeletePost(post)}
+                          aria-label="Delete post"
+                          title="Delete"
+                        >
+                          x
+                        </button>
+                      )}
+                      <button
+                        className="text-sm leading-none text-brogreen hover:opacity-80"
+                        onClick={() => handleReportPost(post)}
+                        aria-label="Flag post"
+                        title="Flag"
+                      >
+                        🚩
+                      </button>
+                    </div>
                     {profileId ? (
                       <Link href={`/profile/${profileId}`} className="shrink-0">
                         {post.user && post.user.avatar ? (
@@ -1052,30 +3123,43 @@ const Feed = () => {
                       <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
                     )}
                     <div className="flex-1 min-w-0">
+                      {showFollowingContext ? (
+                        <div className="mb-1 text-xs font-black text-brogreen">
+                          {(followedComment.user?.name || "A followed user")} commented on this post
+                        </div>
+                      ) : null}
                       <div className="flex items-center gap-2 mb-1">
                         {profileId ? (
-                          <Link href={`/profile/${profileId}`} className="font-black text-base truncate hover:underline">
+                          <Link href={`/profile/${profileId}`} className="font-black text-base truncate text-slate-900 dark:text-slate-100 hover:underline">
                             {post.user?.name || "User"}
                           </Link>
                         ) : (
-                          <span className="font-black text-base truncate">{post.user?.name || "User"}</span>
+                          <span className="font-black text-base truncate text-slate-900 dark:text-slate-100">{post.user?.name || "User"}</span>
                         )}
-                        <span className="text-xs text-slate-500 truncate">{post.user?.handle || "@user"}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{post.user?.handle || "@user"}</span>
                         <span className="text-xs text-slate-400">· {post.time}</span>
                       </div>
                       <div className="mb-2 whitespace-pre-line text-slate-800 dark:text-slate-100">{post.content}</div>
-                      {post.image && (
-                        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 mb-2">
-                          <img src={post.image} alt="Post attachment" className="w-full object-cover" />
+                      {post.poll ? (
+                        <div className="mb-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 p-3">
+                          <div className="text-sm font-black text-slate-900 dark:text-slate-100">{post.poll.question}</div>
+                          <div className="mt-2 space-y-2">
+                            {(post.poll.options || []).map((option) => (
+                              <div key={option.id || option.label} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
+                                <span>{option.label}</span>
+                                <span className="ml-2 text-slate-500">({option.votes || 0} votes)</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      )}
+                      ) : null}
                       <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400 text-sm mt-2">
                         <button
                           className="flex items-center gap-1 comment-toggle"
                           data-id={post.id}
                           onClick={() =>
                             setExpandedComments(expandedComments.includes(post.id)
-                              ? expandedComments.filter(id => id !== post.id)
+                              ? expandedComments.filter((id) => id !== post.id)
                               : [...expandedComments, post.id])
                           }
                         >
@@ -1118,11 +3202,10 @@ const Feed = () => {
                               : "--% Bullish"}
                           </span>
                         </div>
-                        <button className={post.bookmarked ? "text-brogreen" : ""} onClick={() => handleToggleBookmark(post)} aria-label="Toggle bookmark">
+                        <button className={post.bookmarked ? "text-brogreen" : ""}>
                           <span>🔖</span>
                         </button>
                       </div>
-                      {/* Comments section */}
                       <div
                         id={`comments-${post.id}`}
                         className={
@@ -1131,7 +3214,11 @@ const Feed = () => {
                         }
                       >
                         <div className="space-y-3 mb-3">
-                          {(commentsByPost[post.id] || []).map(comment => (
+                          {(commentsByPost[post.id] || []).map((comment) => {
+                            const replyKey = `${post.id}_${comment.id}`;
+                            const replies = repliesByComment[replyKey] || [];
+                            const isReplyOpen = activeReplyTarget === replyKey;
+                            return (
                             <div key={comment.id} className="flex items-start gap-3">
                               {comment.user && comment.user.avatar ? (
                                 <img src={comment.user.avatar} alt={comment.user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
@@ -1141,13 +3228,80 @@ const Feed = () => {
                               <div className="flex-1">
                                 <div className="font-black text-sm text-slate-900 dark:text-slate-100">{comment.user?.name || "User"}</div>
                                 <div className="text-slate-700 dark:text-slate-200 text-sm">{comment.content}</div>
+                                <div className="mt-1 flex items-center justify-between text-xs font-black">
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      className="text-brogreen hover:opacity-80"
+                                      onClick={() => setActiveReplyTarget(isReplyOpen ? null : replyKey)}
+                                    >
+                                      Reply
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={
+                                        "hover:opacity-80 " +
+                                        ((Array.isArray(comment.likedBy) && user?.uid && comment.likedBy.includes(user.uid))
+                                          ? "text-brogreen"
+                                          : "text-slate-500 dark:text-slate-300")
+                                      }
+                                      onClick={() => handleToggleCommentLike(post, comment)}
+                                    >
+                                      Like {comment.likeCount || 0}
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="text-brogreen text-sm leading-none hover:opacity-80"
+                                    onClick={() => handleReportComment(post, comment)}
+                                    aria-label="Flag comment"
+                                    title="Flag"
+                                  >
+                                    🚩
+                                  </button>
+                                </div>
+                                {replies.length > 0 ? (
+                                  <div className="mt-2 space-y-2">
+                                    {replies.map((reply) => (
+                                      <div key={reply.id} className="rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2">
+                                        <div className="flex items-center gap-2">
+                                          {reply.user?.avatar ? (
+                                            <img src={reply.user.avatar} alt={reply.user?.name || "User"} className="h-6 w-6 rounded-full object-cover" />
+                                          ) : (
+                                            <div className="h-6 w-6 rounded-full bg-slate-200" />
+                                          )}
+                                          <span className="text-xs font-black text-slate-900 dark:text-slate-100">{reply.user?.name || "User"}</span>
+                                        </div>
+                                        <div className="mt-1 text-xs text-slate-700 dark:text-slate-200">{reply.content}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                {isReplyOpen ? (
+                                  <form
+                                    className="mt-2 flex gap-2"
+                                    onSubmit={(e) => {
+                                      e.preventDefault();
+                                      handleAddReply(post, comment, replyInputs[replyKey] || "");
+                                    }}
+                                  >
+                                    <input
+                                      className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm text-slate-900 dark:text-slate-100"
+                                      placeholder="Write a reply..."
+                                      value={replyInputs[replyKey] || ""}
+                                      onChange={(e) => setReplyInputs((prev) => ({ ...prev, [replyKey]: e.target.value }))}
+                                    />
+                                    <button type="submit" className="px-3 py-2 rounded-xl bg-brogreen text-black text-xs font-black">Reply</button>
+                                  </form>
+                                ) : null}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                         <form
                           className="flex gap-2 mt-2"
-                          onSubmit={e => {
+                          onSubmit={(e) => {
                             e.preventDefault();
                             const val = (commentInputs[post.id] || "").trim();
                             handleAddComment(post, val);
@@ -1157,149 +3311,15 @@ const Feed = () => {
                             className="flex-1 px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm text-slate-900 dark:text-slate-100"
                             placeholder="Add a comment..."
                             value={commentInputs[post.id] || ""}
-                            onChange={e => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                            onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
                           />
                           <button
                             type="submit"
-                            className="px-4 py-2 rounded-xl bg-brogreen text-black dark:text-brogreen font-black text-sm"
+                            className="px-4 py-2 rounded-xl bg-brogreen text-black font-black text-sm"
                           >
                             Post
                           </button>
                         </form>
-                      </div>
-                    </div>
-                  </li>
-                )})}
-              </ul>
-            </section>
-            <section>
-              <div className="px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-white/10 text-slate-900 dark:text-slate-100">
-                <div>
-                  <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">Recent Posts</h2>
-                  <p id="feed-context" className="text-xs text-slate-500 dark:text-slate-400">
-                    {feedTab === "following"
-                      ? "Following feed, newest first."
-                      : selectedFilter === "home"
-                        ? "All desks, newest first."
-                        : (() => {
-                            const comm = communitiesCache.find(c => c.id === selectedFilter);
-                            return comm ? `${comm.name} desk, newest first.` : "All desks, newest first.";
-                          })()
-                    }
-                  </p>
-                </div>
-                <select
-                  id="sort-posts"
-                  className="px-3 py-2 rounded-full bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 text-sm font-bold outline-none text-slate-900 dark:text-slate-100"
-                  value={sort}
-                  onChange={e => setSort(e.target.value)}
-                >
-                  <option value="newest">Newest</option>
-                  <option value="bullish">Most Uptrended</option>
-                  <option value="bearish">Most Downtrended</option>
-                  <option value="active">Most Active</option>
-                </select>
-              </div>
-              <ul id="posts-list">
-                {posts
-                  .filter(post => {
-                    if (feedTab === "following") {
-                      // Show only posts by following (safe null checks)
-                      return following.some(f => f?.name && post.user?.name && f.name === post.user.name);
-                    }
-                    if (selectedFilter === "home") return true;
-                    // Community filter
-                    if (typeof selectedFilter === "number" || typeof selectedFilter === "string") {
-                      const comm = communitiesCache.find(c => c.id === selectedFilter);
-                      if (comm && post.community) {
-                        return post.community === comm.name || post.community === comm.id;
-                      }
-                    }
-                    return true;
-                  })
-                  .map(post => {
-                  const profileId = post.authorId || post.user?.uid;
-                  return (
-                  <li key={post.id} className="border-b border-slate-100 dark:border-white/10 px-4 py-6 flex gap-4 text-slate-900 dark:text-slate-100">
-                    {profileId ? (
-                      <Link href={`/profile/${profileId}`} className="shrink-0">
-                        {post.user && post.user.avatar ? (
-                          <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
-                        )}
-                      </Link>
-                    ) : post.user && post.user.avatar ? (
-                      <img src={post.user.avatar} alt={post.user.name || "User"} className="w-12 h-12 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">?</div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        {profileId ? (
-                          <Link href={`/profile/${profileId}`} className="font-black text-base truncate text-slate-900 dark:text-slate-100 hover:underline">
-                            {post.user?.name || "User"}
-                          </Link>
-                        ) : (
-                          <span className="font-black text-base truncate text-slate-900 dark:text-slate-100">{post.user?.name || "User"}</span>
-                        )}
-                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate">{post.user?.handle || "@user"}</span>
-                        <span className="text-xs text-slate-400">· {post.time}</span>
-                      </div>
-                      <div className="mb-2 whitespace-pre-line text-slate-800 dark:text-slate-100">{post.content}</div>
-                      {post.image && (
-                        <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 mb-2">
-                          <img src={post.image} alt="Post attachment" className="w-full object-cover" />
-                        </div>
-                      )}
-                      <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400 text-sm mt-2">
-                        <button className="flex items-center gap-1 comment-toggle" data-id={post.id}>
-                          <span>💬</span>
-                          <span>{post.comments}</span>
-                        </button>
-                        {/* Bullish vote button */}
-                        <button
-                          className="flex items-center gap-1"
-                          onClick={() => handleVote(post, "bullish")}
-                          aria-label="Bullish vote"
-                        >
-                          <span role="img" aria-label="Bullish">📈</span>
-                          <span>{post.bullishVotes || 0}</span>
-                        </button>
-                        {/* Bearish vote button */}
-                        <button
-                          className="flex items-center gap-1"
-                          onClick={() => handleVote(post, "bearish")}
-                          aria-label="Bearish vote"
-                        >
-                          <span role="img" aria-label="Bearish">📉</span>
-                          <span>{post.bearishVotes || 0}</span>
-                        </button>
-                        {/* Bullish % bar */}
-                        <div className="flex items-center gap-1">
-                          <div className="w-16 h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-2 bg-brogreen"
-                              style={{
-                                width: ((post.bullishVotes || 0) + (post.bearishVotes || 0)) > 0
-                                  ? `${Math.round(100 * (post.bullishVotes || 0) / ((post.bullishVotes || 0) + (post.bearishVotes || 0)))}%`
-                                  : "0%"
-                              }}
-                            ></div>
-                          </div>
-                          <span className="text-xs font-bold text-brogreen">
-                            {((post.bullishVotes || 0) + (post.bearishVotes || 0)) > 0
-                              ? `${Math.round(100 * (post.bullishVotes || 0) / ((post.bullishVotes || 0) + (post.bearishVotes || 0)))}% Bullish`
-                              : "--% Bullish"}
-                          </span>
-                        </div>
-                        <button className={post.bookmarked ? "text-brogreen" : ""}>
-                          <span>🔖</span>
-                        </button>
-                      </div>
-                      {/* Comments section placeholder for future migration */}
-                      <div id={`comments-${post.id}`} className="hidden mt-4">
-                        {/* Comments will be rendered here in a later step */}
                       </div>
                     </div>
                   </li>
@@ -1321,17 +3341,47 @@ const Feed = () => {
                     <div id="right-profile-name" className="font-black truncate text-slate-900 dark:text-slate-100">{user?.displayName || "User"}</div>
                     <div id="right-profile-handle" className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email ? `@${user.email.split("@")[0]}` : "@bro"}</div>
                     <div className="flex gap-4 mt-1">
-                      <a href="follow.html?tab=following" id="profile-following-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-following-count">0</span> Following</a>
-                      <a href="follow.html?tab=followers" id="profile-followers-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-followers-count">0</span> Followers</a>
+                      <Link href="/follow?tab=following" id="profile-following-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-following-count">{followingIds.length}</span> Following</Link>
+                      <Link href="/follow?tab=followers" id="profile-followers-link" className="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 hover:underline"><span id="profile-followers-count">{followersUsers.length}</span> Followers</Link>
                     </div>
                   </div>
                 </div>
                 <span className="text-slate-500 font-black">•••</span>
               </button>
-              <div className="relative">
-                <input id="global-search" className="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100" placeholder="Search users or communities..." aria-label="Global search" title="Search users or communities" tabIndex={0} />
+              <div className="relative" ref={globalSearchRef}>
+                <input
+                  id="global-search"
+                  className="w-full px-5 py-3 pl-11 rounded-full bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-semibold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
+                  placeholder="Search users or communities..."
+                  aria-label="Global search"
+                  title="Search users or communities"
+                  tabIndex={0}
+                  value={globalSearchInput}
+                  onChange={(e) => setGlobalSearchInput(e.target.value)}
+                  onFocus={() => {
+                    if (globalSearchResults.length) setGlobalSearchOpen(true);
+                  }}
+                />
                 <svg className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={11} cy={11} r={8}></circle><path d="m21 21-4.3-4.3"></path></svg>
-                <div id="global-search-results" className="hidden absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-50 shadow-xl max-h-96 overflow-y-auto"></div>
+                <div id="global-search-results" className={`${globalSearchOpen ? "block" : "hidden"} absolute left-0 right-0 top-14 panel rounded-3xl p-2 z-[200] shadow-xl max-h-96 overflow-y-auto`}>
+                  {globalSearchLoading ? (
+                    <div className="px-3 py-2 text-xs font-black text-slate-500">Searching...</div>
+                  ) : null}
+                  {!globalSearchLoading && globalSearchInput.trim() && !globalSearchResults.length ? (
+                    <div className="px-3 py-2 text-xs font-black text-slate-500">No users or communities found.</div>
+                  ) : null}
+                  {!globalSearchLoading ? globalSearchResults.map((result) => (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      type="button"
+                      className="w-full rounded-2xl px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-white/10"
+                      onClick={() => handleGlobalResultClick(result)}
+                    >
+                      <div className="text-sm font-black text-slate-900 dark:text-slate-100">{result.title}</div>
+                      <div className="text-[11px] text-slate-500">{result.type === "user" ? "User" : "Community"} • {result.subtitle}</div>
+                    </button>
+                  )) : null}
+                </div>
               </div>
                 <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
                 <div className="flex items-center justify-between mb-4">
@@ -1346,107 +3396,467 @@ const Feed = () => {
                       </button>
                     </div>
                   </div>
-                  <button id="theme-toggle-rail" className="text-xs font-black px-3 py-2 rounded-full soft-card" aria-label="Toggle theme" title="Toggle light/dark theme" tabIndex={0}>Theme</button>
+                  <div className="relative">
+                    <div className={`text-right text-sm font-black ${selectedRangePct >= 0 ? "text-green-600" : "text-red-500"}`}>
+                      {selectedRangePct >= 0 ? "+" : "-"}{Math.abs(selectedRangePct).toFixed(2)}%
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-1 rounded-xl border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black text-slate-500"
+                      onClick={() => setPnlRangeMenuOpen((open) => !open)}
+                    >
+                      {pnlRangeLabels[pnlChartRange]} ▾
+                    </button>
+                    {pnlRangeMenuOpen ? (
+                      <div className="absolute right-0 top-[calc(100%+0.4rem)] z-20 w-24 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lg p-1">
+                        {pnlChartRanges.map((range) => (
+                          <button
+                            key={range}
+                            type="button"
+                            className={
+                              "w-full rounded-lg px-2 py-1 text-left text-[10px] font-black " +
+                              (range === pnlChartRange
+                                ? "bg-brogreen/15 text-brogreen"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10")
+                            }
+                            onClick={() => {
+                              setPnlChartRange(range);
+                              setPnlRangeMenuOpen(false);
+                            }}
+                          >
+                            {pnlRangeLabels[range]}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="relative mb-4">
-                  <input id="asset-search" className="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100" placeholder="Search stocks, options, or crypto..." aria-label="Asset search" title="Search stocks, options, or crypto" tabIndex={0} />
-                  <svg className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={11} cy={11} r={8}></circle><path d="m21 21-4.3-4.3"></path></svg>
-                  <div id="asset-search-results" className="hidden absolute left-0 right-0 top-14 panel rounded-2xl p-2 z-50 max-h-96 overflow-y-auto shadow-xl"></div>
+                <div className="mb-4" ref={assetSearchRef}>
+                  <div className="relative">
+                    <input
+                      id="asset-search"
+                      className="w-full px-4 py-3 pl-10 rounded-2xl bg-slate-100 dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-bold placeholder:text-slate-500 dark:placeholder:text-slate-400 text-slate-900 dark:text-slate-100"
+                      placeholder="Search stocks, options, or crypto..."
+                      aria-label="Asset search"
+                      title="Search stocks, options, or crypto"
+                      tabIndex={0}
+                      value={assetSearchInput}
+                      onChange={(e) => setAssetSearchInput(e.target.value)}
+                      onFocus={() => {
+                        if (assetSearchResults.length) setAssetSearchOpen(true);
+                      }}
+                    />
+                    <svg className="absolute left-3.5 top-3.5 w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={11} cy={11} r={8}></circle><path d="m21 21-4.3-4.3"></path></svg>
+                  </div>
+                  <div id="asset-search-results" className={`${assetSearchOpen ? "block" : "hidden"} mt-1 panel rounded-2xl p-2 max-h-72 overflow-y-auto shadow-xl`}>
+                    {assetSearchLoading ? (
+                      <div className="px-3 py-2 text-xs font-black text-slate-500">Searching assets...</div>
+                    ) : null}
+                    {!assetSearchLoading && assetSearchInput.trim() && !assetSearchResults.length ? (
+                      <div className="px-3 py-2 text-xs font-black text-slate-500">No matching assets found.</div>
+                    ) : null}
+                    {!assetSearchLoading ? assetSearchResults.map((result) => (
+                      <div key={`${result.assetType}-${result.symbol}`} className="flex items-center gap-2 rounded-2xl px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/10">
+                        <button
+                          type="button"
+                          className="flex-1 text-left"
+                          onClick={() => handleAssetResultClick(result)}
+                        >
+                          <div className="text-sm font-black text-slate-900 dark:text-slate-100">{result.symbol}</div>
+                          <div className="text-[11px] text-slate-500">{result.name} • {result.assetType}</div>
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-xl bg-brogreen px-2 py-1 text-[11px] font-black text-black disabled:opacity-60"
+                          onClick={() => handleAddToSharedWatchlist(result.symbol, result.name, result.assetType)}
+                          disabled={!user || watchlist.some((item) => item.symbol === result.symbol)}
+                        >
+                          {watchlist.some((item) => item.symbol === result.symbol) ? "Added" : "Add"}
+                        </button>
+                      </div>
+                    )) : null}
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Paper Cash</div><div id="paper-cash" className="font-black text-sm">$100,000</div></div>
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">P&L</div><div id="paper-pnl" className="font-black text-sm text-green-600">$0</div></div>
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Positions</div><div id="paper-position-count" className="font-black text-sm">0</div></div>
+                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Paper Cash</div><div id="paper-cash" className="font-black text-sm">${paperCash.toLocaleString()}</div></div>
+                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">P&L ({pnlRangeLabels[pnlChartRange]})</div><div id="paper-pnl" className={`font-black text-sm ${selectedRangePnl >= 0 ? "text-green-600" : "text-red-500"}`}>{selectedRangePnl >= 0 ? "+" : "-"}${Math.abs(selectedRangePnl).toLocaleString()}</div></div>
+                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Positions</div><div id="paper-position-count" className="font-black text-sm">{paperPositionCount}</div></div>
+                </div>
+                <div className="mb-4 rounded-2xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                  <div className="h-28 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-2">
+                    <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none" aria-label="Paper PnL chart">
+                      <path d={chartPath} fill="none" stroke="currentColor" strokeWidth="2" className={selectedRangePnl >= 0 ? "text-green-600" : "text-red-500"} />
+                    </svg>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-black text-slate-500">
+                    <span>{new Date(selectedChartStart).toLocaleDateString()}</span>
+                    <span>{new Date(chartEndTs).toLocaleDateString()}</span>
+                  </div>
                 </div>
                 <div className="space-y-5">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Stocks Watchlist</h3>
-                      <span className="text-[10px] font-black px-2 py-1 rounded-full bg-brogreen/15 text-green-600">EQUITIES</span>
+                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Watchlist</h3>
                     </div>
-                    <div id="popular-stocks-list" className="space-y-2"></div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Options Watchlist</h3>
-                      <span className="text-[10px] font-black px-2 py-1 rounded-full bg-purple-500/15 text-purple-500">OPTIONS</span>
-                    </div>
-                    <div id="popular-options-list" className="space-y-2"></div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Crypto Watchlist</h3>
-                      <span className="text-[10px] font-black px-2 py-1 rounded-full bg-broblue/15 text-broblue">CRYPTO</span>
-                    </div>
-                    <div id="popular-crypto-list" className="space-y-2"></div>
+                    {(() => {
+                      return watchlist.length ? watchlist.map(item => (
+                        <WatchlistRow key={item.symbol} item={item} activeTicker={activeTicker} setActiveTicker={setActiveTicker} onRemove={handleRemoveFromSharedWatchlist} quoteData={watchlistQuotes[item.symbol]} />
+                      )) : <p className="text-[11px] text-slate-500">No watchlist items added yet.</p>;
+                    })()}
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">My Custom Watchlist</h3>
-                        <p className="text-[11px] text-slate-500">Add stocks, options, or crypto.</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">My Holdings</h3>
+                      <span className="text-[10px] font-black text-slate-400">Refreshes every minute</span>
+                    </div>
+                    {paperHoldings.length ? (
+                      <div className="space-y-2">
+                        {paperHoldings.map((holding) => (
+                          <div
+                            key={holding.symbol}
+                            className={
+                              "rounded-xl soft-card px-3 py-2 cursor-pointer transition " +
+                              (activeTicker === holding.symbol ? "border border-brogreen bg-brogreen/10" : "")
+                            }
+                            onClick={() => setActiveTicker(holding.symbol)}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-xs font-black uppercase text-slate-900 dark:text-slate-100">{holding.symbol}</div>
+                                <div className="text-[10px] text-slate-500">
+                                  {holding.quantity.toLocaleString()} shares • Avg ${holding.averageCost.toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs font-black text-slate-900 dark:text-slate-100">
+                                  ${holding.marketValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </div>
+                                <div className={`text-[10px] font-black ${holding.unrealizedPnl >= 0 ? "text-green-600" : "text-red-500"}`}>
+                                  {holding.unrealizedPnl >= 0 ? "+" : "-"}${Math.abs(holding.unrealizedPnl).toFixed(2)} ({holding.unrealizedPnlPct >= 0 ? "+" : "-"}{Math.abs(holding.unrealizedPnlPct).toFixed(2)}%)
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <button id="add-watchlist-btn" className="text-xs font-black text-brogreen">+ Add</button>
+                    ) : (
+                      <p className="text-[11px] text-slate-500">No holdings yet. Paper buy a stock to start a position.</p>
+                    )}
+                  </div>
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Live Chart ({normalizedActiveTicker || "-"})</h3>
+                      <span className={`text-[10px] font-black ${activeTickerChange >= 0 ? "text-green-600" : "text-red-500"}`}>
+                        {activeTickerChange >= 0 ? "+" : "-"}{Math.abs(activeTickerChangePct).toFixed(2)}%
+                      </span>
                     </div>
-                    <div className="flex gap-2 mb-3 hidden" id="watchlist-form">
-                      <input id="watchlist-input" className="w-full px-3 py-2 rounded-xl bg-white dark:bg-white/8 border border-slate-200 dark:border-white/10 outline-none text-sm font-black uppercase" placeholder="AAPL or BTC" maxLength={18} />
-                      <button id="save-watchlist-btn" className="px-3 py-2 rounded-xl bg-brogreen text-black dark:text-brogreen font-black">Save</button>
-                    </div>
-                    <div id="watchlist-list" className="space-y-2">
-                      {watchlist.map(item => (
-                        <div
-                          key={item.symbol}
-                          className={
-                            "flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer" +
-                            (activeTicker === item.symbol ? " bg-brogreen/10 border border-brogreen" : "")
-                          }
-                          onClick={() => setActiveTicker(item.symbol)}
-                        >
-                          <span className="text-base font-black uppercase flex-1">{item.symbol}</span>
-                          <span className="text-xs text-slate-500 flex-1 truncate">{item.name}</span>
-                          <button
-                            className="ml-2 px-2 py-1 rounded-lg bg-brogreen/10 text-xs text-brogreen font-black"
-                            title="Preview Ticker"
-                            tabIndex={0}
-                          >
-                            Preview
-                          </button>
-                          <button
-                            className="ml-2 px-2 py-1 rounded-lg bg-red-100 text-xs text-red-500 font-black"
-                            title="Remove from Watchlist"
-                            tabIndex={0}
-                            onClick={e => {
-                              e.stopPropagation();
-                              setWatchlist(watchlist.filter(w => w.symbol !== item.symbol));
-                              if (activeTicker === item.symbol && watchlist.length > 1) {
-                                setActiveTicker(watchlist.find(w => w.symbol !== item.symbol)?.symbol || "");
-                              }
-                            }}
-                          >
-                            Remove
-                          </button>
+                    <div className="rounded-2xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-black text-slate-500">{normalizedActiveTicker || "Ticker"}</div>
+                        <div className="text-sm font-black text-slate-900 dark:text-slate-100">
+                          {activeTickerPrice > 0 ? `$${activeTickerPrice.toFixed(2)}` : "--"}
                         </div>
-                      ))}
+                      </div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-slate-500">Timeframe</span>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            className="rounded-xl border border-slate-200 dark:border-white/10 px-2 py-1 text-[10px] font-black text-slate-600 dark:text-slate-300"
+                            onClick={() => setActiveTickerRangeMenuOpen((open) => !open)}
+                          >
+                            {activeTickerChartRangeLabels[activeTickerChartRange]} ▾
+                          </button>
+                          {activeTickerRangeMenuOpen ? (
+                            <div className="absolute right-0 top-[calc(100%+0.4rem)] z-20 w-24 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-lg p-1">
+                              {activeTickerChartRanges.map((range) => (
+                                <button
+                                  key={range}
+                                  type="button"
+                                  className={
+                                    "w-full rounded-lg px-2 py-1 text-left text-[10px] font-black " +
+                                    (range === activeTickerChartRange
+                                      ? "bg-brogreen/15 text-brogreen"
+                                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10")
+                                  }
+                                  onClick={() => {
+                                    setActiveTickerChartRange(range);
+                                    setActiveTickerRangeMenuOpen(false);
+                                  }}
+                                >
+                                  {activeTickerChartRangeLabels[range]}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="h-24 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-2">
+                        {activeTickerChartLoading ? (
+                          <div className="h-full flex items-center justify-center text-[11px] font-black text-slate-500">Loading chart...</div>
+                        ) : activeTickerChartPath ? (
+                          <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none" aria-label="Selected ticker live chart">
+                            <path d={activeTickerChartPath} fill="none" stroke="currentColor" strokeWidth="2" className={activeTickerChange >= 0 ? "text-green-600" : "text-red-500"} />
+                          </svg>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-[11px] font-black text-slate-500">Waiting for live quote data...</div>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-[10px] font-black text-slate-500">
+                        <span>{activeTickerChartStartLabel}</span>
+                        <span>{activeTickerChartRange === "day" ? "Times shown in local time" : activeTickerChartEndLabel}</span>
+                        {activeTickerChartRange !== "day" ? null : <span>{activeTickerChartEndLabel}</span>}
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2 items-center">
+                        <select
+                          value={stockOrderType}
+                          onChange={(e) => setStockOrderType(e.target.value)}
+                          className="rounded-xl border border-slate-300 dark:border-white/20 px-3 py-2 text-[11px] font-black text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900"
+                        >
+                          <option value="market">Market</option>
+                          <option value="limit">Limit</option>
+                        </select>
+                        {stockOrderType === "limit" ? (
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={stockLimitPrice}
+                            onChange={(e) => setStockLimitPrice(e.target.value)}
+                            placeholder="Limit price"
+                            className="w-32 rounded-xl border border-slate-300 dark:border-white/20 px-3 py-2 text-[11px] font-black text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          className="rounded-xl bg-green-600 px-3 py-2 text-[11px] font-black text-white disabled:opacity-60"
+                          onClick={() => handleExecuteSelectedTickerTrade("buy")}
+                          disabled={paperTradeSubmitting === `buy-${stockOrderType}` || activeTickerPrice <= 0}
+                        >
+                          {paperTradeSubmitting === `buy-${stockOrderType}` ? "Buying..." : (stockOrderType === "limit" ? "Buy Limit" : "Buy More")}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-xl bg-red-500 px-3 py-2 text-[11px] font-black text-white disabled:opacity-60"
+                          onClick={() => handleExecuteSelectedTickerTrade("sell")}
+                          disabled={paperTradeSubmitting === `sell-${stockOrderType}` || Number(paperAccount?.positions?.[normalizedActiveTicker] || 0) <= 0 || activeTickerPrice <= 0}
+                        >
+                          {paperTradeSubmitting === `sell-${stockOrderType}` ? "Selling..." : (stockOrderType === "limit" ? "Sell Limit" : "Sell")}
+                        </button>
+                        <button
+                          type="button"
+                          className="rounded-xl border border-slate-300 dark:border-white/20 px-3 py-2 text-[11px] font-black text-slate-700 dark:text-slate-100"
+                          onClick={handleOpenOptionChain}
+                          disabled={!normalizedActiveTicker}
+                        >
+                          {optionChainOpen ? "Hide Chain" : "Option Chain"}
+                        </button>
+                      </div>
+                      {optionChainOpen ? (
+                        <div className="mt-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-3 space-y-3">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-black text-slate-900 dark:text-slate-100">Option Chain</div>
+                              <div className="text-[10px] text-slate-500">Showing contracts nearest to the current underlying price.</div>
+                              <div className={`text-[10px] font-black mt-1 ${marketOpen ? "text-green-600" : "text-red-500"}`}>
+                                Market status: {marketOpen ? "Open" : "Closed"}
+                              </div>
+                            </div>
+                            <select
+                              className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-[11px] font-black text-slate-900 dark:text-slate-100"
+                              value={selectedOptionExpiration}
+                              onChange={(e) => setSelectedOptionExpiration(e.target.value)}
+                              disabled={optionChainLoading || !optionChainData?.expirationDates?.length}
+                            >
+                              {(optionChainData?.expirationDates || []).map((expiration) => (
+                                <option key={expiration} value={String(expiration)}>
+                                  {new Date(Number(expiration) * 1000).toLocaleDateString()}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {optionChainLoading ? (
+                            <div className="text-[11px] font-black text-slate-500">Loading option chain...</div>
+                          ) : null}
+                          {!optionChainLoading && optionChainError ? (
+                            <div className="text-[11px] font-black text-red-500">{optionChainError}</div>
+                          ) : null}
+                          {!optionChainLoading && !optionChainError ? (
+                            <>
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                  <div className="mb-2 text-xs font-black uppercase text-slate-500">Calls</div>
+                                  <div className="space-y-2">
+                                    {nearestCallContracts.length ? nearestCallContracts.map((contract) => (
+                                      <div key={contract.contractSymbol} className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 p-2">
+                                        <div className="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100">
+                                          <span>Str ${Number(contract.strike || 0).toFixed(0)}</span>
+                                          <span>Last ${Number(contract.lastPrice || 0).toFixed(2)}</span>
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500 dark:text-slate-300">
+                                          <span>B/A ${Number(contract.bid || 0).toFixed(2)}/{Number(contract.ask || 0).toFixed(2)}</span>
+                                          <span>Vol {Number(contract.volume || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="mt-2 grid grid-cols-1 gap-2">
+                                          <button
+                                            type="button"
+                                            className="rounded-lg bg-green-600 px-2 py-1.5 text-[10px] font-black text-white disabled:opacity-60"
+                                            onClick={() => handleExecuteOptionContractTrade(contract, "buy", "call")}
+                                            disabled={!marketOpen || paperTradeSubmitting === `buy-option-${String(contract.contractSymbol || "").toUpperCase()}`}
+                                          >
+                                            {paperTradeSubmitting === `buy-option-${String(contract.contractSymbol || "").toUpperCase()}` ? "Buying..." : "Paper Buy"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-[11px] font-black text-slate-500">No call contracts available.</div>}
+                                  </div>
+                                </div>
+                                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                  <div className="mb-2 text-xs font-black uppercase text-slate-500">Puts</div>
+                                  <div className="space-y-2">
+                                    {nearestPutContracts.length ? nearestPutContracts.map((contract) => (
+                                      <div key={contract.contractSymbol} className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 p-2">
+                                        <div className="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100">
+                                          <span>Str ${Number(contract.strike || 0).toFixed(0)}</span>
+                                          <span>Last ${Number(contract.lastPrice || 0).toFixed(2)}</span>
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500 dark:text-slate-300">
+                                          <span>B/A ${Number(contract.bid || 0).toFixed(2)}/{Number(contract.ask || 0).toFixed(2)}</span>
+                                          <span>Vol {Number(contract.volume || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="mt-2 grid grid-cols-1 gap-2">
+                                          <button
+                                            type="button"
+                                            className="rounded-lg bg-green-600 px-2 py-1.5 text-[10px] font-black text-white disabled:opacity-60"
+                                            onClick={() => handleExecuteOptionContractTrade(contract, "buy", "put")}
+                                            disabled={!marketOpen || paperTradeSubmitting === `buy-option-${String(contract.contractSymbol || "").toUpperCase()}`}
+                                          >
+                                            {paperTradeSubmitting === `buy-option-${String(contract.contractSymbol || "").toUpperCase()}` ? "Buying..." : "Paper Buy"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-[11px] font-black text-slate-500">No put contracts available.</div>}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="rounded-xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="text-xs font-black uppercase text-slate-500">My Open Contracts</div>
+                                  <div className="text-[10px] font-black text-slate-500">{openOptionContractsForActiveTicker.length} open</div>
+                                </div>
+                                {openOptionContractsForActiveTicker.length ? (
+                                  <div className="space-y-2">
+                                    {openOptionContractsForActiveTicker.map((position) => (
+                                      <div key={position.symbol} className="rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-slate-900/60 p-2">
+                                        <div className="flex items-center justify-between gap-2 text-[10px] sm:text-[11px] font-black text-slate-800 dark:text-slate-100">
+                                          <span>{position.optionType} ${position.strike.toFixed(2)}</span>
+                                          <span>{position.quantity} ctr</span>
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-500 dark:text-slate-300">
+                                          <span>Avg ${position.avgContractPrice.toFixed(2)} x {position.multiplier}</span>
+                                          <span>{position.hasLiveMark ? `Mark $${position.markPrice.toFixed(2)}` : "Mark unavailable"}</span>
+                                        </div>
+                                        <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                                          <span>Value ${position.marketValue.toFixed(2)}</span>
+                                          <span className={position.unrealizedPnl >= 0 ? "text-green-600" : "text-red-500"}>
+                                            {position.unrealizedPnl >= 0 ? "+" : "-"}${Math.abs(position.unrealizedPnl).toFixed(2)} ({position.unrealizedPct >= 0 ? "+" : "-"}{Math.abs(position.unrealizedPct).toFixed(2)}%)
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-[11px] font-black text-slate-500">No open contracts for {normalizedActiveTicker || "this ticker"}.</div>
+                                )}
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-white/10">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Paper Positions</h3>
-                      <button id="clear-paper-positions" className="text-[10px] font-black text-red-500">Clear</button>
+                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">Paper Trade History ({normalizedActiveTicker || "-"})</h3>
+                      {hasMoreThanTenPaperTrades ? (
+                        <button
+                          id="paper-history-toggle"
+                          className="text-[10px] font-black text-brogreen"
+                          onClick={() => setShowAllPaperTrades((prev) => !prev)}
+                        >
+                          {showAllPaperTrades ? "Show less" : "Show all"}
+                        </button>
+                      ) : null}
                     </div>
-                    <div id="paper-positions-list" className="space-y-2"></div>
+                    <div id="paper-positions-list" className="space-y-2">
+                      <div className="text-[11px] font-black text-slate-500">Showing up to 60 days of trade history for {normalizedActiveTicker || "the selected ticker"}.</div>
+                      {visiblePaperTrades.length ? visiblePaperTrades.map((trade) => (
+                        <div key={trade.id} className="flex items-center justify-between rounded-xl soft-card px-3 py-2">
+                          <div>
+                            <div className="text-xs font-black uppercase">{trade.symbol}</div>
+                            <div className="text-[10px] text-slate-500">
+                              {(trade.side || "trade").toUpperCase()} {trade.quantity} {trade.assetType === "option" ? "contracts" : "shares"} @ ${Number(trade.price || 0).toFixed(2)}
+                            </div>
+                            {trade.assetType === "option" ? (
+                              <div className="text-[10px] text-slate-500">
+                                {String(trade.optionType || "call").toUpperCase()} {String(trade.underlyingSymbol || normalizedActiveTicker || "")} ${Number(trade.strike || 0).toFixed(2)}
+                              </div>
+                            ) : null}
+                            {trade.assetType === "option" ? (
+                              <div className="text-[10px] text-slate-500">
+                                Notional: ${Number(trade.notional || (Number(trade.quantity || 0) * Number(trade.price || 0) * Number(trade.contractMultiplier || 100))).toFixed(2)}
+                              </div>
+                            ) : null}
+                            {(trade.assetType || "stock") === "option" && trade.contractMultiplier ? (
+                              <div className="text-[10px] text-slate-500">Multiplier: {trade.contractMultiplier}x</div>
+                            ) : null}
+                            {(trade.side || "").toLowerCase() === "sell" ? (
+                              <div className={`text-[10px] font-black ${Number(trade.realizedPnl || 0) >= 0 ? "text-green-600" : "text-red-500"}`}>
+                                Trade PnL: {Number(trade.realizedPnl || 0) >= 0 ? "+" : "-"}${Math.abs(Number(trade.realizedPnl || 0)).toFixed(2)}
+                              </div>
+                            ) : null}
+                          </div>
+                          <div className="text-[10px] text-slate-500 text-right space-y-1">
+                            <div>{trade.createdAt?.toDate?.().toLocaleString?.() || "-"}</div>
+                            <button
+                              type="button"
+                              className="text-brogreen font-black disabled:opacity-60"
+                              onClick={() => handleShareHistoricalTrade(trade)}
+                              disabled={!user}
+                            >
+                              Share
+                            </button>
+                          </div>
+                        </div>
+                      )) : <div className="text-[11px] text-slate-500">No trades for {normalizedActiveTicker || "this ticker"} yet.</div>}
+                    </div>
                   </div>
                 </div>
               </section>
                 <section className="panel rounded-3xl p-4 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
                 <h2 className="font-black text-xl mb-3 text-slate-900 dark:text-slate-100">Trending Topics</h2>
                 <div id="right-trending" className="space-y-3">
-                  {trendingTopics.map(t => (
-                    <div key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
+                  {trendingTopics.length ? trendingTopics.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={
+                        "w-full flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black text-left transition " +
+                        (activeTopic === t.topic ? "bg-brogreen/10 border border-brogreen" : "hover:bg-brogreen/10")
+                      }
+                      onClick={() => setActiveTopic((prev) => (prev === t.topic ? "" : t.topic))}
+                    >
                       <span className="flex-1 truncate">{t.topic}</span>
                       <span className="text-xs text-slate-500">{t.posts} posts</span>
+                    </button>
+                  )) : (
+                    <div className="px-3 py-2 rounded-xl soft-card text-xs font-black text-slate-500">
+                      No live topics yet.
                     </div>
-                  ))}
+                  )}
                 </div>
               </section>
             </div>
@@ -1466,53 +3876,25 @@ const Feed = () => {
               <h2 className="font-black text-lg mb-2">Communities</h2>
               <div className="space-y-2">
                 {communitiesCache.map(c => (
-                  <button
-                    key={c.id}
-                    className={
-                      "flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer w-full text-left" +
-                      (selectedFilter === c.id ? " bg-brogreen/10 border border-brogreen" : " hover:bg-brogreen/10")
-                    }
-                    onClick={() => {
-                      setSelectedFilter(c.id);
-                      setMobileDrawerOpen(false);
-                    }}
-                    tabIndex={0}
-                    aria-label={c.name}
-                    title={c.name}
-                  >
-                    <img src={c.avatar} alt={c.name} className="w-8 h-8 rounded-full object-cover" onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name) + '&background=050816&color=B6FF22'; }} />
-                    <span className="flex-1 truncate">{c.name}</span>
-                    <span className="text-xs text-slate-500">{c.members} members</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-            {/* Mobile Following */}
-            <section>
-              <h2 className="font-black text-lg mb-2 mt-4">Following</h2>
-              <div className="space-y-2">
-                {following.map(f => (
-                  <div key={f.id} className="flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
-                    <img src={f.avatar} alt={f.name} className="w-8 h-8 rounded-full object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-black text-sm">{f.name}</div>
-                      <div className="truncate text-xs text-slate-500">{f.handle}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-            {/* Mobile Followers (mocked as following for now) */}
-            <section>
-              <h2 className="font-black text-lg mb-2 mt-4">Followers</h2>
-              <div className="space-y-2">
-                {following.map(f => (
-                  <div key={f.id} className="flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
-                    <img src={f.avatar} alt={f.name} className="w-8 h-8 rounded-full object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-black text-sm">{f.name}</div>
-                      <div className="truncate text-xs text-slate-500">{f.handle}</div>
-                    </div>
+                  <div key={c.id} className="flex items-center gap-2">
+                    <button
+                      className={
+                        "flex items-center gap-3 px-3 py-2 rounded-xl soft-card font-black cursor-pointer flex-1 text-left" +
+                        (selectedFilter === c.id ? " bg-brogreen/10 border border-brogreen" : " hover:bg-brogreen/10")
+                      }
+                      onClick={() => {
+                        setSelectedFilter(c.id);
+                        setMobileDrawerOpen(false);
+                        router.push(`/communities/${c.id}`);
+                      }}
+                      tabIndex={0}
+                      aria-label={c.name}
+                      title={c.name}
+                    >
+                      <img src={c.avatar} alt={c.name} className="w-8 h-8 rounded-full object-cover" onError={e => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(c.name) + '&background=050816&color=B6FF22'; }} />
+                      <span className="flex-1 truncate">{c.name}</span>
+                      <span className="text-xs text-slate-500">{c.members} members</span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1521,18 +3903,33 @@ const Feed = () => {
             <section>
               <h2 className="font-black text-lg mb-2 mt-4">Trending Topics</h2>
               <div className="space-y-2">
-                {trendingTopics.map(t => (
-                  <div key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black cursor-pointer hover:bg-brogreen/10">
+                {trendingTopics.length ? trendingTopics.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={
+                      "w-full flex items-center gap-2 px-3 py-2 rounded-xl soft-card font-black text-left transition " +
+                      (activeTopic === t.topic ? "bg-brogreen/10 border border-brogreen" : "hover:bg-brogreen/10")
+                    }
+                    onClick={() => {
+                      setActiveTopic((prev) => (prev === t.topic ? "" : t.topic));
+                      setMobileDrawerOpen(false);
+                    }}
+                  >
                     <span className="flex-1 truncate">{t.topic}</span>
                     <span className="text-xs text-slate-500">{t.posts} posts</span>
+                  </button>
+                )) : (
+                  <div className="px-3 py-2 rounded-xl soft-card text-xs font-black text-slate-500">
+                    No live topics yet.
                   </div>
-                ))}
+                )}
               </div>
             </section>
           </div>
         </aside>
 
-        <button id="mobile-floating-post" className="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black dark:text-brogreen font-black text-2xl shadow-2xl" aria-label="Create a post" title="Create a post">+</button>
+        <button id="mobile-floating-post" className="xl:hidden fixed bottom-5 right-5 z-40 w-16 h-16 rounded-full bg-brogreen text-black font-black text-2xl shadow-2xl" aria-label="Create a post" title="Create a post" onClick={() => setModal("post")}>+</button>
 
         {/* Bro LLM Modal */}
         <div id="bro-llm-modal" className="fixed inset-0 bg-black/70 hidden items-center justify-center z-[100] px-4">

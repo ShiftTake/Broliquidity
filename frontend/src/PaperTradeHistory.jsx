@@ -5,6 +5,7 @@ import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 export default function PaperTradeHistory() {
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -22,11 +23,33 @@ export default function PaperTradeHistory() {
 
   if (!auth.currentUser) return <div className="text-slate-400">Sign in to view trade history.</div>;
   if (loading) return <div className="text-slate-400">Loading trade history...</div>;
-  if (!trades.length) return <div className="text-slate-400">No trades yet.</div>;
+
+  const sixtyDaysAgoMs = Date.now() - (60 * 24 * 60 * 60 * 1000);
+  const tradesWithin60Days = trades.filter((trade) => {
+    const tradeDate = trade.createdAt?.toDate?.();
+    if (!tradeDate) return true;
+    return tradeDate.getTime() >= sixtyDaysAgoMs;
+  });
+  const hasMoreThanTen = tradesWithin60Days.length > 10;
+  const visibleTrades = showAll ? tradesWithin60Days : tradesWithin60Days.slice(0, 10);
+
+  if (!tradesWithin60Days.length) return <div className="text-slate-400">No trades in the past 60 days.</div>;
 
   return (
     <div className="rounded-2xl bg-white/10 p-6 mb-6 shadow-lg">
-      <h3 className="font-black text-lg mb-4">Paper Trade History</h3>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="font-black text-lg">Paper Trade History</h3>
+        {hasMoreThanTen ? (
+          <button
+            type="button"
+            className="text-xs font-black text-brogreen"
+            onClick={() => setShowAll((prev) => !prev)}
+          >
+            {showAll ? "Show less" : "Show all"}
+          </button>
+        ) : null}
+      </div>
+      <p className="text-[11px] text-slate-500 mb-3">Showing up to 60 days of trade history.</p>
       <table className="w-full text-xs">
         <thead>
           <tr className="text-slate-500">
@@ -38,7 +61,7 @@ export default function PaperTradeHistory() {
           </tr>
         </thead>
         <tbody>
-          {trades.map((t) => (
+          {visibleTrades.map((t) => (
             <tr key={t.id} className="border-t border-slate-200 dark:border-white/10">
               <td>{t.createdAt?.toDate?.().toLocaleString?.() || "-"}</td>
               <td className="font-bold">{t.symbol}</td>

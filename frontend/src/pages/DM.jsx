@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { db, auth } from "../firebase";
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
-// useNavigate removed for Next.js migration
 
 export default function DM() {
   const [conversations, setConversations] = useState([]);
@@ -10,7 +9,6 @@ export default function DM() {
   const [newMessage, setNewMessage] = useState("");
   const [users, setUsers] = useState([]);
   const user = auth.currentUser;
-  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
   // Fetch all users for new DM

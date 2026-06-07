@@ -35,4 +35,11 @@ async function getCompanyNews(symbol) {
   return await res.json();
 }
 
-module.exports = { getQuote, searchSymbol, getCompanyProfile, getCompanyNews };
+async function getCandles(symbol, resolution, from, to) {
+  const url = `${BASE_URL}/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=${encodeURIComponent(resolution)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&token=${FINNHUB_API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Finnhub candle error');
+  return await res.json();
+}
+
+module.exports = { getQuote, searchSymbol, getCompanyProfile, getCompanyNews, getCandles };

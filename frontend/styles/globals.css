@@ -5,20 +5,60 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
 
+:root {
+  --bg-base: #f4f7fb;
+  --bg-accent-a: rgba(56, 189, 248, 0.14);
+  --bg-accent-b: rgba(163, 230, 53, 0.12);
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-border: rgba(148, 163, 184, 0.24);
+  --surface-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
   font-family: 'Inter', sans-serif;
+  min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, .35), transparent 35%),
-    radial-gradient(circle at top right, rgba(163, 255, 18, .25), transparent 30%),
-    #050816;
+    radial-gradient(circle at top left, var(--bg-accent-a), transparent 38%),
+    radial-gradient(circle at top right, var(--bg-accent-b), transparent 34%),
+    var(--bg-base);
   color: #0f172a; /* slate-900 */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
+}
+
+*::selection {
+  background: rgba(132, 204, 22, 0.25);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.soft-card {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.soft-card:hover {
+  border-color: rgba(132, 204, 22, 0.45);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+
+.soft-card:focus-within {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 .glass {
@@ -40,4 +80,22 @@ body {
 
 .logo-glow {
   filter: drop-shadow(0 0 32px rgba(182,255,34,.35));
+}
+
+.dark .panel {
+  background: rgba(10, 15, 33, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+}
+
+.dark .soft-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 640px) {
+  .panel {
+    border-radius: 1rem;
+  }
 }

@@ -50,7 +50,7 @@ export default function StockInfo({ symbol }) {
           <div className="text-xs text-slate-400 mt-1">Prev Close: {prevClose?.toFixed(2)}</div>
         </div>
       </div>
-      <PaperTradeButtons symbol={symbol} price={price} />
+      <PaperTradeButtons symbol={symbol} price={price} allowSell={false} />
       <StockChart symbol={symbol} />
       <CompanyInfo symbol={symbol} />
     </div>

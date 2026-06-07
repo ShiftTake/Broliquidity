@@ -15,10 +15,12 @@ function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     setError("");
+    setSuccess("");
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
@@ -39,6 +41,7 @@ function AuthForm() {
   const handleAuth = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -50,7 +53,8 @@ function AuthForm() {
           email,
           displayName: userCredential.user.displayName || "",
           photoURL: defaultPhotoURL,
-          bio: ""
+          bio: "",
+          createdAt: new Date()
         });
         setUser({ ...userCredential.user, photoURL: defaultPhotoURL });
         router.push("/feed");
@@ -124,6 +128,15 @@ function AuthForm() {
                 {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
               </button>
             </div>
+            {!isSignUp ? (
+              <div className="text-center mb-3">
+                <button type="button" className="text-[#b6ff22] hover:underline text-sm font-semibold" onClick={() => router.push("/forgot-password")}>
+                  Forgot Password?
+                </button>
+              </div>
+            ) : null}
+            {error && <div className="text-red-400 mb-4">{error}</div>}
+            {success && <div className="text-green-400 mb-4">{success}</div>}
           </form>
           <div className="flex items-center my-4">
             <div className="flex-grow border-t border-slate-700"></div>

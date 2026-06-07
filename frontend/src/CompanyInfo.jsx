@@ -59,7 +59,7 @@ export default function CompanyInfo({ symbol }) {
                 <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:underline font-bold">
                   {n.headline || n.title}
                 </a>
-                <div className="text-xs text-slate-500">{n.source} • {n.datetime ? new Date(n.datetime).toLocaleDateString() : ""}</div>
+                <div className="text-xs text-slate-500">{n.source || "Unknown source"}</div>
               </li>
             ))}
           </ul>

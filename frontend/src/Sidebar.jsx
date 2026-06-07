@@ -1,23 +1,19 @@
 
 import React from "react";
-import { useBroLLM } from "./BroLLMContext";
 import Link from "next/link";
 import SidebarSearch from "./SidebarSearch";
-import SidebarBroLLM from "./SidebarBroLLM";
 
 const navItems = [
   { name: "Home", path: "/" },
   { name: "Explore", path: "/explore" },
   { name: "Communities", path: "/communities" },
   { name: "Following", path: "/following" },
-  { name: "Bookmarks", path: "/bookmarks" },
-  { name: "Bro LLM", path: "/bro" },
+  { name: "Saved posts", path: "/bookmarks" },
   { name: "Direct Messages", path: "/dm" },
   { name: "Profile", path: "/profile" }
 ];
 
 export default function Sidebar() {
-  const { setShowBroLLM } = useBroLLM();
   return (
     <aside className="w-full max-w-xs p-6 bg-white text-black rounded-2xl shadow-lg flex flex-col gap-2">
       <div className="flex items-center gap-3 mb-8">

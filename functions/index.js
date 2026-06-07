@@ -4,7 +4,7 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const { askGemini } = require('./gemini');
-const { getQuote, searchSymbol, getCompanyProfile, getCompanyNews } = require('./finnhub');
+const { getQuote, searchSymbol, getCompanyProfile, getCompanyNews, getCandles } = require('./finnhub');
 // Finnhub: Get company profile
 exports.companyProfile = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -53,6 +53,26 @@ exports.getQuote = functions.https.onRequest(async (req, res) => {
     const symbol = req.body.symbol || req.query.symbol;
     if (!symbol) return res.status(400).json({ error: 'Missing symbol' });
     const data = await getQuote(symbol);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Finnhub error' });
+  }
+});
+
+exports.getCandles = functions.https.onRequest(async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  try {
+    const symbol = req.body.symbol || req.query.symbol;
+    const resolution = req.body.resolution || req.query.resolution || 'D';
+    const from = req.body.from || req.query.from;
+    const to = req.body.to || req.query.to;
+    if (!symbol || !from || !to) return res.status(400).json({ error: 'Missing candle params' });
+    const data = await getCandles(symbol, resolution, from, to);
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message || 'Finnhub error' });

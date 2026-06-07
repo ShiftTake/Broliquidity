@@ -38,7 +38,8 @@ export default function RegisterForm() {
         email: user.email,
         displayName: user.displayName || "",
         photoURL: randomAvatar,
-        bio: ""
+        bio: "",
+        createdAt: new Date()
       }, { merge: true });
       router.push("/feed");
     } catch (err) {
@@ -61,7 +62,8 @@ export default function RegisterForm() {
         email,
         displayName,
         photoURL: randomAvatar,
-        bio: ""
+        bio: "",
+        createdAt: new Date()
       });
       router.push("/feed");
     } catch (err) {

@@ -59,7 +59,7 @@ export default function Bookmarks() {
       <div className="w-full max-w-2xl flex flex-col mt-12 px-4 sm:px-0">
         <header className="flex items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Bookmarks</h1>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Saved posts</h1>
             <p className="text-sm text-slate-500 mt-1">Saved posts in the order you bookmarked them.</p>
           </div>
           <Link href="/feed" legacyBehavior>
@@ -82,7 +82,7 @@ export default function Bookmarks() {
             <svg width="48" height="48" fill="none" viewBox="0 0 48 48" className="mb-4 opacity-50">
               <path d="M12 6a4 4 0 0 0-4 4v32l16-8 16 8V10a4 4 0 0 0-4-4H12Z" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round"/>
             </svg>
-            <span className="text-slate-500 text-lg font-semibold text-center">No bookmarks yet.<br />Your saved posts will appear here.</span>
+            <span className="text-slate-500 text-lg font-semibold text-center">No saved posts yet.<br />Your saved posts will appear here.</span>
           </div>
         ) : (
           <ul className="space-y-4">

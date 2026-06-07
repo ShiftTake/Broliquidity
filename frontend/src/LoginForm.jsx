@@ -8,16 +8,18 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/feed");
     } catch (err) {
-      setError("Login failed: " + err.message);
+      setError("Incorrect Password");
     }
   };
 
@@ -29,7 +31,13 @@ export default function LoginForm() {
           <input type="email" placeholder="Email" className="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full" required value={email} onChange={e => setEmail(e.target.value)} />
           <input type="password" placeholder="Password" className="px-5 py-3 rounded-2xl bg-white text-black outline-none font-semibold w-full" required value={password} onChange={e => setPassword(e.target.value)} />
           <button type="submit" className="w-full px-4 py-3 rounded-2xl bg-blue-600 text-white font-bold hover:scale-105 transition">Login</button>
+          <div className="text-center">
+            <Link href="/forgot-password" className="text-[#b6ff22] underline text-sm font-semibold hover:opacity-90">
+              Forgot Password?
+            </Link>
+          </div>
           {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
+          {success && <div className="text-green-400 text-sm mt-2">{success}</div>}
         </form>
         <div className="mt-6 text-center text-slate-400 text-sm">
           Don't have an account? <Link href="/register" className="text-[#b6ff22] underline">Create one</Link>
