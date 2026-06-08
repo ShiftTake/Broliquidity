@@ -1350,6 +1350,7 @@ function Feed() {
   const [showAllPaperTrades, setShowAllPaperTrades] = useState(false);
   const [stockOrderType, setStockOrderType] = useState("market");
   const [stockLimitPrice, setStockLimitPrice] = useState("");
+  const [stockShareQuantity, setStockShareQuantity] = useState("1");
   const [pnlChartRange, setPnlChartRange] = useState("day");
   const [pnlRangeMenuOpen, setPnlRangeMenuOpen] = useState(false);
   const [positionQuotes, setPositionQuotes] = useState({});
@@ -1363,6 +1364,7 @@ function Feed() {
   const [optionChainData, setOptionChainData] = useState(null);
   const [optionChainLoading, setOptionChainLoading] = useState(false);
   const [optionChainError, setOptionChainError] = useState("");
+  const [optionContractQuantity, setOptionContractQuantity] = useState("1");
   const [selectedOptionExpiration, setSelectedOptionExpiration] = useState("");
   const [marketOpen, setMarketOpen] = useState(() => isMarketOpenNow());
   // Search dropdowns
@@ -1544,17 +1546,7 @@ function Feed() {
     }
 
     const currentHeldQty = Math.max(0, Number(paperAccount?.positions?.[symbol] || 0));
-    const suggestedQty = side === "sell"
-      ? Math.max(1, Math.floor(currentHeldQty || 1))
-      : 1;
-    const promptLabel = side === "sell" ? "Sell" : "Buy";
-    const qtyInput = window.prompt(
-      `${promptLabel} how many shares of ${symbol}?`,
-      String(suggestedQty)
-    );
-    if (qtyInput == null) return;
-
-    const quantity = Math.floor(Number(qtyInput));
+    const quantity = Math.floor(Number(stockShareQuantity));
     if (!Number.isFinite(quantity) || quantity <= 0) {
       window.alert("Enter a valid share quantity.");
       return;
@@ -1606,14 +1598,7 @@ function Feed() {
     }
 
     const heldContracts = Math.max(0, Number(paperAccount?.optionPositions?.[contractSymbol] || 0));
-    const suggestedQty = side === "sell" ? Math.max(1, heldContracts || 1) : 1;
-    const qtyInput = window.prompt(
-      `${side === "buy" ? "Buy" : "Sell"} how many contracts of ${contractSymbol}?`,
-      String(suggestedQty)
-    );
-    if (qtyInput == null) return;
-
-    const quantity = Math.floor(Number(qtyInput));
+    const quantity = Math.floor(Number(optionContractQuantity));
     if (!Number.isFinite(quantity) || quantity <= 0) {
       window.alert("Enter a valid contract quantity.");
       return;
@@ -3625,6 +3610,15 @@ function Feed() {
                           <option value="market">Market</option>
                           <option value="limit">Limit</option>
                         </select>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={stockShareQuantity}
+                          onChange={(e) => setStockShareQuantity(e.target.value)}
+                          placeholder="Shares"
+                          className="w-24 rounded-xl border border-slate-300 dark:border-white/20 px-3 py-2 text-[11px] font-black text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900"
+                        />
                         {stockOrderType === "limit" ? (
                           <input
                             type="number"
@@ -3666,6 +3660,16 @@ function Feed() {
                       {optionChainOpen ? (
                         <div className="mt-3 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-3 space-y-3">
                           <div className="flex flex-wrap items-center justify-between gap-3">
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={optionContractQuantity}
+                              onChange={(e) => setOptionContractQuantity(e.target.value)}
+                              placeholder="Contracts"
+                              className="w-28 rounded-xl border border-slate-300 dark:border-white/20 px-3 py-2 text-[11px] font-black text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-900"
+                              aria-label="Option contract quantity"
+                            />
                             <div>
                               <div className="text-xs font-black text-slate-900 dark:text-slate-100">Option Chain</div>
                               <div className="text-[10px] text-slate-500">Showing contracts nearest to the current underlying price.</div>
