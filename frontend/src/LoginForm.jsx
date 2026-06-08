@@ -186,6 +186,11 @@ export default function LoginForm() {
             <Link href="/register" className="font-black text-[#b6ff22] underline decoration-[#b6ff22]/30 underline-offset-4">
               Create one
             </Link>
+            <div className="mt-3 flex items-center gap-3 text-xs font-bold text-slate-400">
+              <Link href="/privacy" className="hover:text-[#b6ff22]">Privacy</Link>
+              <span className="text-slate-600">•</span>
+              <Link href="/terms" className="hover:text-[#b6ff22]">Terms</Link>
+            </div>
           </div>
         </section>
       </div>

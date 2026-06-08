@@ -204,7 +204,12 @@ export default function Index() {
 
       {/* FOOTER */}
       <footer className="border-t border-white/10 px-6 py-8 text-center text-slate-500 text-sm w-full relative z-10">
-        © 2026 Bro Liquidity. Built for finance conversations.
+        <div>© 2026 Bro Liquidity. Built for finance conversations.</div>
+        <div className="mt-3 flex items-center justify-center gap-4 text-xs font-bold">
+          <Link href="/privacy" className="hover:text-[#b6ff22]">Privacy</Link>
+          <span className="text-slate-600">•</span>
+          <Link href="/terms" className="hover:text-[#b6ff22]">Terms</Link>
+        </div>
       </footer>
     </div>
   );
