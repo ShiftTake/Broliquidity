@@ -2368,7 +2368,7 @@ function Feed() {
     return map;
   }, [paperTrades]);
 
-  const openOptionContractsForActiveTicker = useMemo(() => {
+  const paperOptionHoldings = useMemo(() => {
     return Object.entries(paperOptionPositions)
       .map(([contractSymbol, rawQty]) => {
         const symbol = String(contractSymbol || "").toUpperCase();
@@ -2376,12 +2376,6 @@ function Feed() {
         if (!symbol || quantity <= 0) return null;
 
         const meta = latestOptionTradeMetaBySymbol[symbol] || null;
-        const inferredUnderlying = String(meta?.underlyingSymbol || "").toUpperCase();
-        const matchesTicker = inferredUnderlying
-          ? inferredUnderlying === normalizedActiveTicker
-          : symbol.startsWith(normalizedActiveTicker);
-        if (!matchesTicker) return null;
-
         const avgContractPrice = Number(paperOptionCostBasis[symbol] || 0);
         const multiplier = Math.max(1, Number(meta?.contractMultiplier || 100));
         const liveContract = optionContractsBySymbol[symbol] || null;
@@ -2396,6 +2390,7 @@ function Feed() {
         const marketValue = quantity * markPrice * multiplier;
         const unrealizedPnl = marketValue - costValue;
         const unrealizedPct = costValue > 0 ? (unrealizedPnl / costValue) * 100 : 0;
+        const underlyingSymbol = String(meta?.underlyingSymbol || liveContract?.underlyingSymbol || "").toUpperCase();
 
         return {
           symbol,
@@ -2407,15 +2402,33 @@ function Feed() {
           marketValue,
           unrealizedPnl,
           unrealizedPct,
-          optionType: String(meta?.optionType || "call").toUpperCase(),
+          optionType: String(meta?.optionType || liveContract?.contractType || "call").toUpperCase(),
           strike: Number(meta?.strike || liveContract?.strike || 0),
           expiration: meta?.expiration?.toDate?.() || (meta?.expiration ? new Date(meta.expiration) : null),
+          underlyingSymbol,
           hasLiveMark: Boolean(liveContract)
         };
       })
       .filter(Boolean)
       .sort((a, b) => b.marketValue - a.marketValue || a.symbol.localeCompare(b.symbol));
-  }, [paperOptionPositions, latestOptionTradeMetaBySymbol, normalizedActiveTicker, paperOptionCostBasis, optionContractsBySymbol]);
+  }, [paperOptionPositions, paperOptionCostBasis, latestOptionTradeMetaBySymbol, optionContractsBySymbol]);
+
+  const openOptionContractsForActiveTicker = useMemo(() => {
+    return paperOptionHoldings
+      .map((holding) => {
+        const inferredUnderlying = String(holding.underlyingSymbol || "").toUpperCase();
+        const matchesTicker = inferredUnderlying
+          ? inferredUnderlying === normalizedActiveTicker
+          : holding.symbol.startsWith(normalizedActiveTicker);
+        if (!matchesTicker) return null;
+        return {
+          ...holding,
+          hasLiveMark: holding.hasLiveMark
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.marketValue - a.marketValue || a.symbol.localeCompare(b.symbol));
+  }, [paperOptionHoldings, normalizedActiveTicker]);
   const paperTradesWithin60Days = paperTrades.filter((trade) => {
     const tradeDate = trade.createdAt?.toDate?.();
     if (!tradeDate) return true;
@@ -3512,10 +3525,19 @@ function Feed() {
                     )) : null}
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Paper Cash</div><div id="paper-cash" className="font-black text-sm">${paperCash.toLocaleString()}</div></div>
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">P&L ({pnlRangeLabels[pnlChartRange]})</div><div id="paper-pnl" className={`font-black text-sm ${selectedRangePnl >= 0 ? "text-green-600" : "text-red-500"}`}>{selectedRangePnl >= 0 ? "+" : "-"}${Math.abs(selectedRangePnl).toLocaleString()}</div></div>
-                  <div className="soft-card rounded-2xl p-3"><div className="text-[10px] text-slate-500 font-black uppercase">Positions</div><div id="paper-position-count" className="font-black text-sm">{paperPositionCount}</div></div>
+                <div className="grid grid-cols-1 gap-2 text-center sm:grid-cols-3 mb-4">
+                  <div className="soft-card min-w-0 rounded-2xl p-3">
+                    <div className="text-[10px] text-slate-500 font-black uppercase">Paper Cash</div>
+                    <div id="paper-cash" className="min-w-0 truncate font-black text-sm sm:text-base">${paperCash.toLocaleString()}</div>
+                  </div>
+                  <div className="soft-card min-w-0 rounded-2xl p-3">
+                    <div className="text-[10px] text-slate-500 font-black uppercase">P&L ({pnlRangeLabels[pnlChartRange]})</div>
+                    <div id="paper-pnl" className={`min-w-0 truncate font-black text-sm sm:text-base ${selectedRangePnl >= 0 ? "text-green-600" : "text-red-500"}`}>{selectedRangePnl >= 0 ? "+" : "-"}${Math.abs(selectedRangePnl).toLocaleString()}</div>
+                  </div>
+                  <div className="soft-card min-w-0 rounded-2xl p-3">
+                    <div className="text-[10px] text-slate-500 font-black uppercase">Positions</div>
+                    <div id="paper-position-count" className="min-w-0 truncate font-black text-sm sm:text-base">{paperPositionCount}</div>
+                  </div>
                 </div>
                 <div className="mb-4 rounded-2xl border border-slate-200 dark:border-white/10 p-3 bg-white dark:bg-white/5">
                   <div className="h-28 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-900 p-2">
@@ -3575,7 +3597,86 @@ function Feed() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-slate-500">No holdings yet. Paper buy a stock to start a position.</p>
+                      <p className="text-[11px] text-slate-500">No stock holdings yet. Paper buy a stock to start a position.</p>
+                    )}
+                  </div>
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-black uppercase tracking-wide text-slate-500">My Derivatives</h3>
+                      <span className="text-[10px] font-black text-slate-400">Visible across the whole hub</span>
+                    </div>
+                    {paperOptionHoldings.length ? (
+                      <div className="space-y-2">
+                        {paperOptionHoldings.map((position) => (
+                          <div
+                            key={position.symbol}
+                            className={
+                              "rounded-xl soft-card px-3 py-2 cursor-pointer transition " +
+                              (position.underlyingSymbol && activeTicker === position.underlyingSymbol ? "border border-brogreen bg-brogreen/10" : "")
+                            }
+                            onClick={() => position.underlyingSymbol && setActiveTicker(position.underlyingSymbol)}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-xs font-black uppercase text-slate-900 dark:text-slate-100 truncate">
+                                  {position.underlyingSymbol || position.symbol}
+                                </div>
+                                <div className="text-[10px] text-slate-500 truncate">
+                                  {position.symbol} • {position.optionType} ${position.strike.toFixed(2)} • {position.quantity.toLocaleString()} ctr
+                                </div>
+                              </div>
+                              <div className="text-right min-w-0">
+                                <div className="text-xs font-black text-slate-900 dark:text-slate-100 truncate">
+                                  ${position.marketValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </div>
+                                <div className={`text-[10px] font-black truncate ${position.unrealizedPnl >= 0 ? "text-green-600" : "text-red-500"}`}>
+                                  {position.unrealizedPnl >= 0 ? "+" : "-"}${Math.abs(position.unrealizedPnl).toFixed(2)} ({position.unrealizedPct >= 0 ? "+" : "-"}{Math.abs(position.unrealizedPct).toFixed(2)}%)
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                className="rounded-lg bg-green-600 px-2 py-1.5 text-[10px] font-black text-white disabled:opacity-60"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleExecuteOptionContractTrade({
+                                    contractSymbol: position.symbol,
+                                    bid: position.markPrice,
+                                    ask: position.markPrice,
+                                    lastPrice: position.markPrice,
+                                    strike: position.strike,
+                                    expiration: position.expiration ? Math.floor(position.expiration.getTime() / 1000) : selectedOptionExpiration
+                                  }, "buy", String(position.optionType || "call").toLowerCase());
+                                }}
+                                disabled={!marketOpen || paperTradeSubmitting === `buy-option-${String(position.symbol || "").toUpperCase()}`}
+                              >
+                                {paperTradeSubmitting === `buy-option-${String(position.symbol || "").toUpperCase()}` ? "Buying..." : "Paper Buy"}
+                              </button>
+                              <button
+                                type="button"
+                                className="rounded-lg bg-red-500 px-2 py-1.5 text-[10px] font-black text-white disabled:opacity-60"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleExecuteOptionContractTrade({
+                                    contractSymbol: position.symbol,
+                                    bid: position.markPrice,
+                                    ask: position.markPrice,
+                                    lastPrice: position.markPrice,
+                                    strike: position.strike,
+                                    expiration: position.expiration ? Math.floor(position.expiration.getTime() / 1000) : selectedOptionExpiration
+                                  }, "sell", String(position.optionType || "call").toLowerCase());
+                                }}
+                                disabled={!marketOpen || paperTradeSubmitting === `sell-option-${String(position.symbol || "").toUpperCase()}`}
+                              >
+                                {paperTradeSubmitting === `sell-option-${String(position.symbol || "").toUpperCase()}` ? "Selling..." : "Paper Sell"}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-500">No derivative holdings yet. Buy an option contract to start a position.</p>
                     )}
                   </div>
                   <div className="pt-4 border-t border-slate-200 dark:border-white/10">
