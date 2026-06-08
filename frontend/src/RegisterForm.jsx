@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { auth, db } from "../src/firebase";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, OAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 
@@ -18,6 +18,29 @@ export default function RegisterForm() {
   const [error, setError] = useState("");
   const router = useRouter();
 
+  const upsertSocialProfile = async (user) => {
+    const randomAvatar = user.photoURL || getRandomDefaultAvatar();
+    if (!user.photoURL) {
+      await updateProfile(user, { photoURL: randomAvatar });
+    }
+
+    await setDoc(doc(db, "profiles", user.uid), {
+      username: user.displayName || user.email,
+      bio: "",
+      email: user.email,
+      photoURL: randomAvatar,
+      createdAt: new Date()
+    }, { merge: true });
+
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      displayName: user.displayName || "",
+      photoURL: randomAvatar,
+      bio: "",
+      createdAt: new Date()
+    }, { merge: true });
+  };
+
   const handleGoogleSignIn = async (e) => {
     e.preventDefault();
     setError("");
@@ -25,25 +48,26 @@ export default function RegisterForm() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      const randomAvatar = getRandomDefaultAvatar();
-      await updateProfile(user, { photoURL: randomAvatar });
-      await setDoc(doc(db, "profiles", user.uid), {
-        username: user.displayName || user.email,
-        bio: '',
-        email: user.email,
-        photoURL: randomAvatar,
-        createdAt: new Date()
-      }, { merge: true });
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        displayName: user.displayName || "",
-        photoURL: randomAvatar,
-        bio: "",
-        createdAt: new Date()
-      }, { merge: true });
+      await upsertSocialProfile(user);
       router.push("/feed");
     } catch (err) {
       setError("Google sign-in failed: " + err.message);
+    }
+  };
+
+  const handleAppleSignIn = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await upsertSocialProfile(user);
+      router.push("/feed");
+    } catch (err) {
+      setError("Apple sign-in failed: " + err.message);
     }
   };
 
@@ -120,7 +144,7 @@ export default function RegisterForm() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.35em] text-[#b6ff22]">Sign up</p>
               <h3 className="mt-3 text-3xl font-black tracking-tight text-white">Create your account</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Start with Google or finish the form below.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">Start with Google or Apple, or finish the form below.</p>
             </div>
             <Link href="/login" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-200 transition hover:border-[#b6ff22]/60 hover:text-[#b6ff22]">
               Sign in
@@ -129,6 +153,9 @@ export default function RegisterForm() {
 
           <button onClick={handleGoogleSignIn} className="mt-8 w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-slate-900 transition hover:brightness-95">
             Sign up with Google
+          </button>
+          <button onClick={handleAppleSignIn} className="mt-3 w-full rounded-2xl border border-white/20 bg-black px-4 py-3 text-sm font-black text-white transition hover:brightness-110">
+            Sign up with Apple
           </button>
           <div className="my-4 text-center text-xs font-black uppercase tracking-[0.24em] text-slate-500">or</div>
 

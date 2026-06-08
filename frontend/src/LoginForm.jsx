@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
-import { auth } from "../src/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../src/firebase";
+import { OAuthProvider, signInWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import Link from "next/link";
 
 export default function LoginForm() {
@@ -9,6 +10,32 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+
+  const getRandomDefaultAvatar = () => {
+    const idx = Math.floor(Math.random() * 15) + 1;
+    return `/defaults/default${idx}.png`;
+  };
+
+  const upsertSocialProfile = async (user) => {
+    const resolvedAvatar = user.photoURL || getRandomDefaultAvatar();
+    if (!user.photoURL) {
+      await updateProfile(user, { photoURL: resolvedAvatar });
+    }
+
+    await setDoc(doc(db, "profiles", user.uid), {
+      username: user.displayName || user.email,
+      email: user.email,
+      photoURL: resolvedAvatar,
+      updatedAt: new Date()
+    }, { merge: true });
+
+    await setDoc(doc(db, "users", user.uid), {
+      displayName: user.displayName || "",
+      email: user.email,
+      photoURL: resolvedAvatar,
+      updatedAt: new Date()
+    }, { merge: true });
+  };
 
   const getAuthErrorMessage = (code) => {
     switch (code) {
@@ -36,6 +63,21 @@ export default function LoginForm() {
       router.push("/feed");
     } catch (err) {
       setError(getAuthErrorMessage(err?.code));
+    }
+  };
+
+  const handleAppleSignIn = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+      const result = await signInWithPopup(auth, provider);
+      await upsertSocialProfile(result.user);
+      router.push("/feed");
+    } catch (err) {
+      setError("Apple sign-in failed. " + getAuthErrorMessage(err?.code));
     }
   };
 
@@ -88,7 +130,7 @@ export default function LoginForm() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.35em] text-[#b6ff22]">Login</p>
               <h3 className="mt-3 text-3xl font-black tracking-tight text-white">Access your account</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-300">Use your email and password to continue.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">Use email/password or Sign in with Apple.</p>
             </div>
             <Link href="/register" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.25em] text-slate-200 transition hover:border-[#b6ff22]/60 hover:text-[#b6ff22]">
               Sign up
@@ -123,6 +165,10 @@ export default function LoginForm() {
 
             <button type="submit" className="w-full rounded-2xl bg-[#b6ff22] px-4 py-3 text-sm font-black text-black transition hover:brightness-95">
               Login
+            </button>
+
+            <button type="button" onClick={handleAppleSignIn} className="w-full rounded-2xl border border-white/20 bg-black px-4 py-3 text-sm font-black text-white transition hover:brightness-110">
+              Sign in with Apple
             </button>
 
             <div className="flex items-center justify-between gap-4 text-sm">
