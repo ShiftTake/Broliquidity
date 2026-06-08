@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { deleteUser } from "firebase/auth";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -20,6 +21,8 @@ export default function Profile() {
   const [communities, setCommunities] = useState([]);
   const [tab, setTab] = useState("posts");
   const [loading, setLoading] = useState(true);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const handleDeletePost = async (post) => {
     if (!user?.uid || !post?.id) return;
@@ -33,6 +36,51 @@ export default function Profile() {
       setPosts((prev) => prev.filter((row) => row.id !== post.id));
     } catch {
       // Keep profile rendering resilient if delete fails.
+    }
+  };
+
+  const deleteDocsByQuery = async (q) => {
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((row) => deleteDoc(row.ref)));
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!auth.currentUser || deleteBusy) return;
+
+    const shouldDelete = window.confirm(
+      "Delete your account permanently? This will remove your profile and cannot be undone."
+    );
+    if (!shouldDelete) return;
+
+    setDeleteError("");
+    setDeleteBusy(true);
+
+    const uid = auth.currentUser.uid;
+    try {
+      await Promise.all([
+        deleteDocsByQuery(query(collection(db, "posts"), where("authorId", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "posts"), where("userId", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "posts"), where("user.uid", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "memberships"), where("userId", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "follows"), where("followerId", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "follows"), where("followingId", "==", uid))),
+        deleteDocsByQuery(query(collection(db, "conversations"), where("participants", "array-contains", uid)))
+      ]);
+
+      await Promise.all([
+        deleteDoc(firestoreDoc(db, "profiles", uid)).catch(() => undefined),
+        deleteDoc(firestoreDoc(db, "users", uid)).catch(() => undefined)
+      ]);
+
+      await deleteUser(auth.currentUser);
+      window.location.href = "/";
+    } catch (err) {
+      if (err?.code === "auth/requires-recent-login") {
+        setDeleteError("Please log out and log back in, then try deleting your account again.");
+      } else {
+        setDeleteError("Failed to delete account. Please try again.");
+      }
+      setDeleteBusy(false);
     }
   };
 
@@ -421,6 +469,19 @@ export default function Profile() {
                 <Link href="/communities" className="block rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">Discover Communities</Link>
                 <Link href="/dm" className="block rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">Open Messages</Link>
               </div>
+            </div>
+            <div className="panel rounded-3xl border border-red-300/50 dark:border-red-400/30 bg-white dark:bg-[#050816] p-5 shadow-sm">
+              <h2 className="text-sm font-black uppercase tracking-wide text-red-600 dark:text-red-300">Account</h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Delete your account and associated profile data directly in-app.</p>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteBusy}
+                className="mt-4 w-full rounded-2xl border border-red-300 dark:border-red-400/50 px-4 py-3 text-sm font-black text-red-700 dark:text-red-200 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleteBusy ? "Deleting Account..." : "Delete Account"}
+              </button>
+              {deleteError ? <p className="mt-3 text-xs font-bold text-red-600 dark:text-red-300">{deleteError}</p> : null}
             </div>
           </div>
         </aside>
