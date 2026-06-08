@@ -46,8 +46,8 @@ export default function Index() {
             <a href="#community" className="hover:text-[#b6ff22] transition-colors duration-200">
               Community
             </a>
-            <a href="#user-flow" className="hover:text-[#b6ff22] transition-colors duration-200">
-              Get Started
+            <a href="#trust-policy" className="hover:text-[#b6ff22] transition-colors duration-200">
+              Policies
             </a>
             <button
               onClick={() => router.push("/login")}
@@ -74,8 +74,8 @@ export default function Index() {
             </h2>
 
             <p className="mt-6 text-base md:text-xl text-slate-300 max-w-xl">
-              Bro Liquidity is a community platform for stock trade discussions,
-              finance jobs, licensing exams, career moves, and market takes.
+              Bro Liquidity combines social finance discussions with paper trading,
+              options flow tracking, licensing prep, and finance career networking.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -118,7 +118,7 @@ export default function Index() {
               Built for the finance crowd
             </h3>
             <p className="text-slate-400 mt-3">
-              Trading, licensing, and career conversations in one place.
+              Social market intelligence, simulated trading, and career coordination in one platform.
             </p>
           </div>
 
@@ -129,19 +129,19 @@ export default function Index() {
                 Trade Threads
               </h4>
               <p className="text-slate-300">
-                Post stock ideas, market takes, option plays,
-                earnings reactions, and watchlists.
+                Post stock ideas, market takes, option setups,
+                earnings reactions, and watchlist calls.
               </p>
             </div>
 
             <div className="glass pop-card rounded-3xl p-7">
               <div className="text-4xl mb-4">📚</div>
               <h4 className="text-2xl font-black mb-3">
-                License Talk
+                Paper Trading Hub
               </h4>
               <p className="text-slate-300">
-                Discuss Series 7, SIE, CFA, CPA,
-                FINRA exams, study plans, and career requirements.
+                Run simulated stock and options trades with live market data,
+                open contract tracking, and trade history.
               </p>
             </div>
 
@@ -155,6 +155,37 @@ export default function Index() {
                 resume feedback, compensation data, and referrals.
               </p>
             </div>
+          </div>
+        </section>
+
+        <section id="trust-policy" className="max-w-7xl mx-auto px-6 py-8 md:py-12">
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6 md:p-8">
+            <h3 className="text-3xl md:text-4xl font-black">Trust, Safety, and Policies</h3>
+            <p className="mt-3 text-slate-300 max-w-3xl">
+              We are building Bro Liquidity to be transparent and app-store ready, with clear policies,
+              community standards, and account controls.
+            </p>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <Link href="/privacy" className="rounded-2xl border border-white/10 bg-black/20 p-4 hover:border-[#b6ff22]/40 transition">
+                <p className="text-sm font-black text-[#b6ff22]">Privacy Policy</p>
+                <p className="mt-1 text-sm text-slate-300">How account and activity data are handled.</p>
+              </Link>
+              <Link href="/terms" className="rounded-2xl border border-white/10 bg-black/20 p-4 hover:border-[#b6ff22]/40 transition">
+                <p className="text-sm font-black text-[#b6ff22]">Terms of Service</p>
+                <p className="mt-1 text-sm text-slate-300">Platform usage rules and account responsibilities.</p>
+              </Link>
+              <Link href="/community-guidelines" className="rounded-2xl border border-white/10 bg-black/20 p-4 hover:border-[#b6ff22]/40 transition">
+                <p className="text-sm font-black text-[#b6ff22]">Community Guidelines</p>
+                <p className="mt-1 text-sm text-slate-300">Content standards, reporting, and conduct expectations.</p>
+              </Link>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-sm font-black text-[#b6ff22]">Account Controls</p>
+                <p className="mt-1 text-sm text-slate-300">In-app account deletion and profile controls are available from the profile page.</p>
+              </div>
+            </div>
+            <p className="mt-6 text-xs text-slate-400">
+              Bro Liquidity content is for educational and informational discussion only and is not financial advice.
+            </p>
           </div>
         </section>
 
@@ -209,6 +240,8 @@ export default function Index() {
           <Link href="/privacy" className="hover:text-[#b6ff22]">Privacy</Link>
           <span className="text-slate-600">•</span>
           <Link href="/terms" className="hover:text-[#b6ff22]">Terms</Link>
+          <span className="text-slate-600">•</span>
+          <Link href="/community-guidelines" className="hover:text-[#b6ff22]">Guidelines</Link>
         </div>
       </footer>
     </div>
