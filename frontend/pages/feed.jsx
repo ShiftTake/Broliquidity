@@ -3819,6 +3819,23 @@ function Feed() {
                                             {position.unrealizedPnl >= 0 ? "+" : "-"}${Math.abs(position.unrealizedPnl).toFixed(2)} ({position.unrealizedPct >= 0 ? "+" : "-"}{Math.abs(position.unrealizedPct).toFixed(2)}%)
                                           </span>
                                         </div>
+                                        <div className="mt-2 grid grid-cols-1 gap-2">
+                                          <button
+                                            type="button"
+                                            className="rounded-lg bg-red-500 px-2 py-1.5 text-[10px] font-black text-white disabled:opacity-60"
+                                            onClick={() => handleExecuteOptionContractTrade({
+                                              contractSymbol: position.symbol,
+                                              bid: position.markPrice,
+                                              ask: position.markPrice,
+                                              lastPrice: position.markPrice,
+                                              strike: position.strike,
+                                              expiration: position.expiration ? Math.floor(position.expiration.getTime() / 1000) : selectedOptionExpiration
+                                            }, "sell", String(position.optionType || "call").toLowerCase())}
+                                            disabled={!marketOpen || paperTradeSubmitting === `sell-option-${String(position.symbol || "").toUpperCase()}`}
+                                          >
+                                            {paperTradeSubmitting === `sell-option-${String(position.symbol || "").toUpperCase()}` ? "Selling..." : "Paper Sell"}
+                                          </button>
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
