@@ -1232,6 +1232,8 @@ function Feed() {
   const [profileUploadFile, setProfileUploadFile] = useState(null);
   const [profileBio, setProfileBio] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState("");
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState("");
   const [assigningRandomAvatar, setAssigningRandomAvatar] = useState(false);
   // Mobile drawer state
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -1398,32 +1400,55 @@ function Feed() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    if (user.photoURL) {
-      setProfilePhoto(user.photoURL);
-      return;
-    }
+    if (!user?.uid) return;
 
-    const randomAvatar = getDeterministicDefaultAvatar(user.uid);
-    setProfilePhoto(randomAvatar);
-
-    if (assigningRandomAvatar) return;
-    setAssigningRandomAvatar(true);
-
-    const assignRandomAvatar = async () => {
+    let cancelled = false;
+    const hydrateProfile = async () => {
       try {
-        await updateProfile(auth.currentUser, { photoURL: randomAvatar });
-        await setDoc(doc(db, "users", user.uid), {
-          photoURL: randomAvatar
-        }, { merge: true });
-        setUser((prev) => (prev ? { ...prev, photoURL: randomAvatar } : prev));
+        const [usersSnap, profilesSnap] = await Promise.all([
+          getDoc(doc(db, "users", user.uid)),
+          getDoc(doc(db, "profiles", user.uid))
+        ]);
+
+        if (cancelled) return;
+
+        const usersData = usersSnap.exists() ? usersSnap.data() : {};
+        const profileData = profilesSnap.exists() ? profilesSnap.data() : {};
+        const persistedPhoto = user.photoURL || usersData.photoURL || profileData.photoURL || "";
+        const persistedBio = usersData.bio || profileData.bio || "";
+
+        if (persistedPhoto) {
+          setProfilePhoto(persistedPhoto);
+        }
+        setProfileBio(String(persistedBio || ""));
+
+        if (persistedPhoto) return;
+
+        const randomAvatar = getDeterministicDefaultAvatar(user.uid);
+        setProfilePhoto(randomAvatar);
+
+        if (assigningRandomAvatar) return;
+        setAssigningRandomAvatar(true);
+
+        try {
+          await updateProfile(auth.currentUser, { photoURL: randomAvatar });
+          await setDoc(doc(db, "users", user.uid), {
+            photoURL: randomAvatar
+          }, { merge: true });
+          setUser((prev) => (prev ? { ...prev, photoURL: randomAvatar } : prev));
+        } catch (err) {
+          // Non-blocking fallback; user can still manually choose an avatar.
+        }
+        setAssigningRandomAvatar(false);
       } catch (err) {
-        // Non-blocking fallback; user can still manually choose an avatar.
+        // Keep profile UI usable if hydration fails.
       }
-      setAssigningRandomAvatar(false);
     };
 
-    assignRandomAvatar();
+    hydrateProfile();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.uid, user?.photoURL]);
 
   useEffect(() => {
@@ -2409,11 +2434,15 @@ function Feed() {
   const handleProfileImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setProfileSaveError("");
+    setProfileSaveSuccess("");
     setProfileUploadFile(file);
     setProfilePhoto(URL.createObjectURL(file));
   };
 
   const handleSelectDefaultAvatar = (avatarUrl) => {
+    setProfileSaveError("");
+    setProfileSaveSuccess("");
     setProfileUploadFile(null);
     setProfilePhoto(avatarUrl);
   };
@@ -2421,6 +2450,8 @@ function Feed() {
   const handleSaveProfile = async () => {
     if (!user) return;
     setProfileSaving(true);
+    setProfileSaveError("");
+    setProfileSaveSuccess("");
     try {
       let finalPhotoUrl = profilePhoto;
       if (profileUploadFile) {
@@ -2433,14 +2464,22 @@ function Feed() {
         photoURL: finalPhotoUrl
       });
       await setDoc(doc(db, "users", user.uid), {
-        photoURL: finalPhotoUrl
+        photoURL: finalPhotoUrl,
+        bio: profileBio,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      await setDoc(doc(db, "profiles", user.uid), {
+        photoURL: finalPhotoUrl,
+        bio: profileBio,
+        updatedAt: serverTimestamp()
       }, { merge: true });
       setUser((prev) => (prev ? { ...prev, photoURL: finalPhotoUrl } : prev));
       setProfileUploadFile(null);
       setProfileImagePickerOpen(false);
+      setProfileSaveSuccess("Profile saved.");
       setModal("");
     } catch (err) {
-      // Keep non-blocking to preserve existing feed behavior.
+      setProfileSaveError(err?.message || "Failed to save profile. Please try again.");
     }
     setProfileSaving(false);
   };
@@ -2812,6 +2851,8 @@ function Feed() {
                 </div>
               </div>
               <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500" rows={3} placeholder="Add a short finance-bro bio..." value={profileBio} onChange={(e) => setProfileBio(e.target.value)}></textarea>
+              {profileSaveError ? <div className="w-full rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{profileSaveError}</div> : null}
+              {profileSaveSuccess ? <div className="w-full rounded-2xl border border-green-300 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">{profileSaveSuccess}</div> : null}
               <button id="save-profile" className="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" onClick={handleSaveProfile} disabled={profileSaving}>{profileSaving ? "Saving..." : "Save Profile"}</button>
               <button id="logout-btn" className="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black" onClick={handleLogout}>Logout</button>
             </div>
