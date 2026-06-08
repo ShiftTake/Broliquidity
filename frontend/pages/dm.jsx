@@ -220,10 +220,10 @@ export default function DM() {
     .map((u) => ({ ...u, photoURL: getAvatarUrl(u, u.id) }));
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]">
-      <header className="border-b border-slate-200 bg-white/90 backdrop-blur-xl px-6 py-4">
+    <div className="min-h-screen bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+      <header className="border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl px-4 py-4 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/feed" className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl soft-card text-xs font-black tracking-wide text-slate-500 hover:text-broblue transition-colors">
+          <Link href="/feed" className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-black tracking-wide text-slate-500 dark:text-slate-300 hover:text-broblue transition-colors">
             ← BACK TO FEED
           </Link>
           <div className="flex items-center gap-2">
@@ -232,23 +232,23 @@ export default function DM() {
           </div>
         </div>
       </header>
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 gap-6 flex overflow-hidden" style={{ minHeight: "calc(100vh - 88px)" }}>
+      <div className="max-w-7xl mx-auto p-4 lg:p-6 gap-6 flex flex-col md:flex-row overflow-hidden" style={{ minHeight: "calc(100vh - 88px)" }}>
         {/* Sidebar */}
-        <aside className="w-80 panel rounded-3xl flex flex-col overflow-hidden shadow-xl hidden md:flex bg-slate-50/50">
-          <div className="p-4 border-b border-slate-200">
+        <aside className="w-full md:w-80 panel rounded-3xl flex flex-col overflow-hidden shadow-sm border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/40">
+          <div className="p-4 border-b border-slate-200 dark:border-white/10">
             <div className="flex items-center gap-2 mb-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span className="font-black text-base">Direct Messages</span>
             </div>
             <input
               type="text"
-              className="w-full mt-2 px-4 py-2 rounded-2xl bg-slate-100 border border-slate-200/60 outline-none text-sm text-slate-800 placeholder:text-slate-400 focus:border-broblue transition-all"
+              className="w-full mt-2 px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 outline-none text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:border-broblue transition-all"
               placeholder="Search users…"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="flex-1 overflow-y-auto scrollbar-hide bg-slate-50/20">
+          <div className="flex-1 overflow-y-auto scrollbar-hide bg-slate-50/20 dark:bg-transparent max-h-72 md:max-h-none">
             <div className="divide-y divide-slate-100">
               {searching ? (
                 <div className="px-4 py-3 text-sm font-semibold text-slate-500">Searching users...</div>
@@ -267,7 +267,7 @@ export default function DM() {
                     className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left
                       ${isActive
                         ? "bg-brogreen/20 shadow-lg shadow-brogreen/10"
-                        : "hover:bg-slate-100"
+                        : "hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                     onClick={() => startConversation(u.id)}
                   >
@@ -281,7 +281,7 @@ export default function DM() {
                       }}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="truncate font-bold text-slate-900">{u.displayName || u.email || u.id}</div>
+                      <div className="truncate font-bold text-slate-900 dark:text-slate-100">{u.displayName || u.email || u.id}</div>
                       <div className="flex items-center gap-1 mt-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                         <span className="text-xs text-slate-400">online</span>
@@ -294,9 +294,9 @@ export default function DM() {
           </div>
         </aside>
         {/* Main Chat Panel */}
-        <main className="flex-1 panel rounded-3xl flex flex-col overflow-hidden shadow-xl relative bg-slate-50/50">
+        <main className="flex-1 panel rounded-3xl flex flex-col overflow-hidden shadow-sm border border-slate-200 dark:border-white/10 relative bg-white dark:bg-[#050816]">
           {/* Chat Header */}
-          <div id="active-chat-header" className="flex items-center gap-4 px-8 py-6 border-b border-slate-200 bg-white/90 min-h-[80px]">
+          <div id="active-chat-header" className="flex items-center gap-4 px-5 py-5 md:px-8 md:py-6 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 min-h-[80px]">
             {otherUser ? (
               <>
                 <img src={getAvatar(otherUser)} alt={otherUser.displayName || otherUser.email || otherUser.id} className="w-12 h-12 rounded-full object-cover border border-slate-200" />
@@ -310,7 +310,7 @@ export default function DM() {
             )}
           </div>
           {/* Messages */}
-          <div id="dm-chat" className="flex-1 overflow-y-auto px-8 py-6 bg-slate-50/20 space-y-4 max-h-[calc(100vh-88px-80px-88px)] scrollbar-hide">
+          <div id="dm-chat" className="flex-1 overflow-y-auto px-5 py-5 md:px-8 md:py-6 bg-slate-50/20 dark:bg-transparent space-y-4 max-h-[calc(100vh-88px-80px-88px)] scrollbar-hide">
             {messages.map(m => {
               const isMe = m.sender === user.uid;
               return (
@@ -322,7 +322,7 @@ export default function DM() {
                     max-w-[70%] px-5 py-3 mb-1
                     ${isMe
                       ? "bg-brogreen text-black rounded-2xl rounded-tr-sm font-bold shadow-lg"
-                      : "bg-white border border-slate-200/60 text-slate-800 rounded-2xl rounded-tl-sm shadow"
+                      : "bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-sm shadow"
                     }
                   `}>
                     {m.text}
@@ -334,13 +334,13 @@ export default function DM() {
           </div>
           {/* Input Form */}
           {selected && (
-            <form id="dm-form" onSubmit={sendMessage} className="flex items-center gap-4 px-8 py-6 border-t border-slate-200 bg-white/90">
+            <form id="dm-form" onSubmit={sendMessage} className="flex items-center gap-4 px-5 py-5 md:px-8 md:py-6 border-t border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90">
               <input
                 type="text"
                 value={newMessage}
                 onChange={e => setNewMessage(e.target.value)}
                 placeholder="Type a message…"
-                className="flex-1 px-5 py-4 rounded-2xl bg-slate-100 border border-slate-200/60 outline-none text-sm font-semibold text-slate-800 placeholder:text-slate-400 focus:border-broblue transition-all"
+                className="flex-1 px-5 py-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 outline-none text-sm font-semibold text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:border-broblue transition-all"
               />
               <button
                 type="submit"
