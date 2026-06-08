@@ -7,6 +7,7 @@ import {
   deleteDoc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   where
 } from "firebase/firestore";
@@ -37,9 +38,23 @@ export default function Profile() {
 
   useEffect(() => {
     let active = true;
+    let profileDocUnsubscribe = null;
+    let usersDocUnsubscribe = null;
+
+    const clearProfileListeners = () => {
+      if (profileDocUnsubscribe) {
+        profileDocUnsubscribe();
+        profileDocUnsubscribe = null;
+      }
+      if (usersDocUnsubscribe) {
+        usersDocUnsubscribe();
+        usersDocUnsubscribe = null;
+      }
+    };
 
     const unsubscribe = auth.onAuthStateChanged(async (nextUser) => {
       if (!active) return;
+      clearProfileListeners();
       setUser(nextUser);
 
       if (!nextUser) {
@@ -61,17 +76,46 @@ export default function Profile() {
 
         if (!active) return;
 
-        const mergedProfile = {
-          ...(usersDoc.exists() ? usersDoc.data() : {}),
-          ...(profileDoc.exists() ? profileDoc.data() : {}),
+        let liveProfileData = profileDoc.exists() ? profileDoc.data() : {};
+        let liveUsersData = usersDoc.exists() ? usersDoc.data() : {};
+
+        const buildMergedProfile = () => ({
+          ...liveUsersData,
+          ...liveProfileData,
           ...ensuredUser,
           photoURL:
-            (profileDoc.exists() ? profileDoc.data().photoURL : "") ||
-            (usersDoc.exists() ? usersDoc.data().photoURL : "") ||
-            ensuredUser.photoURL,
-          displayName: nextUser.displayName || ensuredUser.displayName || nextUser.email,
-          email: nextUser.email || ensuredUser.email || ""
-        };
+            nextUser.photoURL ||
+            liveProfileData.photoURL ||
+            liveUsersData.photoURL ||
+            ensuredUser.photoURL ||
+            "/mainlogo.png",
+          displayName:
+            nextUser.displayName ||
+            ensuredUser.displayName ||
+            liveProfileData.displayName ||
+            liveUsersData.displayName ||
+            nextUser.email,
+          email:
+            nextUser.email ||
+            ensuredUser.email ||
+            liveProfileData.email ||
+            liveUsersData.email ||
+            ""
+        });
+
+        const mergedProfile = buildMergedProfile();
+
+        profileDocUnsubscribe = onSnapshot(firestoreDoc(db, "profiles", nextUser.uid), (snap) => {
+          if (!active) return;
+          liveProfileData = snap.exists() ? snap.data() : {};
+          setProfile(buildMergedProfile());
+        });
+
+        usersDocUnsubscribe = onSnapshot(firestoreDoc(db, "users", nextUser.uid), (snap) => {
+          if (!active) return;
+          liveUsersData = snap.exists() ? snap.data() : {};
+          setProfile(buildMergedProfile());
+        });
 
         const membershipsQuery = query(collection(db, "memberships"), where("userId", "==", nextUser.uid));
 
@@ -179,6 +223,7 @@ export default function Profile() {
 
     return () => {
       active = false;
+      clearProfileListeners();
       unsubscribe();
     };
   }, []);
@@ -200,6 +245,8 @@ export default function Profile() {
       </div>
     );
   }
+
+  const resolvedProfileAvatar = auth.currentUser?.photoURL || profile?.photoURL || user?.photoURL || "/mainlogo.png";
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
@@ -237,9 +284,13 @@ export default function Profile() {
             <div className="border-b border-slate-200 dark:border-white/10 p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
-                  src={profile?.photoURL || "/defaults/default1.png"}
+                  src={resolvedProfileAvatar}
                   alt={profile?.displayName || "Your profile"}
                   className="h-24 w-24 rounded-full border-4 border-brogreen object-cover bg-slate-200"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/mainlogo.png";
+                  }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
@@ -293,9 +344,13 @@ export default function Profile() {
                         </button>
                         <div className="flex gap-4">
                           <img
-                            src={profile?.photoURL || "/defaults/default1.png"}
+                            src={resolvedProfileAvatar}
                             alt={profile?.displayName || "User"}
                             className="h-12 w-12 rounded-full border border-slate-200 dark:border-white/10 object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/mainlogo.png";
+                            }}
                           />
                           <div className="min-w-0 flex-1">
                             <div className="mb-2 flex flex-wrap items-center gap-2">

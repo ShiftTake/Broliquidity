@@ -1357,13 +1357,6 @@ function Feed() {
   const [optionChainError, setOptionChainError] = useState("");
   const [selectedOptionExpiration, setSelectedOptionExpiration] = useState("");
   const [marketOpen, setMarketOpen] = useState(() => isMarketOpenNow());
-  // Theme state
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== "undefined" && window.localStorage) {
-      return localStorage.getItem("theme") || "light";
-    }
-    return "light";
-  });
   // Search dropdowns
   const [assetSearchInput, setAssetSearchInput] = useState("");
   const [assetSearchResults, setAssetSearchResults] = useState([]);
@@ -1373,6 +1366,7 @@ function Feed() {
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [globalSearchLoading, setGlobalSearchLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const pendingOrderProcessingRef = useRef(false);
 
   useEffect(() => {
@@ -1382,12 +1376,9 @@ function Feed() {
     return () => unsubscribe();
   }, []);
 
-  // Theme effect
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && window.localStorage) {
-      localStorage.setItem("theme", theme);
-    }
-  }, [theme]);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const syncMarketStatus = () => setMarketOpen(isMarketOpenNow());
@@ -2470,9 +2461,20 @@ function Feed() {
     }
   };
 
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-center px-4 py-16">
+          <div className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816] px-6 py-5 text-sm font-black text-slate-500 dark:text-slate-400">
+            Loading feed...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={theme === "dark" ? "dark" : ""}>
-      <>
+    <>
         {/* Ticker Quick View Modal */}
         <div id="ticker-modal" className="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 px-4">
           <div className="panel rounded-3xl p-6 w-full max-w-2xl relative overflow-hidden shadow-2xl">
@@ -2817,7 +2819,6 @@ function Feed() {
                 </div>
               </div>
               <textarea id="profile-bio" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 outline-none font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500" rows={3} placeholder="Add a short finance-bro bio..." value={profileBio} onChange={(e) => setProfileBio(e.target.value)}></textarea>
-              <button id="profile-theme-toggle" className="w-full px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-bold text-slate-900 dark:text-slate-100">Toggle Theme</button>
               <button id="save-profile" className="w-full px-6 py-3 rounded-2xl bg-brogreen text-black dark:text-brogreen font-black" onClick={handleSaveProfile} disabled={profileSaving}>{profileSaving ? "Saving..." : "Save Profile"}</button>
               <button id="logout-btn" className="w-full px-4 py-3 rounded-2xl bg-red-600 text-white font-black" onClick={handleLogout}>Logout</button>
             </div>
@@ -2915,13 +2916,13 @@ function Feed() {
           {/* Left X-style Rail */}
           <aside className="hidden xl:block min-h-screen sticky top-0 border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
             <div className="h-screen overflow-y-auto scrollbar-hide px-5 py-4 flex flex-col bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
-              <a href="feed.html" className="flex items-center gap-3 mb-6" aria-label="Go to home feed" role="link">
+              <Link href="/feed" className="flex items-center gap-3 mb-6" aria-label="Go to home feed">
                 <img src="mainlogo.png" alt="BroLiquidity Logo" className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-white/10 bg-white dark:bg-[#050816]" />
                 <div>
                   <h1 className="font-black text-xl leading-tight text-slate-900 dark:text-slate-100">BroLiquidity</h1>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">Trades • Licenses • Jobs</p>
                 </div>
-              </a>
+              </Link>
               <nav className="space-y-2 text-xl font-bold text-slate-900 dark:text-slate-100" role="navigation" aria-label="Sidebar navigation">
                 <Link href="/feed" legacyBehavior>
                   <a className="left-nav active-nav w-full rounded-2xl px-4 py-3 flex items-center gap-4 text-left bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100" aria-label="Home" title="Home" tabIndex={0}>
@@ -2987,10 +2988,10 @@ function Feed() {
           <header className="xl:hidden sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#050816]/90 backdrop-blur-xl text-slate-900 dark:text-slate-100">
             <nav className="px-4 py-3 flex items-center justify-between gap-3">
               <button id="mobile-menu-btn" className="w-11 h-11 rounded-2xl soft-card grid place-items-center" aria-label="Open mobile menu" title="Open mobile menu">☰</button>
-              <a href="feed.html" className="flex items-center gap-2" aria-label="Go to home feed" role="link">
+              <Link href="/feed" className="flex items-center gap-2" aria-label="Go to home feed">
                 <img src="mainlogo.png" className="w-10 h-10 rounded-xl object-cover" alt="BroLiquidity" />
                 <span className="font-black text-slate-900 dark:text-slate-100">BroLiquidity</span>
-              </a>
+              </Link>
                   <button id="mobile-post-btn" className="px-4 py-2 rounded-2xl bg-brogreen text-black font-black" aria-label="Create a post" title="Create a post" onClick={() => setModal("post")}>Post</button>
             </nav>
           </header>
@@ -3962,7 +3963,6 @@ function Feed() {
           </div>
         </div>
       </>
-      </div>
     );
 }
 

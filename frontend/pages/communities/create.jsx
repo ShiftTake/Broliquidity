@@ -152,12 +152,41 @@ export default function CreateCommunityPage() {
               </div>
             </div>
 
-            <form className="space-y-4 p-5" onSubmit={handleSubmit}>
-              {!viewer ? (
-                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-600">
-                  Sign in to create a community.
+            {!viewer ? (
+              <div className="space-y-5 p-5">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brogreen">Sign In Required</p>
+                  <h3 className="mt-2 text-xl font-black">Create your desk after you log in</h3>
+                  <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                    Signing in unlocks the full creation flow, including avatar selection, banner upload, ownership setup, and the instant redirect to your new community feed.
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Link href="/login" className="rounded-2xl bg-brogreen px-5 py-3 text-sm font-black text-black">
+                      Sign In to Continue
+                    </Link>
+                    <Link href="/register" className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black hover:bg-slate-50">
+                      Create Account
+                    </Link>
+                  </div>
                 </div>
-              ) : null}
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-500">Identity</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-700">Name your desk and choose an avatar that matches the tone.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-500">Context</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-700">Add a short description, category, and optional banner so members know what to expect.</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                    <p className="text-xs font-black uppercase tracking-wide text-slate-500">Launch</p>
+                    <p className="mt-2 text-sm font-semibold text-slate-700">Publish instantly and land in the new community feed as the owner.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+            <form className="space-y-4 p-5" onSubmit={handleSubmit}>
 
               <div>
                 <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">Community Name</label>
@@ -238,6 +267,7 @@ export default function CreateCommunityPage() {
                 <Link href="/communities" className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-black hover:bg-slate-50">Cancel</Link>
               </div>
             </form>
+            )}
           </section>
         </main>
       </div>
