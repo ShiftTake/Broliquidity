@@ -147,9 +147,14 @@ export default function DM() {
 
   // Start or select a conversation
   const startConversation = async (otherId) => {
-    if (!user) return;
+    if (!user || !otherId || otherId === user.uid) return;
     let convo = conversations.find(c => c.participants.includes(otherId));
     if (!convo) {
+      const targetUserSnap = await getDoc(doc(db, "users", otherId));
+      if (!targetUserSnap.exists()) {
+        return;
+      }
+
       const doc = await addDoc(collection(db, "conversations"), {
         participants: [user.uid, otherId],
         createdAt: serverTimestamp()

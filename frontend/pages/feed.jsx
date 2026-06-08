@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { auth, db } from "../src/firebase";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { query, collection, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDocs, where, addDoc, serverTimestamp, updateDoc, increment as firestoreIncrement, runTransaction } from "firebase/firestore";
+import { query, collection, orderBy, onSnapshot, doc, setDoc, deleteDoc, getDoc, getDocs, where, addDoc, serverTimestamp, updateDoc, increment as firestoreIncrement, runTransaction, startAt, endAt, limit } from "firebase/firestore";
 import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 import { ensureUserHasAvatar, getRandomDefaultAvatar } from "../src/avatarDefaults";
 import { getFollowing, getFollowers } from "../src/following";
@@ -630,20 +630,28 @@ function Feed() {
 
     const mapUsersByIds = async (ids) => {
       if (!ids?.length) return [];
-      const usersSnap = await getDocs(collection(db, "users"));
+      const uniqueIds = [...new Set(ids.filter(Boolean))];
       return Promise.all(
-        usersSnap.docs
-          .filter((d) => ids.includes(d.id))
-          .map(async (d) => {
-            const normalized = await ensureUserHasAvatar(db, d.id);
-            const displayName = normalized.displayName || normalized.username || normalized.email || d.id;
+        uniqueIds.map(async (uid) => {
+          try {
+            const userSnap = await getDoc(doc(db, "users", uid));
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const displayName = userData.displayName || userData.username || userData.email || uid;
             return {
-              id: d.id,
+              id: uid,
               name: displayName,
-              handle: normalized.email ? `@${normalized.email.split("@")[0]}` : `@${d.id.slice(0, 8)}`,
-              avatar: normalized.photoURL || "/defaults/default1.png"
+              handle: userData.email ? `@${userData.email.split("@")[0]}` : `@${uid.slice(0, 8)}`,
+              avatar: userData.photoURL || getDeterministicDefaultAvatar(uid)
             };
-          })
+          } catch {
+            return {
+              id: uid,
+              name: uid,
+              handle: `@${uid.slice(0, 8)}`,
+              avatar: getDeterministicDefaultAvatar(uid)
+            };
+          }
+        })
       );
     };
 
@@ -1716,12 +1724,11 @@ function Feed() {
     let active = true;
     const runSearch = async () => {
       setGlobalSearchLoading(true);
-      const lowered = queryText.toLowerCase();
 
       const communityMatches = communitiesCache
         .filter((community) => {
-          const name = String(community.name || "").toLowerCase();
-          return name.includes(lowered);
+          const name = String(community.name || "");
+          return name.toLowerCase().includes(queryText.toLowerCase());
         })
         .slice(0, 6)
         .map((community) => ({
@@ -1733,16 +1740,17 @@ function Feed() {
 
       let userMatches = [];
       try {
-        const usersSnap = await getDocs(collection(db, "users"));
-        userMatches = usersSnap.docs
-          .map((userDoc) => ({ id: userDoc.id, ...userDoc.data() }))
-          .filter((entry) => {
-            const displayName = String(entry.displayName || entry.username || "").toLowerCase();
-            const email = String(entry.email || "").toLowerCase();
-            return displayName.includes(lowered) || email.includes(lowered);
-          })
-          .slice(0, 6)
-          .map((entry) => ({
+        const [emailSnap, displayNameSnap] = await Promise.all([
+          getDocs(query(collection(db, "users"), orderBy("email"), startAt(queryText), endAt(`${queryText}\uf8ff`), limit(6))),
+          getDocs(query(collection(db, "users"), orderBy("displayName"), startAt(queryText), endAt(`${queryText}\uf8ff`), limit(6)))
+        ]);
+
+        const usersById = new Map();
+        [...emailSnap.docs, ...displayNameSnap.docs].forEach((userDoc) => {
+          usersById.set(userDoc.id, { id: userDoc.id, ...userDoc.data() });
+        });
+
+        userMatches = [...usersById.values()].slice(0, 6).map((entry) => ({
             type: "user",
             id: entry.id,
             title: entry.displayName || entry.username || entry.email || "User",
