@@ -5,6 +5,8 @@ import { db, auth } from "../../src/firebase";
 import {
   collection,
   deleteDoc,
+  setDoc,
+  serverTimestamp,
   query,
   where,
   getDocs,
@@ -23,6 +25,8 @@ export default function UserProfile() {
   const [tab, setTab] = useState("posts");
   const [isFollowing, setIsFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blockBusy, setBlockBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const isOwnProfile = auth.currentUser?.uid === userId;
 
@@ -140,8 +144,13 @@ export default function UserProfile() {
       setCommunities(commDetails);
 
       if (auth.currentUser && auth.currentUser.uid !== userId) {
-        const myFollowing = await getFollowing(auth.currentUser.uid);
+        const viewerUid = auth.currentUser.uid;
+        const [myFollowing, blockDoc] = await Promise.all([
+          getFollowing(viewerUid),
+          getDoc(firestoreDoc(db, "userBlocks", `${viewerUid}_${userId}`))
+        ]);
         setIsFollowing(myFollowing.includes(userId));
+        setIsBlocked(blockDoc.exists());
       }
       setLoading(false);
     }
@@ -163,6 +172,35 @@ export default function UserProfile() {
       // Preserve UX without hard-failing page render.
     }
     setFollowBusy(false);
+  };
+
+  const handleBlockToggle = async () => {
+    if (!auth.currentUser || !userId || isOwnProfile || blockBusy) return;
+    const viewerUid = auth.currentUser.uid;
+    const blockRef = firestoreDoc(db, "userBlocks", `${viewerUid}_${userId}`);
+
+    if (!isBlocked) {
+      const shouldBlock = window.confirm("Block this user? They will remain in public content but future direct engagement can be restricted.");
+      if (!shouldBlock) return;
+    }
+
+    setBlockBusy(true);
+    try {
+      if (isBlocked) {
+        await deleteDoc(blockRef);
+        setIsBlocked(false);
+      } else {
+        await setDoc(blockRef, {
+          blockerId: viewerUid,
+          blockedUserId: userId,
+          createdAt: serverTimestamp()
+        });
+        setIsBlocked(true);
+      }
+    } catch {
+      // Keep page usable if block action fails.
+    }
+    setBlockBusy(false);
   };
 
   if (loading) {
@@ -385,6 +423,16 @@ export default function UserProfile() {
                 ) : (
                   <Link href="/profile" className="block rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">Open Your Profile Feed</Link>
                 )}
+                {!isOwnProfile ? (
+                  <button
+                    type="button"
+                    className="block w-full rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-white/5"
+                    onClick={handleBlockToggle}
+                    disabled={blockBusy || !auth.currentUser}
+                  >
+                    {!auth.currentUser ? "Sign in to Block" : blockBusy ? "Saving..." : isBlocked ? "Unblock User" : "Block User"}
+                  </button>
+                ) : null}
                 <Link href={`/dm?userId=${userId}`} className="block rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">Message User</Link>
                 <Link href="/communities" className="block rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/5">Browse Communities</Link>
               </div>
