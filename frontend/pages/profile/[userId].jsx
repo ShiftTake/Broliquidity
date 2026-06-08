@@ -11,7 +11,7 @@ import {
   getDoc,
   doc as firestoreDoc
 } from "firebase/firestore";
-import { ensureUserHasAvatar, getRandomDefaultAvatar } from "../../src/avatarDefaults";
+import { ensureUserHasAvatar, getAvatarUrl, getRandomDefaultAvatar } from "../../src/avatarDefaults";
 import { followUser, unfollowUser, getFollowing } from "../../src/following";
 
 export default function UserProfile() {
@@ -172,6 +172,8 @@ export default function UserProfile() {
     return <div className="min-h-screen bg-white dark:bg-[#050816] px-4 py-10 text-center font-bold text-slate-500 dark:text-slate-400">User not found.</div>;
   }
 
+  const resolvedProfileAvatar = getAvatarUrl({ uid: userId, ...profile }, userId);
+
   return (
     <div className="min-h-screen bg-white dark:bg-[#050816] text-slate-900 dark:text-slate-100">
       <div className="mx-auto flex w-full max-w-6xl gap-6 px-4 py-6 lg:px-6">
@@ -210,9 +212,13 @@ export default function UserProfile() {
             <div className="border-b border-slate-200 dark:border-white/10 p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
-                  src={profile.photoURL || "/defaults/default1.png"}
+                  src={resolvedProfileAvatar}
                   alt={profile.username ? `${profile.username}'s profile` : "Profile"}
                   className="h-24 w-24 rounded-full border-4 border-brogreen object-cover bg-slate-200"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = getAvatarUrl({ uid: userId }, userId);
+                  }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
@@ -291,9 +297,16 @@ export default function UserProfile() {
                         ) : null}
                         <div className="flex gap-4">
                           <img
-                            src={post.user?.avatar || profile.photoURL || "/defaults/default1.png"}
+                            src={getAvatarUrl({
+                              uid: post.user?.uid || userId,
+                              photoURL: post.user?.avatar || profile.photoURL
+                            }, post.user?.uid || userId)}
                             alt={profile.username || profile.displayName || "User"}
                             className="h-12 w-12 rounded-full border border-slate-200 dark:border-white/10 object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = getAvatarUrl({ uid: post.user?.uid || userId }, post.user?.uid || userId);
+                            }}
                           />
                           <div className="min-w-0 flex-1">
                             <div className="mb-2 flex flex-wrap items-center gap-2">

@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { db, auth } from "../src/firebase";
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, endAt, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp, startAt, where } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ensureUserHasAvatar } from "../src/avatarDefaults";
+import { getAvatarUrl } from "../src/avatarDefaults";
 
 export default function DM() {
   const router = useRouter();
@@ -13,29 +13,28 @@ export default function DM() {
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [users, setUsers] = useState([]);
+  const [usersById, setUsersById] = useState({});
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
   const [search, setSearch] = useState("");
   const [autoStartedDm, setAutoStartedDm] = useState(false);
   const user = auth.currentUser;
   const messagesEndRef = useRef(null);
 
-  // Fetch all users for new DM
-  useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, "users"));
-    const unsub = onSnapshot(q, async (snap) => {
-      const normalizedUsers = await Promise.all(
-        snap.docs
-          .filter((d) => d.id !== user.uid)
-          .map(async (d) => {
-            const normalized = await ensureUserHasAvatar(db, d.id);
-            return { id: d.id, ...normalized };
-          })
-      );
-      setUsers(normalizedUsers);
+  const upsertUsers = (incomingUsers) => {
+    setUsersById((prev) => {
+      const next = { ...prev };
+      incomingUsers.forEach((u) => {
+        if (!u?.id) return;
+        const merged = { ...(next[u.id] || {}), ...u };
+        next[u.id] = {
+          ...merged,
+          photoURL: getAvatarUrl(merged, u.id)
+        };
+      });
+      return next;
     });
-    return () => unsub();
-  }, [user]);
+  };
 
   // Fetch conversations
   useEffect(() => {
@@ -46,6 +45,94 @@ export default function DM() {
     });
     return () => unsub();
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setUsersById({});
+      return;
+    }
+
+    const otherParticipantIds = [...new Set(
+      conversations
+        .flatMap((c) => c.participants || [])
+        .filter((uid) => uid && uid !== user.uid)
+    )];
+
+    if (!otherParticipantIds.length) return;
+
+    let cancelled = false;
+    const loadConversationUsers = async () => {
+      const loadedUsers = await Promise.all(
+        otherParticipantIds.map(async (uid) => {
+          try {
+            const userSnap = await getDoc(doc(db, "users", uid));
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            return { id: uid, ...userData };
+          } catch {
+            return { id: uid };
+          }
+        })
+      );
+
+      if (!cancelled) {
+        upsertUsers(loadedUsers);
+      }
+    };
+
+    loadConversationUsers();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversations, user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setSearchResults([]);
+      return;
+    }
+
+    const term = search.trim().toLowerCase();
+    if (term.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const [emailSnap, displayNameSnap] = await Promise.all([
+          getDocs(query(collection(db, "users"), orderBy("email"), startAt(term), endAt(`${term}\uf8ff`), limit(12))),
+          getDocs(query(collection(db, "users"), orderBy("displayName"), startAt(term), endAt(`${term}\uf8ff`), limit(12)))
+        ]);
+
+        const matchedById = new Map();
+        [...emailSnap.docs, ...displayNameSnap.docs].forEach((snap) => {
+          if (!snap?.id || snap.id === user.uid) return;
+          matchedById.set(snap.id, { id: snap.id, ...(snap.data() || {}) });
+        });
+
+        const results = [...matchedById.values()];
+        if (!cancelled) {
+          setSearchResults(results);
+          upsertUsers(results);
+        }
+      } catch {
+        if (!cancelled) {
+          setSearchResults([]);
+        }
+      }
+      if (!cancelled) {
+        setSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [search, user?.uid]);
 
   // Fetch messages for selected conversation
   useEffect(() => {
@@ -98,30 +185,34 @@ export default function DM() {
     }
 
     if (autoStartedDm) return;
-    if (!users.some((u) => u.id === dmTargetId)) return;
 
     setAutoStartedDm(true);
     startConversation(dmTargetId);
-  }, [dmTargetId, user, conversations, users, autoStartedDm, selected]);
+  }, [dmTargetId, user, conversations, autoStartedDm, selected]);
 
   if (!user) return <div className="p-8 text-slate-400">Sign in to use direct messages.</div>;
 
   // Find the other user in the current conversation
   const activeConvo = conversations.find(c => c.id === selected);
   const otherUserId = activeConvo?.participants?.find(pid => pid !== user.uid);
-  const otherUser = users.find(u => u.id === otherUserId);
+  const otherUser = otherUserId ? usersById[otherUserId] : null;
 
   // Avatar helper
   const getAvatar = (u) => {
-    if (u?.photoURL) return u.photoURL;
-    const name = u?.displayName || u?.email || "User";
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=050816&color=B6FF22`;
+    return getAvatarUrl(u, u?.id || "user");
   };
 
-  // Filter users by search
-  const filteredUsers = users.filter(u =>
-    (u.displayName || u.email || u.id).toLowerCase().includes(search.toLowerCase())
-  );
+  const conversationUsers = [...new Set(
+    conversations
+      .flatMap((c) => c.participants || [])
+      .filter((uid) => uid && uid !== user.uid)
+  )]
+    .map((uid) => usersById[uid] || { id: uid })
+    .sort((a, b) => (a.displayName || a.email || a.id || "").localeCompare(b.displayName || b.email || b.id || ""));
+
+  const filteredUsers = (search.trim().length >= 2 ? searchResults : conversationUsers)
+    .filter((u) => u?.id)
+    .map((u) => ({ ...u, photoURL: getAvatarUrl(u, u.id) }));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]">
@@ -154,6 +245,14 @@ export default function DM() {
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide bg-slate-50/20">
             <div className="divide-y divide-slate-100">
+              {searching ? (
+                <div className="px-4 py-3 text-sm font-semibold text-slate-500">Searching users...</div>
+              ) : null}
+              {!searching && filteredUsers.length === 0 ? (
+                <div className="px-4 py-3 text-sm font-semibold text-slate-500">
+                  {search.trim().length >= 2 ? "No users found for this search." : "No conversations yet. Search for a user to start a DM."}
+                </div>
+              ) : null}
               {filteredUsers.map(u => {
                 const convo = conversations.find(c => c.participants.includes(u.id));
                 const isActive = convo && convo.id === selected;
@@ -167,7 +266,15 @@ export default function DM() {
                       }`}
                     onClick={() => startConversation(u.id)}
                   >
-                    <img src={getAvatar(u)} alt={u.displayName || u.email || u.id} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                    <img
+                      src={getAvatar(u)}
+                      alt={u.displayName || u.email || u.id}
+                      className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getAvatarUrl({ id: u.id }, u.id);
+                      }}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="truncate font-bold text-slate-900">{u.displayName || u.email || u.id}</div>
                       <div className="flex items-center gap-1 mt-1">

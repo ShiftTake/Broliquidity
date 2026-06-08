@@ -10,6 +10,27 @@ export const getRandomDefaultAvatar = () => {
   return defaultAvatarOptions[idx];
 };
 
+export const getDeterministicDefaultAvatar = (seed) => {
+  const normalized = String(seed || "user");
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i += 1) {
+    hash = ((hash << 5) - hash + normalized.charCodeAt(i)) | 0;
+  }
+  const idx = Math.abs(hash) % defaultAvatarOptions.length;
+  return defaultAvatarOptions[idx] || defaultAvatarOptions[0];
+};
+
+export const getAvatarUrl = (userLike, fallbackSeed = "user") => {
+  if (userLike?.photoURL) return userLike.photoURL;
+  const seed =
+    userLike?.uid ||
+    userLike?.id ||
+    userLike?.email ||
+    userLike?.displayName ||
+    fallbackSeed;
+  return getDeterministicDefaultAvatar(seed);
+};
+
 export const ensureUserHasAvatar = async (db, uid) => {
   if (!uid) {
     return {

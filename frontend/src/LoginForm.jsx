@@ -8,18 +8,34 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const router = useRouter();
+
+  const getAuthErrorMessage = (code) => {
+    switch (code) {
+      case "auth/invalid-credential":
+      case "auth/wrong-password":
+      case "auth/user-not-found":
+      case "auth/invalid-email":
+        return "Invalid email or password.";
+      case "auth/user-disabled":
+        return "This account has been disabled.";
+      case "auth/too-many-requests":
+        return "Too many login attempts. Please try again later.";
+      case "auth/network-request-failed":
+        return "Network error. Check your connection and try again.";
+      default:
+        return "Login failed. Please try again.";
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/feed");
     } catch (err) {
-      setError("Incorrect Password");
+      setError(getAuthErrorMessage(err?.code));
     }
   };
 
@@ -117,7 +133,6 @@ export default function LoginForm() {
             </div>
 
             {error && <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-black text-red-300">{error}</div>}
-            {success && <div className="rounded-2xl border border-green-400/30 bg-green-500/10 px-4 py-3 text-sm font-black text-green-300">{success}</div>}
           </form>
 
           <div className="mt-8 rounded-3xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">

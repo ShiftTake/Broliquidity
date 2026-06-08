@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { collection, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../src/firebase";
 import { followUser, getFollowers, getFollowing, unfollowUser } from "../src/following";
-import { ensureUserHasAvatar } from "../src/avatarDefaults";
+import { getAvatarUrl } from "../src/avatarDefaults";
 
 export default function Follow() {
   const router = useRouter();
@@ -45,26 +45,46 @@ export default function Follow() {
           return;
         }
 
-        const usersSnap = await getDocs(collection(db, "users"));
-        const normalizedUsers = await Promise.all(
-          usersSnap.docs.map(async (d) => {
-            const normalized = await ensureUserHasAvatar(db, d.id);
-            return { uid: d.id, ...normalized };
-          })
-        );
-
-        const byId = {};
-        normalizedUsers.forEach((u) => {
-          byId[u.uid] = u;
-        });
-        setUsersById(byId);
-
         const [myFollowing, myFollowers] = await Promise.all([
           getFollowing(current.uid),
           getFollowers(current.uid)
         ]);
         setFollowingIds(myFollowing);
         setFollowerIds(myFollowers);
+
+        const uniqueTargetIds = [...new Set([...myFollowing, ...myFollowers])]
+          .filter((uid) => uid && uid !== current.uid);
+
+        if (!uniqueTargetIds.length) {
+          setUsersById({});
+          setLoading(false);
+          return;
+        }
+
+        const resolvedUsers = await Promise.all(
+          uniqueTargetIds.map(async (uid) => {
+            try {
+              const userSnap = await getDoc(doc(db, "users", uid));
+              const userData = userSnap.exists() ? userSnap.data() : {};
+              return {
+                uid,
+                ...userData,
+                photoURL: getAvatarUrl({ uid, ...userData }, uid)
+              };
+            } catch {
+              return {
+                uid,
+                photoURL: getAvatarUrl({ uid }, uid)
+              };
+            }
+          })
+        );
+
+        const byId = {};
+        resolvedUsers.forEach((u) => {
+          byId[u.uid] = u;
+        });
+        setUsersById(byId);
       } catch (e) {
         setError("Failed to load followers/following");
       }
@@ -221,9 +241,13 @@ export default function Follow() {
                     <li key={u.uid} className="border-b border-slate-100 dark:border-white/10 px-5 py-4 last:border-b-0">
                       <div className="flex flex-wrap items-center gap-3">
                         <img
-                          src={u.photoURL || "/defaults/default1.png"}
+                          src={getAvatarUrl(u, u.uid)}
                           className="h-12 w-12 rounded-full border-2 border-brogreen object-cover bg-slate-700"
                           alt={displayName}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = getAvatarUrl({ uid: u.uid }, u.uid);
+                          }}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="truncate font-black">{displayName}</div>
