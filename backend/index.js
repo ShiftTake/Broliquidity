@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { randomUUID } from 'crypto';
 
 dotenv.config();
 
@@ -46,6 +47,23 @@ app.use(rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 }));
+
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || randomUUID();
+  req.requestId = Array.isArray(requestId) ? requestId[0] : requestId;
+  res.setHeader('x-request-id', req.requestId);
+  next();
+});
+
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  res.on('finish', () => {
+    const durationMs = Date.now() - startedAt;
+    console.log(`[${req.requestId}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${durationMs}ms)`);
+  });
+  next();
+});
+
 app.use(express.json());
 
 let dbStatus = 'disconnected';
@@ -129,6 +147,32 @@ app.get('/readyz', (req, res) => {
     database: {
       required: requiresDatabase,
       status: dbStatus,
+    },
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({
+    error: {
+      code: 'NOT_FOUND',
+      message: 'Route not found',
+      requestId: req.requestId,
+    },
+  });
+});
+
+app.use((err, req, res, next) => {
+  const status = err?.status || 500;
+  const code = status === 500 ? 'INTERNAL_ERROR' : 'REQUEST_ERROR';
+  const message = status === 500 ? 'Internal server error' : (err?.message || 'Request failed');
+
+  console.error(`[${req.requestId}]`, err);
+
+  res.status(status).json({
+    error: {
+      code,
+      message,
+      requestId: req.requestId,
     },
   });
 });
